@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111319">
+  <title>声海音乐 · 免费听</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">♫</div><div>声海音乐<small>FREE MUSIC PLAYER</small></div></div>
+      <div class="nav-label">在线音乐</div>
+      <button class="nav active" data-view="discover"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span> 音乐馆</button>
+      <button class="nav" data-view="search"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m16 16 4.5 4.5"/></svg></span> 搜索歌曲</button>
+      <button class="nav" data-view="chinese"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span> 中文热歌</button>
+      <button class="nav" data-view="radio"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a5 5 0 0 0 0 6M1 6a9 9 0 0 0 0 12M8 12h.01M12 8v8"/><path d="M16 7a7 7 0 0 1 0 10M19 4a11 11 0 0 1 0 16"/></svg></span> 免费电台</button>
+      <div class="nav-label section-gap">我的音乐</div>
+      <button class="nav" data-view="likes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.2-8.8 11-8.8 11S3.2 14 3.2 8.8A4.7 4.7 0 0 1 12 6a4.7 4.7 0 0 1 8.8 2.8Z"/></svg></span> 我喜欢</button>
+      <button class="nav" data-view="local"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V5l13-2v13"/><circle cx="2.5" cy="18" r="2.5"/><circle cx="14.5" cy="16" r="2.5"/></svg></span> 本地歌曲</button>
+      <div class="sidebar-bottom"><div class="source-dot"></div><span>免费音乐来源<br><small>开放曲库 · 正版电台</small></span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="searchbox"><span>⌕</span><input id="searchInput" placeholder="搜索歌曲、音乐人、专辑" autocomplete="off"><kbd>↵</kbd></div>
+        <button id="importButton" class="import-btn">＋ 导入本地音乐</button>
+        <input id="fileInput" type="file" accept="audio/*,.flac,.wav,.aiff,.m4a,.mp3,.ogg,.opus" multiple hidden>
+      </header>
+
+      <section id="hero" class="hero">
+        <div class="hero-copy"><div class="eyebrow">FREE MUSIC · OPEN CATALOG</div><h1>好音乐，<br><em>随时听。</em></h1><p>搜索开放授权音乐，或收听正版免费电台；也可以播放本地歌曲。</p><button id="exploreButton" class="hero-btn">开始听歌 <span>↗</span></button></div>
+        <div class="hero-art"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="vinyl"><div class="vinyl-center"></div></div><div class="spark">✦</div></div>
+      </section>
+
+      <section class="content">
+        <div class="section-header"><div><div id="sectionKicker" class="eyebrow muted">CURATED FOR YOU</div><h2 id="sectionTitle">发现好音乐</h2></div><p id="sectionNote">来自开放授权曲库的音乐</p></div>
+        <div id="chips" class="chips"><button class="chip selected" data-query="">全部</button><button class="chip" data-query="ambient">氛围</button><button class="chip" data-query="jazz">爵士</button><button class="chip" data-query="electronic">电子</button><button class="chip" data-query="piano">钢琴</button><button class="chip" data-query="classical">古典</button></div>
+        <div class="table-head"><span>歌曲</span><span>专辑</span><span>格式</span><span>操作</span></div>
+        <div id="radioGrid" class="radio-grid" hidden></div>
+        <div id="chineseGrid" class="radio-grid" hidden></div>
+        <div id="status" class="status">正在连接开放曲库…</div>
+        <div id="trackList" class="track-list"></div>
+        <button id="moreButton" class="more-button" hidden>加载更多</button>
+      </section>
+    </main>
+
+    <aside id="queuePanel" class="queue-panel" hidden><div class="queue-heading"><h3>播放队列</h3><button id="closeQueue" aria-label="关闭队列">×</button></div><div id="queueList"></div></aside>
+  </div>
+
+  <footer class="player">
+    <div class="now-playing"><div id="playerArt" class="player-art">♫</div><div class="now-text"><strong id="playerTitle">还没有播放音乐</strong><span id="playerArtist">选择一首歌曲开始</span></div><button id="likeCurrent" class="icon-btn" aria-label="收藏当前歌曲">♡</button></div>
+    <div class="play-center"><div class="controls"><button id="shuffleButton" class="icon-btn subtle" title="随机播放">⤨</button><button id="prevButton" class="icon-btn" title="上一首">⏮</button><button id="playButton" class="play-button" title="播放或暂停">▶</button><button id="nextButton" class="icon-btn" title="下一首">⏭</button><button id="repeatButton" class="icon-btn subtle" title="循环模式">↻</button></div><div class="progress"><span id="currentTime">0:00</span><input id="seek" type="range" min="0" max="1000" value="0"><span id="duration">0:00</span></div></div>
+    <div class="player-side"><span id="formatBadge" class="format-badge">SOURCE</span><button id="queueButton" class="icon-btn" title="播放队列">☷</button><span class="volume-icon">♪</span><input id="volume" type="range" min="0" max="100" value="75"></div>
+    <audio id="audio" preload="metadata"></audio>
+  </footer>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
