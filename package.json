@@ -1,9 +1,9 @@
 {
-  "name": "shenghai-music",
+  "name": "myfreemp3-clone",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "description": "MyFreeMp3 站点复刻（学习用途）",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.js"
   }
 }
