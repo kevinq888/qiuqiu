@@ -47,7 +47,18 @@ const freeFiles = [
   ['The Army Goes Rolling Along', 'U.S. Army Band', 'The Army Goes Rolling Along - U.S. Army Band.ogg', '公有领域'],
   ['Good King Wenceslaus', 'U.S. Army Band', 'U.S. Army Band - Good King Wenceslaus.ogg', '公有领域'],
   ['Hark! The Herald Angels Sing', 'U.S. Army Band', 'U.S. Army Band - Hark! The Herald Angels Sing.ogg', '公有领域'],
-].map(([title, artist, file, license]) => ({ id: `commons:${file}`, title, artist, album: 'Wikimedia Commons · 开放音乐', format: `OGG · ${license === '公有领域' ? 'PD' : license.replace('CC ', '')}`, url: commonsFile(file), source: commonsPage(file), license, provider: 'Wikimedia Commons' }));
+].map(([title, artist, file, license]) => {
+  const km = artist.includes('Kevin MacLeod');
+  return {
+    id: km ? `incompetech:${title}.mp3` : `commons:${file}`,
+    title, artist,
+    album: km ? 'incompetech · Kevin MacLeod' : 'Wikimedia Commons · 开放音乐',
+    format: km ? 'MP3 · CC BY 4.0' : `OGG · ${license === '公有领域' ? 'PD' : license.replace('CC ', '')}`,
+    url: km ? `https://incompetech.com/music/royalty-free/mp3-royaltyfree/${encodeURIComponent(`${title}.mp3`)}` : commonsFile(file),
+    source: km ? 'https://incompetech.com/music/royalty-free/music.html' : commonsPage(file),
+    license, provider: km ? 'incompetech · CC BY 4.0' : 'Wikimedia Commons',
+  };
+});
 const radioStations = [
   { title: 'Radio Paradise', detail: '人工编排的摇滚、世界音乐、电子、古典与爵士混播。', quality: 'FLAC · 官方网页播放器', url: 'https://new.radioparadise.com/', mark: 'RP' },
   { title: 'SomaFM · Groove Salad', detail: '氛围电子与 chillout；可直接播放 SomaFM 官方直播流。', quality: 'MP3 256 kbps · 免费直播', url: 'https://somafm.com/groovesalad/', stream: 'https://ice5.somafm.com/groovesalad-256-mp3', format: 'MP3 256', mark: 'GS' },
@@ -70,7 +81,7 @@ function renderTracks() {
   $('radioGrid').hidden = true;
   document.querySelector('.table-head').hidden = false;
   const tracks = state.view === 'likes' ? Object.values(state.likes) : state.view === 'local' ? state.local : state.tracks;
-  $('trackList').innerHTML = tracks.map((track, i) => `<div class="track-row" data-index="${i}"><div class="track-main"><div class="track-art" ${artStyle(track)}>${track.artwork ? '' : '♫'}</div><div class="track-meta"><strong title="${escapeHTML(track.title)}">${escapeHTML(track.title)}</strong><span>${escapeHTML(track.artist)}</span></div></div><div class="track-album" title="${escapeHTML(track.album)}">${escapeHTML(track.album)}</div><div><span class="track-format">${escapeHTML(track.format)}</span></div><div class="track-actions"><button data-action="like" title="收藏" class="${isLoved(track) ? 'loved' : ''}">${isLoved(track) ? '♥' : '♡'}</button>${track.source ? '<button data-action="source" title="查看来源与授权">↗</button>' : ''}</div></div>`).join('');
+  $('trackList').innerHTML = tracks.map((track, i) => `<div class="track-row" data-index="${i}"><div class="track-main">${track.rank ? `<span class="rank-badge">${track.rank}</span>` : ''}<div class="track-art" ${artStyle(track)}>${track.artwork ? '' : '♫'}</div><div class="track-meta"><strong title="${escapeHTML(track.title)}">${escapeHTML(track.title)}</strong><span>${escapeHTML(track.artist)}</span></div></div><div class="track-album" title="${escapeHTML(track.album)}">${escapeHTML(track.album)}</div><div><span class="track-format">${escapeHTML(track.format)}</span></div><div class="track-actions"><button data-action="info" title="歌曲详情">ⓘ</button><button data-action="like" title="收藏" class="${isLoved(track) ? 'loved' : ''}">${isLoved(track) ? '♥' : '♡'}</button>${track.source ? '<button data-action="source" title="查看来源与授权">↗</button>' : ''}</div></div>`).join('');
   if (state.view === 'likes') $('status').textContent = tracks.length ? '' : '你还没有收藏歌曲。';
   if (state.view === 'local') $('status').textContent = tracks.length ? '' : '点击右上角「导入本地音乐」添加文件。';
   if (state.view === 'discover' || state.view === 'search') $('status').textContent = tracks.length ? '' : state.loading ? '正在查找开放音乐…' : '没有找到带开放授权标记的可播放音乐。换个关键词试试。';
@@ -125,15 +136,54 @@ function setView(view) {
   state.view = view;
   document.querySelectorAll('.nav').forEach(el => el.classList.toggle('active', el.dataset.view === view));
   $('hero').hidden = view !== 'discover';
-  $('chips').hidden = ['likes','local','radio','chinese'].includes(view);
+  $('chips').hidden = ['likes','local','radio','chinese','charts','recent'].includes(view);
   $('searchInput').closest('.searchbox').hidden = ['radio','chinese'].includes(view);
-  $('sectionKicker').textContent = ({discover:'CURATED FOR YOU',search:'SEARCH RESULTS',likes:'YOUR COLLECTION',local:'ON THIS DEVICE',radio:'LIVE · LICENSED RADIO',chinese:'OPEN CHINESE MUSIC'})[view];
-  $('sectionTitle').textContent = ({discover:'发现好音乐',search:'搜索结果',likes:'我喜欢',local:'本地音乐',radio:'高音质正版电台',chinese:'授权中文歌曲与热门榜'})[view];
-  $('sectionNote').textContent = ({discover:'收录 Wikimedia Commons 开放音乐；网络可用时继续补充',search:state.query ? `关键词：${state.query}` : '浏览开放曲库',likes:'你的私人收藏',local:'仅在本次打开期间保留',radio:'直播收听 · 部分电台支持 FLAC',chinese:'站内播放已授权音源 · 官方热歌榜单'})[view];
+  $('sectionKicker').textContent = ({discover:'CURATED FOR YOU',search:'SEARCH RESULTS',charts:'COMMUNITY CHARTS',recent:'FRESHLY ADDED',likes:'YOUR COLLECTION',local:'ON THIS DEVICE',radio:'LIVE · LICENSED RADIO',chinese:'OPEN CHINESE MUSIC'})[view];
+  $('sectionTitle').textContent = ({discover:'发现好音乐',search:'搜索结果',charts:'热门榜单',recent:'最新上架',likes:'我喜欢',local:'本地音乐',radio:'高音质正版电台',chinese:'授权中文歌曲与热门榜'})[view];
+  $('sectionNote').textContent = ({discover:'收录开放授权音乐；网络可用时继续补充',search:state.query ? `关键词：${state.query}` : '浏览开放曲库',charts:'ccMixter 社区排行 · 全部 CC 授权',recent:'Kevin MacLeod 最新发布的 CC BY 4.0 音乐',likes:'你的私人收藏',local:'仅在本次打开期间保留',radio:'直播收听 · 部分电台支持 FLAC',chinese:'站内播放已授权音源 · 官方热歌榜单'})[view];
   if (view === 'search') $('searchInput').focus();
   if (view === 'chinese') renderChinese();
   else if (view === 'radio') renderRadio();
+  else if (view === 'charts' || view === 'recent') loadCatalog(view);
   else renderTracks();
+}
+
+async function loadCatalog(kind) {
+  $('chineseGrid').hidden = true;
+  $('radioGrid').hidden = true;
+  $('trackList').innerHTML = '';
+  $('moreButton').hidden = true;
+  $('status').textContent = kind === 'charts' ? '正在加载热门榜单…' : '正在加载最新上架…';
+  try {
+    const response = await fetch(`/api/catalog?kind=${kind}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '加载失败');
+    state.tracks = data.tracks || [];
+  } catch (error) {
+    state.tracks = [];
+    $('status').textContent = `曲库暂不可用：${error.message}。可稍后再试，本地音乐不受影响。`;
+    return;
+  }
+  renderTracks();
+  $('status').textContent = state.tracks.length ? '' : '暂时没有曲目。';
+}
+
+let detailTrack = null;
+function showDetail(track) {
+  detailTrack = track;
+  $('detailTitle').textContent = track.title;
+  $('detailArtist').textContent = track.artist;
+  $('detailAlbum').textContent = track.album || '—';
+  $('detailFormat').textContent = track.format || 'AUDIO';
+  $('detailLicense').textContent = track.licenseName || track.provider || '—';
+  $('detailProvider').textContent = track.provider || '—';
+  $('detailArt').style.backgroundImage = track.artwork ? `url("${String(track.artwork).replace(/"/g, '%22')}")` : '';
+  $('detailArt').textContent = track.artwork ? '' : '♫';
+  $('detailSource').hidden = !track.source;
+  if (track.source) $('detailSource').href = track.source;
+  $('detailLike').textContent = isLoved(track) ? '♥' : '♡';
+  $('detailLike').classList.toggle('loved', isLoved(track));
+  $('detailPanel').hidden = false;
 }
 
 async function searchOpenverseInBrowser(query, page) {
@@ -318,6 +368,7 @@ $('trackList').addEventListener('click', event => {
   const track = currentList()[Number(row.dataset.index)]; if (!track) return;
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (action === 'like') toggleLike(track);
+  else if (action === 'info') showDetail(track);
   else if (action === 'source') { if (track.source) window.open(track.source, '_blank', 'noopener,noreferrer'); }
   else playFromList(Number(row.dataset.index));
 });
@@ -335,6 +386,27 @@ $('likeCurrent').addEventListener('click', () => toggleLike(state.current));
 $('queueButton').addEventListener('click', () => { $('queuePanel').hidden = !$('queuePanel').hidden; renderQueue(); });
 $('closeQueue').addEventListener('click', () => { $('queuePanel').hidden = true; });
 $('queueList').addEventListener('click', event => { const row = event.target.closest('.queue-item'); if (row) playIndex(Number(row.dataset.index)); });
+$('closeDetail').addEventListener('click', () => { $('detailPanel').hidden = true; });
+$('detailPlay').addEventListener('click', () => {
+  if (!detailTrack) return;
+  const index = currentList().indexOf(detailTrack);
+  if (index >= 0) playFromList(index);
+  else { state.queue = [detailTrack]; playIndex(0); }
+  $('detailPanel').hidden = true;
+});
+$('detailLike').addEventListener('click', () => {
+  if (!detailTrack) return;
+  toggleLike(detailTrack);
+  $('detailLike').textContent = isLoved(detailTrack) ? '♥' : '♡';
+  $('detailLike').classList.toggle('loved', isLoved(detailTrack));
+});
+$('detailArtistSearch').addEventListener('click', () => {
+  if (!detailTrack) return;
+  $('detailPanel').hidden = true;
+  const query = detailTrack.artist.split('·')[0].trim();
+  $('searchInput').value = query;
+  search(query);
+});
 $('volume').addEventListener('input', event => { audio.volume = Number(event.target.value) / 100; });
 $('seek').addEventListener('input', event => { if (Number.isFinite(audio.duration)) audio.currentTime = Number(event.target.value) / 1000 * audio.duration; });
 audio.addEventListener('timeupdate', () => { $('currentTime').textContent = time(audio.currentTime); $('duration').textContent = time(audio.duration); $('seek').value = Number.isFinite(audio.duration) && audio.duration ? Math.round(audio.currentTime / audio.duration * 1000) : 0; });

@@ -8,3 +8,23 @@
 .chinese-local-play{width:100%;background:transparent;border:0;text-align:left;font:inherit;cursor:pointer}.chinese-local-play:hover{background:#222730}.official-chart-head{margin-top:22px;padding-top:18px;border-top:1px solid #343943}
 .chinese-song-row{min-width:0;border-bottom:1px solid #292e37;padding:0 8px 8px}.chinese-song-row .chinese-song{border-bottom:0}.chinese-license-link{display:block;padding:0 0 0 41px;color:#7fba9d;font-size:10px;text-decoration:none}.chinese-license-link:hover{text-decoration:underline;color:#61dfa4}
 .chinese-batch-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.chinese-batch-actions strong{color:#61dfa4;font-size:13px}.chinese-batch-actions .more-button{margin:0;white-space:nowrap}.chinese-license-link a{color:inherit}
+.rank-badge{flex:none;width:24px;text-align:center;color:#7f8793;font-size:11px;font-variant-numeric:tabular-nums;font-weight:700}
+.track-row:nth-child(-n+3) .rank-badge{color:#f5a096}
+.detail-panel{position:fixed;z-index:11;right:0;top:0;bottom:92px;width:330px;background:#20232b;box-shadow:-12px 0 30px #0006;padding:22px;overflow:auto}
+.detail-panel[hidden]{display:none}
+.detail-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.detail-heading h3{margin:0}
+.detail-heading button{background:transparent;border:0;color:#aeb4c0;font-size:27px;cursor:pointer;padding:3px}
+.detail-heading button:hover{color:#56e09d}
+.detail-art{width:100%;aspect-ratio:1;border-radius:12px;display:grid;place-items:center;color:#f8d0c5;font-size:64px;background:linear-gradient(135deg,#374456,#674354);background-size:cover;background-position:center;margin-bottom:18px}
+.detail-body>strong{display:block;font-size:16px;color:#f0f1f2}
+.detail-body>span{display:block;margin-top:6px;color:#858d99;font-size:12px}
+.detail-meta{margin:18px 0;display:grid;gap:10px}
+.detail-meta>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #343942;padding-bottom:10px}
+.detail-meta dt{color:#727985;font-size:11px;flex:none}
+.detail-meta dd{margin:0;color:#c6cad1;font-size:11px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-actions{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.detail-actions .hero-btn{flex:1}
+.detail-actions .more-button{margin:0;padding:10px 12px;white-space:nowrap}
+.detail-source{color:#61dfa4;font-size:12px;font-weight:700;text-decoration:none}
+.detail-source:hover{text-decoration:underline}

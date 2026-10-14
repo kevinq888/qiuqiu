@@ -1,4 +1,5 @@
 import http from 'node:http';
+import https from 'node:https';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,16 +16,34 @@ function asText(value, fallback = '') {
   return Array.isArray(value) ? String(value[0] ?? fallback) : String(value ?? fallback);
 }
 
-async function getJSON(url) {
-  let response;
-  try {
-    response = await fetch(url, { signal: AbortSignal.timeout(12000), headers: { 'User-Agent': 'ShenghaiMusic/1.0 (personal free music player)' } });
-  } catch (error) {
-    if (error.name === 'TimeoutError' || error.name === 'AbortError') throw new Error('连接上游超时');
-    throw new Error('网络不可达或 DNS 解析失败');
-  }
-  if (!response.ok) throw new Error(`上游服务返回 ${response.status}`);
-  return response.json();
+const USER_AGENT = 'ShenghaiMusic/1.0 (personal free music player)';
+
+function httpsGet(urlString, { headers = {}, timeout = 30000, json = false } = {}) {
+  return new Promise((resolve, reject) => {
+    let parsed;
+    try { parsed = new URL(urlString); } catch { return reject(new Error('bad url')); }
+    if (parsed.protocol !== 'https:') return reject(new Error('仅支持 https 上游'));
+    const req = https.request(parsed, { method: 'GET', headers, maxHeaderSize: 256 * 1024, timeout }, res => {
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume();
+        resolve(httpsGet(new URL(res.headers.location, parsed).href, { headers, timeout, json }));
+        return;
+      }
+      if (res.statusCode !== 200 && res.statusCode !== 206) { res.resume(); reject(new Error(`上游服务返回 ${res.statusCode}`)); return; }
+      if (!json) { resolve(res); return; }
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('error', reject);
+      res.on('end', () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch { reject(new Error('上游返回无法解析')); } });
+    });
+    req.on('timeout', () => req.destroy(new Error('连接上游超时')));
+    req.on('error', error => reject(error.message === '连接上游超时' || error.name === 'AbortError' ? new Error('连接上游超时') : new Error('网络不可达或 DNS 解析失败')));
+    req.end();
+  });
+}
+
+async function getJSON(url, timeout = 12000) {
+  return httpsGet(url, { headers: { 'User-Agent': USER_AGENT }, timeout, json: true });
 }
 
 function audioFiles(files) {
@@ -141,8 +160,126 @@ async function searchOpenverse(term, page) {
   return { tracks, totalItems: Number(data.result_count || 0), page };
 }
 
+function ccmixterLicense(systags) {
+  const tags = String(systags || '').split(',');
+  const nc = tags.includes('non_commercial') || tags.includes('nc_sampling_plus');
+  const sa = tags.includes('share_alike');
+  const sp = tags.includes('sampling_plus') || tags.includes('nc_sampling_plus');
+  if (sp) return nc ? 'Sampling Plus NC' : 'Sampling Plus';
+  return nc ? (sa ? 'CC BY-NC-SA' : 'CC BY-NC') : (sa ? 'CC BY-SA' : 'CC BY');
+}
+
+function durationSeconds(value) {
+  const parts = String(value || '').split(':').map(Number);
+  if (!parts.length || parts.some(Number.isNaN)) return 0;
+  return parts.reduce((acc, n) => acc * 60 + n, 0);
+}
+
+async function ccmixterQuery(params) {
+  const url = new URL('https://ccmixter.org/api/query');
+  url.searchParams.set('f', 'json');
+  url.searchParams.set('dataview', 'files');
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
+  const data = await getJSON(url);
+  if (!Array.isArray(data)) throw new Error('ccMixter 返回格式异常');
+  return data.flatMap(item => (item.files || []).filter(file => {
+    const type = file.file_format_info?.['media-type'];
+    const ext = String(file.file_name || '').split('.').pop().toLowerCase();
+    return type === 'audio' && ['mp3', 'ogg', 'm4a'].includes(ext) && !/preview/i.test(file.file_extra?.type || '');
+  }).map(file => {
+    const uploadId = Number(item.upload_id || 0);
+    const ext = String(file.file_name || '').split('.').pop().toUpperCase();
+    return {
+      id: `ccmixter:${uploadId}:${file.file_id}`,
+      title: String(item.upload_name || '未命名作品'),
+      artist: String(item.user_name || 'Unknown artist'),
+      album: String(item.upload_extra?.relative_dir || '').replace(/^content\//, '') || 'ccMixter',
+      format: ext,
+      duration: durationSeconds(file.file_format_info?.ps),
+      size: Number(file.file_rawsize || 0),
+      url: `/api/stream?url=${encodeURIComponent(file.download_url || '')}`,
+      source: uploadId ? `https://ccmixter.org/files/${encodeURIComponent(item.user_name)}/${uploadId}` : 'https://ccmixter.org/',
+      license: `https://ccmixter.org/`,
+      licenseName: ccmixterLicense(item.upload_extra?.systags),
+      provider: `ccMixter · ${ccmixterLicense(item.upload_extra?.systags)}`,
+    };
+  }));
+}
+
+async function searchCcmixter(term, page) {
+  const params = { limit: 60 };
+  if (term) params.search = term.slice(0, 60);
+  else params.ord = 'rank_desc';
+  const tracks = await ccmixterQuery(params);
+  const perPage = 25;
+  const start = (page - 1) * perPage;
+  return { tracks: tracks.slice(start, start + perPage), totalItems: tracks.length, page };
+}
+
+const incompetechCatalog = { at: 0, tracks: [] };
+async function incompetechTracks() {
+  if (incompetechCatalog.tracks.length && Date.now() - incompetechCatalog.at < 1800000) return incompetechCatalog.tracks;
+  const pieces = await getJSON('https://incompetech.com/music/royalty-free/pieces.json', 90000);
+  const tracks = (Array.isArray(pieces) ? pieces : []).filter(piece => piece?.filename && /\.mp3$/i.test(piece.filename)).map(piece => {
+    const uploaded = String(piece.uploaded || '').slice(0, 10);
+    return {
+      id: `incompetech:${piece.filename}`,
+      title: String(piece.title || piece.filename.replace(/\.mp3$/i, '')),
+      artist: 'Kevin MacLeod',
+      album: [uploaded, String(piece.feel || piece.genre || '')].filter(Boolean).join(' · ') || 'incompetech',
+      format: 'MP3',
+      duration: durationSeconds(piece.length),
+      uploaded,
+      url: `https://incompetech.com/music/royalty-free/mp3-royaltyfree/${encodeURIComponent(piece.filename)}`,
+      artwork: null,
+      source: 'https://incompetech.com/music/royalty-free/music.html',
+      license: 'https://creativecommons.org/licenses/by/4.0/',
+      licenseName: 'CC BY 4.0',
+      provider: 'incompetech · CC BY 4.0',
+    };
+  });
+  if (!tracks.length) throw new Error('incompetech 曲库为空');
+  incompetechCatalog.at = Date.now();
+  incompetechCatalog.tracks = tracks;
+  return tracks;
+}
+
+const streamReferer = { 'ccmixter.org': 'https://ccmixter.org/', 'www.ccmixter.org': 'https://ccmixter.org/' };
+
+function proxyStream(target, req, res) {
+  let parsed;
+  try { parsed = new URL(target); } catch { res.writeHead(400); return res.end('bad url'); }
+  if (parsed.protocol !== 'https:' || !streamReferer[parsed.hostname]) { res.writeHead(403); return res.end('host not allowed'); }
+  const headers = { Referer: streamReferer[parsed.hostname], 'User-Agent': USER_AGENT };
+  if (req.headers.range) headers.Range = req.headers.range;
+  const upstream = https.request(parsed, { method: 'GET', headers, maxHeaderSize: 256 * 1024, timeout: 30000 }, response => {
+    if (response.statusCode !== 200 && response.statusCode !== 206) { response.resume(); res.writeHead(502); res.end('upstream error'); return; }
+    const out = { 'Content-Type': response.headers['content-type'] || 'audio/mpeg', 'Cache-Control': 'no-store' };
+    for (const key of ['content-length', 'content-range', 'accept-ranges']) {
+      const value = response.headers[key];
+      if (value) out[key] = value;
+    }
+    res.writeHead(response.statusCode, out);
+    response.pipe(res);
+  });
+  upstream.on('timeout', () => upstream.destroy(new Error('timeout')));
+  upstream.on('error', () => { if (!res.headersSent) { res.writeHead(502); res.end('stream unavailable'); } else res.destroy(); });
+  req.on('close', () => upstream.destroy());
+  upstream.end();
+}
+
+async function catalogTracks(kind) {
+  if (kind === 'recent') {
+    const tracks = (await incompetechTracks()).filter(t => t.uploaded).sort((a, b) => b.uploaded.localeCompare(a.uploaded));
+    return tracks.slice(0, 40).map((t, i) => ({ ...t, rank: i + 1 }));
+  }
+  const tracks = await ccmixterQuery({ limit: 40, ord: 'rank_desc' });
+  return tracks.map((t, i) => ({ ...t, rank: i + 1 }));
+}
+
 async function searchCatalogs(term, page) {
   const providers = [
+    ['ccMixter', () => searchCcmixter(term, page)],
     ['Openverse', () => searchOpenverse(term, page)],
     ['Internet Archive', () => searchMusic(term, page)],
   ];
@@ -187,6 +324,26 @@ const server = http.createServer(async (req, res) => {
         cache.delete(key);
         throw error;
       }
+    }
+    if (url.pathname === '/api/catalog') {
+      const kind = url.searchParams.get('kind') === 'recent' ? 'recent' : 'charts';
+      const key = `catalog:${kind}`;
+      let entry = cache.get(key);
+      if (!entry || Date.now() - entry.at > 600000) {
+        entry = { at: Date.now(), promise: catalogTracks(kind) };
+        cache.set(key, entry);
+      }
+      try {
+        const tracks = await entry.promise;
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ tracks, kind }));
+      } catch (error) {
+        cache.delete(key);
+        throw error;
+      }
+    }
+    if (url.pathname === '/api/stream') {
+      return proxyStream(url.searchParams.get('url') || '', req, res);
     }
     const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
     if (!['/index.html', '/app.js', '/styles.css'].includes(pathname)) {
