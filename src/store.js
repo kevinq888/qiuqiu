@@ -80,6 +80,11 @@ function mediaUrl(title) {
   return `${CDN_BASE}/${encodeURIComponent(title)}.m4a`;
 }
 
+// 本站代理地址（CDN 校验 Referer，浏览器直连会 403，需经服务器转发）
+function proxyMediaUrl(title) {
+  return `/media/${encodeURIComponent(title)}.m4a`;
+}
+
 function searchSongs(query) {
   const q = String(query || '').trim().toLowerCase();
   if (!q) return [];
@@ -104,5 +109,6 @@ module.exports = {
   songs,
   getSong,
   mediaUrl,
+  proxyMediaUrl,
   searchSongs,
 };

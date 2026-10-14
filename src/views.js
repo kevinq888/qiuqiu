@@ -1,5 +1,5 @@
 // 页面模板：逐页复刻 myfreemp3ku.com 的 HTML 结构
-const { seed, getSong, mediaUrl } = require('./store');
+const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = 'MyFreeMp3';
 const SITE_TITLE = 'MyFreeMp3 - 在线音乐免费下载官网';
@@ -406,7 +406,7 @@ ${searchFormInner()}
       music: {
         title: ${JSON.stringify(title)},
         author: ${JSON.stringify(artist || '')},
-        url: ${JSON.stringify(mediaUrl(title))},
+        url: ${JSON.stringify(proxyMediaUrl(title))},
         pic: '/projects/source_code/picture/logo.png'
       }
     });

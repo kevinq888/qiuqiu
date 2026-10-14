@@ -1,8 +1,9 @@
 // MyFreeMp3 复刻站：零依赖 Node 后端
 const http = require('node:http');
+const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
-const { getSong, mediaUrl, searchSongs } = require('./src/store');
+const { getSong, mediaUrl, proxyMediaUrl, searchSongs } = require('./src/store');
 const views = require('./src/views');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -55,6 +56,32 @@ const server = http.createServer((req, res) => {
   // 静态资源
   if (serveStatic(req, res, p)) return;
 
+  // 音频代理：CDN 校验 Referer，浏览器直连 403，由服务器带 Referer 转发（支持 Range 拖动进度）
+  if (p.startsWith('/media/') && p.endsWith('.m4a')) {
+    const title = decodeURIComponent(p.slice('/media/'.length, -'.m4a'.length));
+    const headers = {
+      Referer: 'https://myfreemp3ku.com/',
+      'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0',
+    };
+    if (req.headers.range) headers.Range = req.headers.range;
+    const upstream = https.get(mediaUrl(title), { headers }, (up) => {
+      const h = {
+        'Content-Type': up.headers['content-type'] || 'audio/x-m4a',
+        'Accept-Ranges': 'bytes',
+      };
+      if (up.headers['content-length']) h['Content-Length'] = up.headers['content-length'];
+      if (up.headers['content-range']) h['Content-Range'] = up.headers['content-range'];
+      res.writeHead(up.statusCode || 502, h);
+      up.pipe(res);
+    });
+    upstream.on('error', () => {
+      if (!res.headersSent) send(res, 502, 'Bad Gateway', 'text/plain; charset=utf-8');
+      else res.end();
+    });
+    upstream.setTimeout(30000, () => upstream.destroy(new Error('upstream timeout')));
+    return;
+  }
+
   // 下载地址揭示（人机验证通过后调用）
   if (p.startsWith('/api/reveal/') && req.method === 'POST') {
     const id = decodeURIComponent(p.slice('/api/reveal/'.length));
@@ -63,7 +90,7 @@ const server = http.createServer((req, res) => {
       send(res, 404, JSON.stringify({ ok: false }), 'application/json; charset=utf-8');
       return;
     }
-    const url = mediaUrl(song.title);
+    const url = proxyMediaUrl(song.title);
     send(res, 200, JSON.stringify({
       ok: true,
       links: [
