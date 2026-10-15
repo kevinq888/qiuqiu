@@ -126,14 +126,14 @@ body.player-docked{padding-bottom:var(--player-dock-height,112px)}
   .player-host.is-expanded .player-actions a{margin-left:auto}
 }
 @media(max-width:640px){
-  /* 窄屏紧凑底栏：进度条一行，歌名与操作按钮一行，整体只占两行高度。 */
+  /* 窄屏紧凑底栏：歌名与操作一行在上，进度条贴底，整体只占两行高度。 */
   .player-host.is-expanded .player-panel{
     grid-template-columns:minmax(0,1fr) auto;
-    grid-template-areas:"audio audio" "head actions";
+    grid-template-areas:"head actions" "audio audio";
     gap:6px 10px;
     padding:9px 14px calc(9px + env(safe-area-inset-bottom));
   }
-  .player-host.is-expanded .player-panel audio{grid-area:audio;margin:0;height:30px}
+  .player-host.is-expanded .player-panel audio{grid-area:audio;margin:0;height:28px;border-radius:999px}
   .player-host.is-expanded .player-panel-head{grid-area:head;display:flex;align-items:center;gap:6px;margin:0}
   .player-host.is-expanded .player-panel-head small{display:none}
   .player-host.is-expanded .player-panel-head h2{font-size:13px;margin:0}
@@ -150,4 +150,100 @@ body.player-docked{padding-bottom:var(--player-dock-height,112px)}
     bottom:calc(var(--player-dock-height,104px) + 8px);
     max-height:min(300px,calc(100dvh - var(--player-dock-height,104px) - 24px));
   }
+}
+
+/* ============================================================
+   现代化样式层：统一设计令牌、玻璃拟态、微交互与可访问性。
+   以级联覆盖方式叠加，不改动上面的基础布局与六套主题。
+   ============================================================ */
+:root{
+  --radius-lg:24px;
+  --radius-md:16px;
+  --radius-sm:11px;
+  --speed:.22s;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+/* 全局：字体渲染、选区、滚动条、焦点可见性 */
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::selection{background:var(--mint);color:var(--forest)}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--forest) 26%,transparent);border-radius:999px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--forest) 45%,transparent);background-clip:content-box;border:2px solid transparent}
+:focus-visible{outline:2px solid var(--forest);outline-offset:2px;border-radius:6px}
+.search-form input:focus-visible,.player-panel audio:focus-visible{outline:none}
+
+/* 顶部导航：吸顶 + 玻璃质感 */
+.site-header{position:sticky;top:0;background:color-mix(in srgb,var(--cream) 86%,transparent);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border-bottom:1px solid color-mix(in srgb,var(--line) 72%,transparent)}
+@supports not (backdrop-filter:blur(1px)){.site-header{background:var(--cream)}}
+.brand img{transition:transform var(--speed) var(--ease)}
+.brand:hover img{transform:rotate(-8deg) scale(1.05)}
+.main-nav a{transition:color var(--speed),background var(--speed),transform var(--speed)}
+.main-nav a:hover{transform:translateY(-1px)}
+
+/* Hero：柔和光斑装饰 + 标题层次 */
+.hero{border-radius:var(--radius-lg)}
+.hero:after{content:'';position:absolute;width:300px;height:300px;border-radius:50%;right:16%;bottom:-150px;background:radial-gradient(circle,color-mix(in srgb,var(--orange) 16%,transparent),transparent 68%);filter:blur(6px);pointer-events:none}
+.hero h1{text-shadow:0 1px 0 color-mix(in srgb,var(--white) 60%,transparent)}
+
+/* 搜索框：focus 光环 + 按钮渐变 */
+.search-form{border-radius:999px;border:1px solid transparent;transition:box-shadow var(--speed),border-color var(--speed)}
+.search-form:focus-within{border-color:color-mix(in srgb,var(--forest) 34%,transparent);box-shadow:0 12px 35px color-mix(in srgb,var(--forest) 10%,transparent),0 0 0 4px color-mix(in srgb,var(--mint) 74%,transparent)}
+.search-form button,.primary-action{background:linear-gradient(135deg,var(--forest),color-mix(in srgb,var(--forest) 78%,var(--ink)));box-shadow:0 6px 16px color-mix(in srgb,var(--forest) 22%,transparent);transition:transform var(--speed) var(--ease),box-shadow var(--speed),filter var(--speed)}
+.search-form button:hover,.primary-action:hover{transform:translateY(-2px);box-shadow:0 10px 22px color-mix(in srgb,var(--forest) 30%,transparent);filter:brightness(1.06)}
+.search-form button:active,.primary-action:active{transform:translateY(0)}
+
+/* 卡片体系：统一圆角、悬浮上扬 */
+.panel{border-radius:var(--radius-lg)}
+.collection-card,.artist-card,.keyword-grid a{border-radius:var(--radius-md);transition:transform var(--speed) var(--ease),box-shadow var(--speed),border-color var(--speed)}
+.artist-card:hover,.keyword-grid a:hover,.collection-card:hover{transform:translateY(-4px);box-shadow:0 18px 38px color-mix(in srgb,var(--forest) 13%,transparent);border-color:color-mix(in srgb,var(--forest) 26%,transparent)}
+.heading-icon{border-radius:13px}
+
+/* 歌曲行与标签：柔和 hover */
+.song-row{border-radius:var(--radius-sm);transition:background var(--speed)}
+.song-row:hover{background:color-mix(in srgb,var(--subtle) 62%,transparent)}
+.song-row:hover .song-rank{color:var(--forest)}
+.mood-tag{border-radius:999px;transition:transform var(--speed) var(--ease),background var(--speed),border-color var(--speed),box-shadow var(--speed)}
+.mood-tag:hover{transform:translateY(-2px);box-shadow:0 6px 14px color-mix(in srgb,var(--forest) 10%,transparent)}
+
+/* 分页按钮微交互 */
+.pager a{transition:transform var(--speed) var(--ease),background var(--speed),color var(--speed)}
+.pager a:hover{transform:translateY(-2px)}
+
+/* 详情页封面与歌词 */
+.detail-cover{box-shadow:0 18px 40px color-mix(in srgb,var(--forest) 16%,transparent);border-radius:var(--radius-md)}
+.lyrics summary{transition:color var(--speed)}
+.lyrics summary:hover{color:var(--forest)}
+
+/* 底部播放栏：玻璃拟态 + 进度条融入 */
+.player-host.is-expanded{background:color-mix(in srgb,var(--white) 88%,transparent);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%)}
+@supports not (backdrop-filter:blur(1px)){.player-host.is-expanded{background:var(--white)}}
+.player-panel audio{height:36px;border-radius:999px}
+.player-actions button{transition:background var(--speed),color var(--speed),transform var(--speed) var(--ease)}
+.player-actions button:hover{transform:translateY(-1px)}
+.player-actions button:active{transform:translateY(0) scale(.94)}
+.player-actions a{transition:color var(--speed)}
+.player-actions a:hover{color:var(--orange)}
+.vinyl-toggle:hover .vinyl-disc{animation-play-state:running}
+.player-panel,.queue-panel{border-radius:var(--radius-lg);background:color-mix(in srgb,var(--white) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+@supports not (backdrop-filter:blur(1px)){.player-panel,.queue-panel{background:var(--white)}}
+
+/* 清单条目 hover */
+.queue-items .personal-song,.personal-song{transition:background var(--speed)}
+.personal-song:hover{background:color-mix(in srgb,var(--subtle) 62%,transparent)}
+
+/* 批量按钮与二级按钮 */
+.secondary-action{border-radius:var(--radius-sm);transition:transform var(--speed) var(--ease),background var(--speed),border-color var(--speed)}
+.secondary-action:hover{transform:translateY(-1px)}
+.add-all-button{border-radius:999px}
+
+/* 深色主题下光斑与行 hover 的协调 */
+[data-theme="dark"] .hero:after{background:radial-gradient(circle,color-mix(in srgb,var(--orange) 22%,transparent),transparent 70%)}
+[data-theme="dark"] .song-row:hover,[data-theme="dark"] .personal-song:hover{background:color-mix(in srgb,var(--subtle) 88%,transparent)}
+[data-theme="dark"] ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--forest) 42%,transparent);background-clip:content-box;border:2px solid transparent}
+
+/* 减少动态效果偏好：关闭上浮与光斑动画 */
+@media(prefers-reduced-motion:reduce){
+  .main-nav a:hover,.search-form button:hover,.primary-action:hover,.collection-card:hover,.artist-card:hover,.keyword-grid a:hover,.mood-tag:hover,.pager a:hover,.player-actions button:hover{transform:none}
+  .hero:after{display:none}
 }
