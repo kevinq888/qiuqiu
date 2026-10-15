@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: qiuqiumusic
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: node --check server.js
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit

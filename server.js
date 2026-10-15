@@ -55,6 +55,11 @@ const server = http.createServer((req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const p = u.pathname;
 
+  if (p === '/healthz') {
+    send(res, 200, 'ok', 'text/plain; charset=utf-8');
+    return;
+  }
+
   // 静态资源
   if (serveStatic(req, res, p)) return;
 
@@ -170,6 +175,6 @@ function notFoundPage() {
   return '<!doctype html><html><head><meta charset="utf-8"><title>404</title><style>body{background-color:#444;font-size:14px}h3{font-size:60px;color:#eee;text-align:center;padding-top:30px;font-weight:normal}</style></head><body><h3>404，您请求的文件不存在!</h3></body></html>';
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`秋秋音乐已启动: http://localhost:${PORT}`);
 });
