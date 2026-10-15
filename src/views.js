@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-3';
+const ASSET_VERSION = '20261016-4';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -35,7 +35,7 @@ function searchForm(q = '') {
   return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;
 }
 function footer() {
-  return `<footer class="site-footer"><div class="shell footer-content"><div><strong>秋秋音乐</strong><span>听见喜欢的声音。</span></div><p>让每一次播放，都刚好合你心意。<br><small>© ${new Date().getFullYear()} qiuqiumusic</small></p></div></footer>`;
+  return `<footer class="site-footer"><div class="shell footer-content footer-simple"><span class="footer-copy">© ${new Date().getFullYear()} qiuqiumusic</span><span class="footer-tagline">秋秋音乐，听见喜欢的声音。让每一次播放，都刚好合你心意。</span></div></footer>`;
 }
 function player() {
   return `<aside class="player-host" id="site-player" aria-label="音乐播放器" hidden><button class="vinyl-toggle" id="player-toggle" type="button" aria-label="展开播放器" aria-expanded="false"><span class="vinyl-disc"><span class="vinyl-label">${icon('note')}</span></span><span class="vinyl-eq" aria-hidden="true"><i></i><i></i><i></i></span></button><section class="player-panel" id="player-panel" aria-label="当前播放" hidden><div class="player-panel-head"><div><small><span id="player-state">正在播放</span> · 秋秋音乐</small><h2 id="player-title">选择一首歌</h2></div><button id="player-collapse" class="icon-button" type="button" aria-label="收起播放器">⌄</button></div><audio id="player-audio" controls preload="none"></audio><div class="player-actions"><button id="player-prev" type="button" aria-label="上一首">⏮</button><button id="player-play-pause" type="button" aria-label="播放或暂停">⏯</button><button id="player-next" type="button" aria-label="下一首">⏭</button><button id="player-favorite" type="button" aria-label="收藏当前歌曲">${icon('heart')}</button><button id="player-queue" type="button" aria-label="播放清单">${icon('note')} <span id="queue-count">0</span></button><a id="player-detail" href="#">歌曲详情 ${icon('arrow')}</a></div></section><section class="queue-panel" id="queue-panel" aria-label="播放清单" hidden><div class="queue-head"><div><small>我的歌单</small><h2>播放清单</h2></div><button id="queue-close" class="icon-button" type="button" aria-label="关闭播放清单">×</button></div><div id="queue-items" class="queue-items"></div></section></aside>`;

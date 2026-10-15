@@ -247,3 +247,13 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .main-nav a:hover,.search-form button:hover,.primary-action:hover,.collection-card:hover,.artist-card:hover,.keyword-grid a:hover,.mood-tag:hover,.pager a:hover,.player-actions button:hover{transform:none}
   .hero:after{display:none}
 }
+
+/* 页脚：单行版权与标语，两端对齐；移动端居中堆叠，间隔均匀。 */
+.site-footer{padding:26px 0}
+.footer-simple{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.footer-simple .footer-copy{color:#9dbcae;font-size:13px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.footer-simple .footer-tagline{color:#d9e6d9;font-size:13px;text-align:right;line-height:1.7}
+@media(max-width:680px){
+  .footer-simple{flex-direction:column;justify-content:center;gap:8px;padding:2px 0}
+  .footer-simple .footer-tagline{text-align:center;max-width:330px;margin:0 auto}
+}
