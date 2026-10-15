@@ -58,3 +58,63 @@ body{background:var(--cream);color:var(--ink);transition:background .25s,color .
   .brand strong{font-size:18px}
   .brand img{width:40px;height:40px}
 }
+
+/* 展开后使用底部播放栏，并按实际高度给页面留出滚动空间。 */
+body.player-docked{padding-bottom:var(--player-dock-height,112px)}
+.player-host.is-expanded{
+  left:0;
+  right:0;
+  bottom:0;
+  width:100%;
+  background:var(--white);
+  border-top:1px solid var(--line);
+  box-shadow:0 -12px 36px rgba(24,59,57,.12);
+}
+.player-host.is-expanded .player-panel{
+  position:relative;
+  right:auto;
+  bottom:auto;
+  width:min(1160px,100%);
+  max-height:none;
+  margin:0 auto;
+  padding:14px 24px calc(14px + env(safe-area-inset-bottom));
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(220px,1.25fr) auto;
+  align-items:center;
+  gap:18px;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:transparent;
+}
+.player-host.is-expanded .player-panel-head{min-width:0;align-items:center}
+.player-host.is-expanded .player-panel-head>div{min-width:0}
+.player-host.is-expanded .player-panel-head h2{max-width:none}
+.player-host.is-expanded .player-panel audio{min-width:0;margin:0}
+.player-host.is-expanded .player-actions{min-width:0}
+.player-host.is-expanded .queue-panel{
+  right:max(24px,calc((100vw - 1160px)/2 + 24px));
+  bottom:calc(var(--player-dock-height,112px) + 12px);
+  max-height:min(420px,calc(100dvh - var(--player-dock-height,112px) - 28px));
+}
+@media(max-width:960px){
+  .player-host.is-expanded .player-panel{
+    grid-template-columns:minmax(0,1fr) minmax(220px,1fr);
+    gap:10px 18px;
+  }
+  .player-host.is-expanded .player-actions{grid-column:1/-1;justify-content:center}
+  .player-host.is-expanded .player-actions a{margin-left:auto}
+}
+@media(max-width:640px){
+  .player-host.is-expanded .player-panel{
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .player-host.is-expanded .player-actions{grid-column:1;justify-content:space-between}
+  .player-host.is-expanded .queue-panel{
+    right:16px;
+    bottom:calc(var(--player-dock-height,190px) + 8px);
+    max-height:min(300px,calc(100dvh - var(--player-dock-height,190px) - 24px));
+  }
+}

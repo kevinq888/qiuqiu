@@ -10,6 +10,7 @@
   const titleNode = document.getElementById('player-title');
   const stateNode = document.getElementById('player-state');
   const detail = document.getElementById('player-detail');
+  const toggle = document.getElementById('player-toggle');
   let queue = [];
   let favorites = [];
   let current = null;
@@ -74,15 +75,25 @@
     if (owner !== tabId) stateNode.textContent = isPlaying ? '正在另一标签页播放' : '另一标签页已暂停';
     else if (!isPlaying && audio.paused) stateNode.textContent = '已暂停';
   }
+  function syncPlayerSpace() {
+    if (!host.classList.contains('is-expanded')) return;
+    document.documentElement.style.setProperty('--player-dock-height', `${Math.ceil(panel.getBoundingClientRect().height)}px`);
+  }
   function expand() {
     panel.hidden = false;
     host.classList.add('is-expanded');
+    document.body.classList.add('player-docked');
+    toggle.setAttribute('aria-expanded', 'true');
     queuePanel.hidden = true;
+    syncPlayerSpace();
   }
   function collapse() {
     panel.hidden = true;
     queuePanel.hidden = true;
     host.classList.remove('is-expanded');
+    document.body.classList.remove('player-docked');
+    document.documentElement.style.removeProperty('--player-dock-height');
+    toggle.setAttribute('aria-expanded', 'false');
   }
   function playSong(song, expandPanel = true) {
     if (!validSong(song)) return;
@@ -211,7 +222,9 @@
       if (select) select.value = document.documentElement.dataset.theme;
     }
   });
-  document.getElementById('player-toggle').addEventListener('click', expand);
+  toggle.addEventListener('click', expand);
+  if ('ResizeObserver' in window) new ResizeObserver(syncPlayerSpace).observe(panel);
+  window.addEventListener('resize', syncPlayerSpace);
   document.getElementById('player-collapse').addEventListener('click', collapse);
   document.getElementById('player-prev').addEventListener('click', () => playbackCommand('prev'));
   document.getElementById('player-next').addEventListener('click', () => playbackCommand('next'));
