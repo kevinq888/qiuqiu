@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261015-4';
+const ASSET_VERSION = '20261015-6';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -49,6 +49,9 @@ function section(title, eyebrow, content, more, iconName = 'spark', className = 
 function songRows(items, start = 1, { date = false } = {}) {
   return `<div class="song-list">${items.map((song, index) => `<div class="song-row"><span class="song-rank ${index < 3 && start === 1 ? 'top-rank' : ''}">${String(start + index).padStart(2, '0')}</span><div class="song-main">${songLink(song)}<small>${esc(song.artist || song.title.split('-')[0] || '秋秋音乐')}</small></div>${date && song.date ? `<span class="song-date">${esc(song.date)}</span>` : ''}<button class="song-action favorite-button" type="button" data-favorite-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="收藏 ${esc(song.title)}">${icon('heart')}</button><button class="song-action add-button" type="button" data-add-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="加入播放清单 ${esc(song.title)}">${icon('plus')}</button><button class="play-button" type="button" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" aria-label="播放 ${esc(song.title)}">${icon('play')}</button></div>`).join('')}</div>`;
 }
+function bulkAction(items) {
+  return items.length ? `<button class="add-all-button" type="button" data-add-page aria-live="polite" aria-label="一键将本页 ${items.length} 首歌曲加入播放清单"><span class="add-all-icon">${icon('plus')}</span><span class="add-all-text">一键加入歌单</span><span class="add-all-count">${items.length} 首</span></button>` : '';
+}
 function homePage() {
   const hot = seed.hot_tags.slice(0, 16).map(song => `<a href="/library/${esc(song.id)}.html" class="mood-tag" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}">${esc(song.title)}</a>`).join('');
   const intro = `<section class="hero"><div class="hero-copy"><span class="hero-kicker">每日好音乐 <span>✦</span></span><h1>让喜欢的音乐，<br><em>刚好遇见你。</em></h1><p>从此刻的心情出发，听一首属于今天的歌。</p>${searchForm()}<div class="hero-notes"><span>${icon('headphones')} 随时在线聆听</span><span>${icon('spark')} 每日发现新声</span></div></div><div class="hero-graphic" aria-hidden="true"><div class="disc"><div class="disc-inner"><img src="/projects/source_code/picture/logo.svg" alt=""></div></div><span class="float-note note-one">♫</span><span class="float-note note-two">♪</span><span class="graphic-caption">听见此刻的喜欢。</span></div></section>`;
@@ -77,8 +80,7 @@ function rankingPage(data) {
   const title = recommend ? '推荐歌曲 · 5000 首' : '热门歌曲 · 5000 首';
   const note = data.stale ? '当前展示本地缓存；源站暂时不可用或更新中。' : '访问时检查本地缓存，缓存有效期为 6 小时。';
   const description = `前 10 首沿用${recommend ? '推荐' : '热门'}榜单，后续曲目取自实时更新的歌曲列表。${note}`;
-  const addAll = data.items.length ? `<button class="add-all-button" type="button" data-add-page aria-live="polite" aria-label="一键将本页 ${data.items.length} 首歌曲加入播放清单"><span class="add-all-icon">${icon('plus')}</span><span class="add-all-text">一键加入歌单</span><span class="add-all-count">${data.items.length} 首</span></button>` : '';
-  const content = `<div class="page-intro"><span class="eyebrow">精选曲库</span><h1>${title}</h1><p>${description}</p></div>${section(`第 ${data.page} / ${data.pages} 页`, '每页 20 首', data.items.length ? songRows(data.items, (data.page - 1) * 20 + 1) : `<div class="empty-state">这页暂时无法从源站获取曲目，请稍后重试。</div>`, null, recommend ? 'spark' : 'flame', '', addAll)}${pager(recommend ? '/ranking/recommend' : '/ranking/hot', data.page, data.pages)}`;
+  const content = `<div class="page-intro"><span class="eyebrow">精选曲库</span><h1>${title}</h1><p>${description}</p></div>${section(`第 ${data.page} / ${data.pages} 页`, '每页 20 首', data.items.length ? songRows(data.items, (data.page - 1) * 20 + 1) : `<div class="empty-state">这页暂时无法从源站获取曲目，请稍后重试。</div>`, null, recommend ? 'spark' : 'flame', 'bulk-panel', bulkAction(data.items))}${pager(recommend ? '/ranking/recommend' : '/ranking/hot', data.page, data.pages)}`;
   return layout(title, content, recommend ? '/ranking/recommend' : '/ranking/hot');
 }
 function searchPage(query, results) {
@@ -87,7 +89,7 @@ function searchPage(query, results) {
   const base = `/search.php?q=${encodeURIComponent(query)}`;
   const pageNav = page > 1 || hasNext ? `<nav class="pager" aria-label="搜索分页">${page > 1 ? `<a href="${base}&page=${page - 1}">上一页</a>` : ''}<span class="current" aria-current="page">第 ${page} 页</span>${hasNext ? `<a href="${base}&page=${page + 1}">下一页</a>` : ''}</nav>` : '';
   const description = source === 'local' && !items.length ? `“${esc(query)}”暂未找到歌曲` : `“${esc(query)}”本页找到 ${items.length} 首歌曲`;
-  return layout(`搜索 ${query}`, `<div class="page-intro"><span class="eyebrow">FIND YOUR MUSIC</span><h1>搜索结果</h1><p>${description}</p>${notice}${searchForm(query)}</div>${section('歌曲', '搜索结果', items.length ? songRows(items, (page - 1) * 20 + 1) : '<div class="empty-state">没有找到相关歌曲，换个关键词试试。</div>', null, 'search')}${pageNav}`);
+  return layout(`搜索 ${query}`, `<div class="page-intro"><span class="eyebrow">FIND YOUR MUSIC</span><h1>搜索结果</h1><p>${description}</p>${notice}${searchForm(query)}</div>${section('歌曲', '搜索结果', items.length ? songRows(items, (page - 1) * 20 + 1) : '<div class="empty-state">没有找到相关歌曲，换个关键词试试。</div>', null, 'search', 'bulk-panel', bulkAction(items))}${pageNav}`);
 }
 function songPage(song) {
   const { title, artist, cover, lyrics } = song;
@@ -97,10 +99,10 @@ function songPage(song) {
 function myMusicPage() {
   return layout('我的音乐', `<div class="page-intro"><span class="eyebrow">专属音乐空间</span><h1>我的音乐</h1><p>收藏与播放清单保存在当前浏览器，未来可与微信账号同步。</p></div><div class="home-grid personal-grid">${section('我的收藏', '我的收藏', '<div id="favorites-list" class="personal-list"></div>', null, 'heart')}${section('播放清单', '我的播放清单', '<div id="playlist-list" class="personal-list"></div>', null, 'note')}</div>`, '/my-music');
 }
-function listPage(title, eyebrow, items, more = null) {
-  return layout(title, `<div class="page-intro"><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1><p>喜欢的声音，就从这里开始。</p>${searchForm()}</div>${section(title, eyebrow, songRows(items), more, 'note')}`);
+function listPage(title, eyebrow, items, more = null, withBulk = false) {
+  return layout(title, `<div class="page-intro"><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1><p>喜欢的声音，就从这里开始。</p>${searchForm()}</div>${section(title, eyebrow, songRows(items), more, 'note', withBulk ? 'bulk-panel' : '', withBulk ? bulkAction(items) : '')}`);
 }
-function recentPage() { return listPage('最近更新', '最新收录', seed.nav1); }
+function recentPage() { return listPage('最近更新', '最新收录', seed.nav1, null, true); }
 function viewmorPage(data) { return data ? rankingPage(data) : listPage('此刻热门', '此刻流行', seed.viewmor, '/ranking/hot'); }
 function downPage(data) { return data ? rankingPage(data) : listPage('热门歌曲', '热门点播', seed.down, '/ranking/hot'); }
 function collectionsPage() {

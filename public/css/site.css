@@ -31,3 +31,30 @@ body{background:var(--cream);color:var(--ink);transition:background .25s,color .
 .vinyl-toggle{position:relative;width:66px;height:66px;filter:none;border:1px solid rgba(255,255,255,.8);border-radius:50%;background:rgba(255,255,255,.88);box-shadow:0 10px 28px rgba(19,60,57,.19),0 2px 6px rgba(19,60,57,.07);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:transform .2s,box-shadow .2s}.vinyl-toggle:hover{transform:translateY(-3px);box-shadow:0 16px 32px rgba(19,60,57,.23)}.vinyl-disc{width:51px;height:51px;border:1px solid rgba(255,255,255,.17);background:repeating-radial-gradient(circle at center,transparent 0 5px,rgba(255,255,255,.055) 6px 7px,transparent 8px 10px),conic-gradient(from 40deg,#123c41,#244d50 24%,#0d2d33 52%,#2b5658 76%,#123c41);box-shadow:inset 0 1px 3px rgba(255,255,255,.16),0 2px 5px rgba(17,48,51,.15);animation-duration:8s}.vinyl-disc:after{width:4px;height:4px;background:#194247}.vinyl-label{width:23px;height:23px;background:#f7ece1;color:#24736c;box-shadow:0 0 0 2px rgba(255,255,255,.18)}.vinyl-label .icon{width:12px;height:12px;stroke-width:2.3}.vinyl-eq{position:absolute;right:1px;bottom:2px;width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;gap:2px;background:var(--orange);border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,.13)}.vinyl-eq i{width:2px;height:5px;border-radius:2px;background:white;animation:eq-bounce .75s ease-in-out infinite alternate;animation-play-state:paused}.vinyl-eq i:nth-child(2){height:9px;animation-delay:.25s}.vinyl-eq i:nth-child(3){height:4px;animation-delay:.5s}.player-host.is-playing .vinyl-eq i{animation-play-state:running}@keyframes eq-bounce{to{height:3px}}
 @media(max-width:680px){.add-all-button{min-height:38px;gap:6px;padding:4px 5px 4px 4px;font-size:12px;max-width:none}.add-all-icon{width:27px;height:27px}.add-all-count{display:none}.add-all-button.completed{max-width:none}.vinyl-toggle{width:62px;height:62px}.vinyl-disc{width:48px;height:48px}}
 @media(prefers-reduced-motion:reduce){.vinyl-eq i{animation:none}}
+
+/* 手机端收紧网格最小宽度，避免长歌名或标签把整页撑出屏幕。 */
+.home-grid,.collection-grid,.artist-grid,.keyword-grid,.panel,.song-list,.song-row,.detail-copy,.hero-copy{min-width:0}
+.panel-heading>div:nth-child(2){min-width:0}
+.page-intro h1,.detail-copy h2{overflow-wrap:anywhere}
+@media(max-width:680px){
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .home-grid,.collection-grid,.keyword-grid{grid-template-columns:minmax(0,1fr)}
+  .artist-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .main-nav{width:100%;max-width:100%;scrollbar-width:none}
+  .main-nav::-webkit-scrollbar{display:none}
+  .mood-tags{min-width:0}
+  .mood-tag{min-width:0}
+  .song-main{min-width:0}
+  .detail-copy{width:100%}
+  .search-form{max-width:100%}
+}
+@media(max-width:360px){
+  .hero-copy{padding:30px 18px 24px}
+  .hero h1{font-size:clamp(30px,10vw,36px)}
+  .bulk-panel .panel-heading{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center}
+  .bulk-panel .panel-heading .add-all-button{grid-column:1/-1;margin-left:0;justify-content:center;width:100%}
+  .bulk-panel .panel-heading h2{white-space:nowrap}
+  .theme-picker{right:16px;padding:6px 8px}
+  .brand strong{font-size:18px}
+  .brand img{width:40px;height:40px}
+}
