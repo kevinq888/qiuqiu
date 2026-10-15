@@ -87,8 +87,11 @@
     if (!host.classList.contains('is-expanded')) return;
     document.documentElement.style.setProperty('--player-dock-height', `${Math.ceil(panel.getBoundingClientRect().height)}px`);
   }
+  let restoreVinylPos = null;
   function expand() {
     panel.hidden = false;
+    // 展开为底部播放条：清除悬浮球拖动留下的内联定位，让 is-expanded 吸底规则生效
+    host.style.left = host.style.top = host.style.right = host.style.bottom = '';
     host.classList.add('is-expanded');
     document.body.classList.add('player-docked');
     toggle.setAttribute('aria-expanded', 'true');
@@ -102,6 +105,7 @@
     document.body.classList.remove('player-docked');
     document.documentElement.style.removeProperty('--player-dock-height');
     toggle.setAttribute('aria-expanded', 'false');
+    if (restoreVinylPos) restoreVinylPos(); // 恢复悬浮球拖动记忆位置
   }
   // 播放计数上报：每首歌每个会话只计一次，驱动本站"本站点播榜"。
   audio.addEventListener('play', () => {
@@ -260,10 +264,13 @@
       host.style.right = 'auto';
       host.style.bottom = 'auto';
     }
-    try {
-      const saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
-      if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) place(saved.left, saved.top);
-    } catch {}
+    restoreVinylPos = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+        if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) place(saved.left, saved.top);
+      } catch {}
+    };
+    restoreVinylPos();
     toggle.addEventListener('pointerdown', event => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       if (host.classList.contains('is-expanded')) return;
