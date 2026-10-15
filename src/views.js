@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-6';
+const ASSET_VERSION = '20261016-8';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -28,14 +28,14 @@ function pageHead(title, description = '听见喜欢的声音。秋秋音乐，�
   return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f1f8f5"><meta name="description" content="${esc(description)}"><meta name="keywords" content="秋秋音乐,qiuqiumusic,在线音乐,音乐播放"><title>${esc(title)} · ${SITE}</title><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="秋秋音乐"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="icon" href="/projects/source_code/picture/logo.svg" type="image/svg+xml"><script>try{document.documentElement.dataset.theme=localStorage.getItem('qiuqiumusic.theme')||'mint'}catch{}</script><link rel="stylesheet" href="/projects/source_code/css/site.css?v=${ASSET_VERSION}"><script src="/projects/source_code/js/app.js?v=${ASSET_VERSION}" defer></script></head><body>`;
 }
 function nav(active = '') {
-  const links = [['/', '发现'], ['/ranking/recommend', '推荐榜'], ['/ranking/hot', '热门榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
+  const links = [['/', '发现'], ['/charts', '排行榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
   return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><div class="theme-picker"><label class="sr-only" for="theme-select">切换皮肤</label><span aria-hidden="true">◐</span><select id="theme-select" aria-label="切换皮肤"><option value="mint">薄荷绿</option><option value="sky">晴空蓝</option><option value="lilac">晨雾紫</option><option value="sunset">日落橙</option><option value="sakura">樱花粉</option><option value="dark">暗夜黑</option></select></div></div></header>`;
 }
 function searchForm(q = '') {
   return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;
 }
 function footer() {
-  return `<footer class="site-footer"><div class="shell footer-content footer-simple"><span class="footer-copy">© ${new Date().getFullYear()} qiuqiumusic</span><span class="footer-tagline">秋秋音乐，听见喜欢的声音。让每一次播放，都刚好合你心意。</span></div></footer>`;
+  return `<footer class="site-footer"><div class="shell footer-content footer-simple"><span class="footer-copy">© ${new Date().getFullYear()} qiuqiumusic</span><span class="footer-tagline">秋秋音乐，让每一次播放，都刚好合你心意。</span></div></footer>`;
 }
 function player() {
   return `<aside class="player-host" id="site-player" aria-label="音乐播放器" hidden><button class="vinyl-toggle" id="player-toggle" type="button" aria-label="展开播放器" aria-expanded="false"><span class="vinyl-disc"><span class="vinyl-label">${icon('note')}</span></span><span class="vinyl-eq" aria-hidden="true"><i></i><i></i><i></i></span></button><section class="player-panel" id="player-panel" aria-label="当前播放" hidden><div class="player-panel-head"><div><small><span id="player-state">正在播放</span> · 秋秋音乐</small><h2 id="player-title">选择一首歌</h2></div><button id="player-collapse" class="icon-button" type="button" aria-label="收起播放器">⌄</button></div><audio id="player-audio" controls preload="none"></audio><div class="player-actions"><button id="player-prev" type="button" aria-label="上一首">⏮</button><button id="player-play-pause" type="button" aria-label="播放或暂停">⏯</button><button id="player-next" type="button" aria-label="下一首">⏭</button><button id="player-favorite" type="button" aria-label="收藏当前歌曲">${icon('heart')}</button><button id="player-queue" type="button" aria-label="播放清单">${icon('note')} <span id="queue-count">0</span></button><a id="player-detail" href="#">歌曲详情 ${icon('arrow')}</a></div></section><section class="queue-panel" id="queue-panel" aria-label="播放清单" hidden><div class="queue-head"><div><small>我的歌单</small><h2>播放清单</h2></div><button id="queue-close" class="icon-button" type="button" aria-label="关闭播放清单">×</button></div><div id="queue-items" class="queue-items"></div></section></aside>`;
@@ -46,8 +46,21 @@ function layout(title, body, active = '', description) {
 function section(title, eyebrow, content, more, iconName = 'spark', className = '', action = '') {
   return `<section class="panel ${className}"><div class="panel-heading"><div class="heading-icon">${icon(iconName)}</div><div><span class="eyebrow">${esc(eyebrow)}</span><h2>${esc(title)}</h2></div>${action}${more ? `<a class="more-link" href="${more}">查看更多 ${icon('arrow')}</a>` : ''}</div>${content}</section>`;
 }
-function songRows(items, start = 1, { date = false } = {}) {
-  return `<div class="song-list">${items.map((song, index) => `<div class="song-row"><span class="song-rank ${index < 3 && start === 1 ? 'top-rank' : ''}">${String(start + index).padStart(2, '0')}</span><div class="song-main">${songLink(song)}<small>${esc(song.artist || song.title.split('-')[0] || '秋秋音乐')}</small></div>${date && song.date ? `<span class="song-date">${esc(song.date)}</span>` : ''}<button class="song-action favorite-button" type="button" data-favorite-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="收藏 ${esc(song.title)}">${icon('heart')}</button><button class="song-action add-button" type="button" data-add-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="加入播放清单 ${esc(song.title)}">${icon('plus')}</button><button class="play-button" type="button" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" aria-label="播放 ${esc(song.title)}">${icon('play')}</button></div>`).join('')}</div>`;
+function trendBadge(value) {
+  if (value === 'new' || value === undefined) return '<span class="trend-badge trend-new">NEW</span>';
+  if (value > 0) return `<span class="trend-badge trend-up">▲${value}</span>`;
+  if (value < 0) return `<span class="trend-badge trend-down">▼${-value}</span>`;
+  return '<span class="trend-badge trend-same">—</span>';
+}
+function rankClass(n) {
+  return n === 1 ? 'rank-gold' : n === 2 ? 'rank-silver' : n === 3 ? 'rank-bronze' : '';
+}
+function songRows(items, start = 1, { date = false, trend = null, plays = false } = {}) {
+  return `<div class="song-list">${items.map((song, index) => {
+    const n = start + index;
+    const medal = trend ? rankClass(n) : (index < 3 && start === 1 ? 'top-rank' : '');
+    return `<div class="song-row"><span class="song-rank ${medal}">${String(n).padStart(2, '0')}</span>${trend ? trendBadge(trend.get(String(song.id))) : ''}<div class="song-main">${songLink(song)}<small>${esc(song.artist || song.title.split('-')[0] || '秋秋音乐')}</small></div>${plays && song.plays ? `<span class="song-plays">${song.plays} 次点播</span>` : ''}${date && song.date ? `<span class="song-date">${esc(song.date)}</span>` : ''}<button class="song-action favorite-button" type="button" data-favorite-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="收藏 ${esc(song.title)}">${icon('heart')}</button><button class="song-action add-button" type="button" data-add-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="加入播放清单 ${esc(song.title)}">${icon('plus')}</button><button class="play-button" type="button" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" aria-label="播放 ${esc(song.title)}">${icon('play')}</button></div>`;
+  }).join('')}</div>`;
 }
 function bulkAction(items) {
   return items.length ? `<button class="add-all-button" type="button" data-add-page aria-live="polite" aria-label="一键将本页 ${items.length} 首歌曲加入播放清单"><span class="add-all-icon">${icon('plus')}</span><span class="add-all-text">一键加入歌单</span><span class="add-all-count">${items.length} 首</span></button>` : '';
@@ -115,6 +128,31 @@ function recentPage(items, page = 1, pages = 1) {
 }
 function viewmorPage(data) { return data ? rankingPage(data) : listPage('此刻热门', '此刻流行', seed.viewmor, '/ranking/hot'); }
 function downPage(data) { return data ? rankingPage(data) : listPage('热门歌曲', '热门点播', seed.down, '/ranking/hot'); }
+// 排行榜中心：四张榜单卡片，榜首大卡片 + Top 5 预览 + 走势徽章
+function chartsHubPage(charts) {
+  const cards = charts.map(chart => {
+    const top5 = chart.items.slice(0, 5);
+    const list = top5.length ? `<div class="chart-card-list">${top5.map((song, i) => {
+      const n = i + 1;
+      const badge = trendBadge(chart.trend && chart.trend.get(String(song.id)));
+      if (n === 1) {
+        return `<a class="chart-top1" href="/library/${esc(song.id)}.html" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" title="播放 ${esc(song.title)}"><span class="rank-badge rank-gold">1</span><span class="chart-top1-info"><strong>${esc(song.title)}</strong><small>${esc(song.artist || song.title.split('-')[0] || '秋秋音乐')}${chart.plays && song.plays ? ` · ${song.plays} 次点播` : ''}</small></span>${badge}${icon('play')}</a>`;
+      }
+      return `<div class="chart-mini-row"><span class="rank-badge ${rankClass(n)}">${n}</span><div class="song-main">${songLink(song)}</div>${badge}<button class="play-button" type="button" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" aria-label="播放 ${esc(song.title)}">${icon('play')}</button></div>`;
+    }).join('')}</div>` : '<div class="empty-state">榜单数据暂时不可用，稍后刷新试试。</div>';
+    return `<section class="panel chart-card chart-${chart.kind}"><div class="panel-heading"><div class="heading-icon">${icon(chart.def.icon)}</div><div><span class="eyebrow">${esc(chart.def.eyebrow)}</span><h2>${esc(chart.def.name)}</h2></div><a class="more-link" href="/charts/${chart.kind}">完整榜单 ${icon('arrow')}</a></div><p class="chart-desc">${esc(chart.def.description)}</p>${list}</section>`;
+  }).join('');
+  return layout('排行榜', `<div class="page-intro"><span class="eyebrow">QIUQIU CHARTS</span><h1>排行榜</h1><p>热门、新歌、编辑推荐与本站真实点播，走势每日更新。</p>${searchForm()}</div><div class="charts-grid">${cards}</div>`, '/charts');
+}
+// 完整榜单页：金银铜徽章 + 走势列 + 点播数（本站榜）+ 分页
+function chartPage(kind, def, data) {
+  const note = data.stale ? ' 源站暂时不可用，当前展示缓存数据。' : '';
+  const list = data.items.length
+    ? songRows(data.items, (data.page - 1) * 20 + 1, { trend: data.trend, plays: data.plays })
+    : `<div class="empty-state">${kind === 'local' ? '还没有点播记录，播放过的歌曲会自动上榜。' : '榜单数据暂时不可用，稍后刷新试试。'}</div>`;
+  const content = `<div class="page-intro"><span class="eyebrow">${esc(def.eyebrow)}</span><h1>${esc(def.name)}</h1><p>${esc(def.description)}${note}</p>${searchForm()}</div>${section(`第 ${data.page} / ${data.pages} 页`, def.name, list, '/charts', def.icon, 'bulk-panel', bulkAction(data.items))}${data.pages > 1 ? pager(`/charts/${kind}`, data.page, data.pages) : ''}`;
+  return layout(def.name, content, '/charts');
+}
 function collectionsPage() {
   return layout('精选歌单', `<div class="page-intro"><span class="eyebrow">精选歌单</span><h1>精选歌单</h1><p>按心情收藏你的音乐灵感。</p></div><div class="collection-grid">${seed.collections.map((item, index) => `<article class="collection-card"><span>0${index + 1}</span><h2>${esc(item.title)}</h2><p>发现更多好音乐</p>${songLink(item, `打开歌单 ${icon('arrow')}`)}</article>`).join('')}</div>`, '/navigation/2/');
 }
@@ -124,4 +162,4 @@ function artistsPage() {
 function keywordsPage() {
   return layout('热门搜索', `<div class="page-intro"><span class="eyebrow">热门搜索</span><h1>热门搜索</h1><p>大家正在听什么？</p>${searchForm()}</div><div class="keyword-grid">${seed.keywords.map((word, i) => `<a href="/search.php?q=${encodeURIComponent(word)}"><span>${String(i + 1).padStart(2, '0')}</span>${esc(word)}${icon('arrow')}</a>`).join('')}</div>`, '/keyword.html');
 }
-module.exports = { homePage, rankingPage, searchPage, songPage, myMusicPage, collectionsPage, artistsPage, keywordsPage, recentPage, viewmorPage, downPage };
+module.exports = { homePage, rankingPage, searchPage, songPage, myMusicPage, collectionsPage, artistsPage, keywordsPage, recentPage, viewmorPage, downPage, chartsHubPage, chartPage };

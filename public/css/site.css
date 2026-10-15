@@ -249,7 +249,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 }
 
 /* 页脚：单行版权与标语，两端对齐；移动端居中堆叠，间隔均匀。 */
-.site-footer{padding:26px 0}
+.site-footer{padding:12px 0}
 .footer-simple{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .footer-simple .footer-copy{color:#9dbcae;font-size:13px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
 .footer-simple .footer-tagline{color:#d9e6d9;font-size:13px;text-align:right;line-height:1.7}
@@ -263,3 +263,33 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 .vinyl-toggle:active{cursor:grabbing}
 body.vinyl-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
 body.vinyl-dragging .vinyl-toggle{cursor:grabbing}
+
+/* 排行榜中心：Billboard 风格榜单卡片、名次徽章与走势。 */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.chart-card .chart-desc{margin:-4px 0 14px;font-size:12px;color:var(--muted);line-height:1.6}
+.chart-card-list{display:flex;flex-direction:column;gap:3px}
+.chart-top1{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:6px;border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--mint) 58%,var(--white)),color-mix(in srgb,var(--subtle) 75%,var(--white)));color:var(--ink);text-decoration:none;transition:transform var(--speed) var(--ease),box-shadow var(--speed)}
+.chart-top1:hover{transform:translateY(-2px);box-shadow:0 12px 28px color-mix(in srgb,var(--forest) 14%,transparent)}
+.chart-top1 .icon{width:18px;height:18px;color:var(--forest);flex:none}
+.chart-top1-info{flex:1;min-width:0}
+.chart-top1-info strong{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chart-top1-info small{display:block;margin-top:2px;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chart-mini-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;transition:background var(--speed)}
+.chart-mini-row:hover{background:color-mix(in srgb,var(--subtle) 62%,transparent)}
+.chart-mini-row .song-main{flex:1;min-width:0}
+.chart-mini-row .song-main .song-link{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-badge{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--subtle);color:var(--forest);font-size:12px;font-weight:900;flex:none}
+.rank-badge.rank-gold{background:linear-gradient(135deg,#f5c451,#e8933a);color:#fff;box-shadow:0 4px 12px rgba(232,147,58,.35)}
+.rank-badge.rank-silver{background:linear-gradient(135deg,#cfd8dc,#8fa3ad);color:#fff}
+.rank-badge.rank-bronze{background:linear-gradient(135deg,#d7a27a,#b0724a);color:#fff}
+.song-rank.rank-gold{color:#e8933a}
+.song-rank.rank-silver{color:#8fa3ad}
+.song-rank.rank-bronze{color:#b0724a}
+.trend-badge{flex:none;min-width:30px;text-align:center;font-size:10px;font-weight:900;letter-spacing:.02em}
+.trend-up{color:#1d9d63}
+.trend-down{color:#d9534f}
+.trend-same{color:var(--muted)}
+.trend-new{color:var(--orange);border:1px solid color-mix(in srgb,var(--orange) 45%,transparent);border-radius:6px;padding:1px 4px}
+.song-plays{flex:none;font-size:11px;color:var(--muted);white-space:nowrap}
+[data-theme="dark"] .trend-up{color:#4cd38f}
+[data-theme="dark"] .trend-down{color:#ff7b74}

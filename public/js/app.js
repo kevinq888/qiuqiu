@@ -103,6 +103,17 @@
     document.documentElement.style.removeProperty('--player-dock-height');
     toggle.setAttribute('aria-expanded', 'false');
   }
+  // 播放计数上报：每首歌每个会话只计一次，驱动本站"本站点播榜"。
+  audio.addEventListener('play', () => {
+    if (!current || owner !== tabId) return;
+    const key = `qiuqiumusic.played.${current.id}`;
+    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch {}
+    fetch('/api/stats/play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: String(current.id), title: current.title }),
+    }).catch(() => {});
+  });
   function playSong(song, expandPanel = true) {
     if (!validSong(song)) return;
     if (owner === tabId && current?.id === song.id) {

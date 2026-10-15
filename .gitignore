@@ -1,3 +1,5 @@
 data/cache/
+data/play-stats.json
+data/chart-snapshots.json
 node_modules/
 .DS_Store

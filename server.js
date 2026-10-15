@@ -8,6 +8,7 @@ const views = require('./src/views');
 const { ranking, sourcePage, MAX_PAGES } = require('./src/rankings');
 const { search } = require('./src/search');
 const audioCache = require('./src/audio-cache');
+const charts = require('./src/charts');
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -76,6 +77,37 @@ const server = http.createServer((req, res) => {
   if (p.startsWith('/media/') && p.endsWith('.m4a')) {
     const title = decodeURIComponent(p.slice('/media/'.length, -'.m4a'.length));
     serveAudio(req, res, title);
+    return;
+  }
+
+  // 播放计数上报：驱动"本站点播榜"
+  if (p === '/api/stats/play' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 4096) req.destroy(); });
+    req.on('end', () => {
+      let ok = false;
+      try { const d = JSON.parse(body || '{}'); ok = charts.recordPlay(d.id, d.title); } catch {}
+      send(res, ok ? 200 : 400, JSON.stringify({ ok }), 'application/json; charset=utf-8');
+    });
+    return;
+  }
+
+  // 排行榜中心：热门/新歌/推荐/本站点播 四张榜单
+  if (p === '/charts' || p === '/charts/') {
+    Promise.all(['hot', 'new', 'recommend', 'local'].map(kind => charts.chartTop(kind).catch(() => null)))
+      .then(list => send(res, 200, views.chartsHubPage(list.filter(Boolean))))
+      .catch(() => send(res, 502, '榜单暂时不可用', 'text/plain; charset=utf-8'));
+    return;
+  }
+
+  // 完整榜单页
+  const chartMatch = p.match(/^\/charts\/(hot|new|recommend|local)\/?$/);
+  if (chartMatch) {
+    const kind = chartMatch[1];
+    const page = Number(u.searchParams.get('page') || '1') || 1;
+    charts.chartPageData(kind, page)
+      .then(data => send(res, 200, views.chartPage(kind, charts.CHARTS[kind], data)))
+      .catch(() => send(res, 502, '榜单暂时不可用', 'text/plain; charset=utf-8'));
     return;
   }
 
