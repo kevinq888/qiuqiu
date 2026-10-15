@@ -1,708 +1,115 @@
-// 页面模板：逐页复刻 myfreemp3ku.com 的 HTML 结构
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
-const SITE = 'MyFreeMp3';
-const SITE_TITLE = 'MyFreeMp3 - 在线音乐免费下载官网';
-
-function esc(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+const SITE = '秋秋音乐';
+const ASSET_VERSION = '20261015-4';
+function esc(value) {
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-
-// ---------- 公共片段 ----------
-
-function head({ title, keywords = '', description = '', extraCss = '', extraHead = '' }) {
-  return `<!doctype html>
-<html lang="zh-CN">
-
-<head>
-  <meta charset="UTF-8">
-  <title>${esc(title)}</title>
-  <meta name="keywords" content="${esc(keywords)}">
-  <meta name="description" content="${esc(description)}">
-  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="${SITE_TITLE}">
-  <meta name="application-name" content="${SITE_TITLE}">
-  <meta name="format-detection" content="telephone=no">
-  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" type="text/css" rel="stylesheet" />
-  <link rel="stylesheet" rev="stylesheet" href="/projects/source_code/css/site.css" type="text/css" media="all">
-  ${extraCss}
-  <script src="https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js" type="text/javascript"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" type="application/javascript"></script>
-  ${extraHead}
-</head>`;
+function icon(name) {
+  const paths = {
+    search: '<circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/>',
+    play: '<path d="m8 5 11 7-11 7z"/>',
+    flame: '<path d="M12 22c4.4 0 7-3.3 7-7.3 0-3-1.7-5.4-4.5-7.8.2 3-1.3 4-2.3 4.3.7-3.7-.6-6.5-3.7-9.2.3 3.8-1.5 5.8-3.1 8C4.5 11.3 5 12.7 5 14.7 5 18.7 7.7 22 12 22z"/>',
+    spark: '<path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8zM19 17l.6 1.4L21 19l-1.4.6L19 21l-.6-1.4L17 19l1.4-.6z"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    arrow: '<path d="m9 5 7 7-7 7"/>',
+    note: '<path d="M9 18V5l10-2v13M9 8l10-2"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
+    headphones: '<path d="M3 14v-3a9 9 0 0 1 18 0v3M3 14h3v6H4a1 1 0 0 1-1-1v-5Zm18 0h-3v6h2a1 1 0 0 0 1-1v-5Z"/>',
+    heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+  };
+  return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.note}</svg>`;
 }
-
-function navbar() {
-  return `
-    <div class="container" style="max-width: 960px; ">
-      <nav class="navbar navbar-expand-md navbar-light bg-white px-0 mb-1 font-weight-normal">
-        <a class="navbar-brand font-weight-bolder" style="font-size: 1.3rem;color: #50514F;" href="/" title="${SITE_TITLE}">
-          <img src="/projects/source_code/picture/logo.png" width="35" height="35" class="d-inline-block align-middle" alt="${SITE_TITLE}"> MyFreeMp3
-          <span class="text-muted" style="font-size: smaller"></span>
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-0">
-            <li class="nav-link-item"><a href="/" title="" class="nav-link reddot">首页</a></li><li class="nav-link-item"><a href="/navigation/2/" title="" class="nav-link reddot">合集</a></li><li class="nav-link-item"><a href="/hotsgr.html" title="歌手" class="nav-link reddot">歌手</a></li><li class="nav-link-item"><a href="/keyword.html" title="热搜" class="nav-link reddot">热搜</a></li>
-          </ul>
-        </div>
-      </nav>
-    </div>`;
+function songLink(song, label) {
+  return `<a class="song-link" href="/library/${esc(song.id)}.html" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" title="播放 ${esc(song.title)}">${label || esc(song.title)}</a>`;
 }
-
-// 首页大搜索框
-function searchFormHome() {
-  return `
-    <form name="search" method="get" action="/search.php">
-      <div class="input-group mb-2">
-        <input type="text" id="s-input" name="q" class="form-control text-center border-primary rounded shadow-sm" placeholder="请输入歌名或歌手名">
-        <div id="invalid-msg" class="invalid-feedback"></div>
-      </div>
-      <button class="btn btn-primary shadow-sm rounded-sm btn-block mb-1" id="s-btn" type="submit"> <span id="search">搜索 <i class="fa fa-search"></i></span> </button>
-    </form>`;
+function pageHead(title, description = '听见喜欢的声音。秋秋音乐，发现与分享好音乐。') {
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f5f0"><meta name="description" content="${esc(description)}"><meta name="keywords" content="秋秋音乐,qiuqiumusic,在线音乐,音乐播放"><title>${esc(title)} · ${SITE}</title><link rel="icon" href="/projects/source_code/picture/logo.svg" type="image/svg+xml"><script>try{document.documentElement.dataset.theme=localStorage.getItem('qiuqiumusic.theme')||'mint'}catch{}</script><link rel="stylesheet" href="/projects/source_code/css/site.css?v=${ASSET_VERSION}"><script src="/projects/source_code/js/app.js?v=${ASSET_VERSION}" defer></script></head><body>`;
 }
-
-// 内页行内搜索框
-function searchFormInner(q = '') {
-  return `
-        <form name="search" method="get" action="/search.php">
-      <div class="input-group mb-2 search-row"> <b class="search-img"></b>
-        <input type="text" class="form-control text-muted border border-info rounded-left" id="s-input-line" placeholder=""
-          name="q" value="${esc(q)}">
-        <div class="input-group-append">
-          <button class="btn btn-primary shadow-sm rounded-sm btn-block mb-1" id="s-btn" type="submit"> <span id="search">搜索 <i class="fa fa-search"></i></span> </button>
-        </div>
-      </div>
-</form>`;
+function nav(active = '') {
+  const links = [['/', '发现'], ['/ranking/recommend', '推荐榜'], ['/ranking/hot', '热门榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
+  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><div class="theme-picker"><label class="sr-only" for="theme-select">切换皮肤</label><span aria-hidden="true">◐</span><select id="theme-select" aria-label="切换皮肤"><option value="mint">薄荷绿</option><option value="sky">晴空蓝</option><option value="lilac">晨雾紫</option></select></div></div></header>`;
 }
-
+function searchForm(q = '') {
+  return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;
+}
 function footer() {
-  return `  <footer class="bg-dark text-white text-center mt-4" style="line-height: 1.5rem; font-size:14px;">
-    <div></div>
-    <div>Copyright Your WebSite.Some Rights Reserved.MyFreeMp3音乐官网-mp3歌曲下载-myfreemp3在线音乐免费下载</div>
-  </footer>`;
+  return `<footer class="site-footer"><div class="shell footer-content"><div><strong>秋秋音乐</strong><span>听见喜欢的声音。</span></div><p>让每一次播放，都刚好合你心意。<br><small>© ${new Date().getFullYear()} qiuqiumusic</small></p></div></footer>`;
 }
-
-// 排行榜表格（排名 + 歌曲名）
-function rankTable(items, limit = 10) {
-  const rows = items.slice(0, limit).map((x, i) => `
-                <tr>
-                  <th scope="row"><span class="badge badge-pill  badge-info ">${i + 1}</span> </th>
-                  <td class="tdovhd">
-                    <a href="/library/${x.id}.html" title="${esc(x.title)}" target="_blank" style=" overflow:hidden">${esc(x.title)}</a>
-                  </td>
-                </tr>`).join('');
-  return `
-            <table class="table">
-              <thead class="thead-light">
-                <tr>
-                  <th scope="col" width="48" style="white-space:nowrap;">排名</th>
-                  <th scope="col">歌曲名</th>
-                </tr>
-              </thead>
-              <tbody>${rows}
-              </tbody>
-            </table>`;
+function player() {
+  return `<aside class="player-host" id="site-player" aria-label="音乐播放器" hidden><button class="vinyl-toggle" id="player-toggle" type="button" aria-label="展开播放器"><span class="vinyl-disc"><span class="vinyl-label">${icon('note')}</span></span><span class="vinyl-eq" aria-hidden="true"><i></i><i></i><i></i></span></button><section class="player-panel" id="player-panel" aria-label="当前播放" hidden><div class="player-panel-head"><div><small>正在播放 · 秋秋音乐</small><h2 id="player-title">选择一首歌</h2><span id="player-state">准备播放</span></div><button id="player-collapse" class="icon-button" type="button" aria-label="收起播放器">×</button></div><audio id="player-audio" controls preload="none"></audio><div class="player-actions"><button id="player-prev" type="button" aria-label="上一首">⏮</button><button id="player-play-pause" type="button" aria-label="播放或暂停">⏯</button><button id="player-next" type="button" aria-label="下一首">⏭</button><button id="player-favorite" type="button" aria-label="收藏当前歌曲">${icon('heart')}</button><button id="player-queue" type="button" aria-label="播放清单">${icon('note')} <span id="queue-count">0</span></button><a id="player-detail" href="#">歌曲详情 ${icon('arrow')}</a></div></section><section class="queue-panel" id="queue-panel" aria-label="播放清单" hidden><div class="queue-head"><div><small>我的歌单</small><h2>播放清单</h2></div><button id="queue-close" class="icon-button" type="button" aria-label="关闭播放清单">×</button></div><div id="queue-items" class="queue-items"></div></section></aside>`;
 }
-
-// ---------- 首页 ----------
-
+function layout(title, body, active = '', description) {
+  return `${pageHead(title, description)}${nav(active)}<main class="shell main-content">${body}</main>${footer()}${player()}</body></html>`;
+}
+function section(title, eyebrow, content, more, iconName = 'spark', className = '', action = '') {
+  return `<section class="panel ${className}"><div class="panel-heading"><div class="heading-icon">${icon(iconName)}</div><div><span class="eyebrow">${esc(eyebrow)}</span><h2>${esc(title)}</h2></div>${action}${more ? `<a class="more-link" href="${more}">查看更多 ${icon('arrow')}</a>` : ''}</div>${content}</section>`;
+}
+function songRows(items, start = 1, { date = false } = {}) {
+  return `<div class="song-list">${items.map((song, index) => `<div class="song-row"><span class="song-rank ${index < 3 && start === 1 ? 'top-rank' : ''}">${String(start + index).padStart(2, '0')}</span><div class="song-main">${songLink(song)}<small>${esc(song.artist || song.title.split('-')[0] || '秋秋音乐')}</small></div>${date && song.date ? `<span class="song-date">${esc(song.date)}</span>` : ''}<button class="song-action favorite-button" type="button" data-favorite-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="收藏 ${esc(song.title)}">${icon('heart')}</button><button class="song-action add-button" type="button" data-add-id="${esc(song.id)}" data-song-title="${esc(song.title)}" aria-label="加入播放清单 ${esc(song.title)}">${icon('plus')}</button><button class="play-button" type="button" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" aria-label="播放 ${esc(song.title)}">${icon('play')}</button></div>`).join('')}</div>`;
+}
 function homePage() {
-  const hotTags = seed.hot_tags.map(t =>
-    `                                 <a href="/library/${t.id}.html" target="_blank" style="color:${t.color};font-size: .9rem;">
-                <strong>${esc(t.title)}&nbsp;&nbsp;&nbsp;</strong>
-            </a>`).join('\n');
-
-  const latest = seed.latest.map(x =>
-    `         
-        <div class="row mb-1 new-musics">
-            <div class="col-12">
-                <a href="/library/${x.id}.html" title="${esc(x.title)}" 
-                   class="border-top-0 border-left-0 border-right-0 list-group-item list-group-item-action pl-0 text-primary d-flex justify-content-between align-items-center py-2" target="_blank" style="overflow: hidden;">
-                    <div class="text-truncate limited-text" style="max-width: calc(100% - 80px);">
-                        ${esc(x.title)}                    </div>
-                    <span style="color: #fb430a;font-weight: bold;font-size: .85rem; flex-shrink: 0;">
-                        ${esc(x.date)}                    </span>
-                </a>
-            </div>
-        </div>`).join('\n');
-
-  return `${head({
-    title: SITE_TITLE,
-    keywords: 'myfreemp3,音乐下载,mp3音乐下载,mp3免费下载,歌曲下载',
-    description: 'myfreemp3是一个提供免费音乐在线服务的平台，其形态包括网站与移动端软件，myfreemp3全面支持高品质音乐下载、mp3音乐下载，界面简洁，操作方便。',
-  })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}
-
-${searchFormHome()}
-
-    <div class="card shadow-sm mb-1">
-      <div class="card-body">
-        <h6 class="card-title">
-          <i class="fa fa-fire" style="color: #FF6B6B;"></i> 热门音乐
-          <small>
-            <a class="float-right text-muted" href="/viewmor.html" rel="nofollow">
-              更多
-              <i class="fa fa-angle-right"></i>
-            </a>
-          </small>
-        </h6>
-        <p class="card-text">
-        <div class="right hot-tags" style="width:100%">
-${hotTags}
-        </div>
-      </div>
-    </div>
-    <div class="card mb-1">
-    <div class="card-body">
-        <h6 class="card-title">
-            <i class="fa fa-history" style="color: #FF6B6B;"></i>
-            最近更新
-                <small>
-                    <a class="float-right text-muted" href="/navigation/1/" target="_blank">更多 <i class="fa fa-angle-right"></i></a>
-                </small>            
-        </h6>
-    <div class="latest-articles">
-${latest}
-    </div>
-    </div>
- </div>    
-
-    <div class="row">
-      <div class="col-md-6 mb-1">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h6 class="card-title">
-              <i class="fa fa-bar-chart"></i>
-              推荐歌曲排行
-              <small>
-                <a class="float-right text-muted" href="/navigation/1/" title="推荐歌曲排行" target="_blank" rel="nofollow">
-                  更多
-                  <i class="fa fa-angle-right"></i>
-                </a>
-              </small>
-            </h6>
-            <p class="card-text">
-            ${rankTable(seed.rank_recommend)}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6 mb-1">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h6 class="card-title"> <i class="fa fa-bar-chart"></i> 热门歌曲排行<small>
-                <a class="float-right text-muted" href="/down.html" title="更多热门歌曲排行" target="_blank" rel="nofollow">更多 <i class="fa fa-angle-right"></i>
-                </a>
-              </small>
-            </h6>
-            <p class="card-text">
-            ${rankTable(seed.rank_hot)}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
+  const hot = seed.hot_tags.slice(0, 16).map(song => `<a href="/library/${esc(song.id)}.html" class="mood-tag" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}">${esc(song.title)}</a>`).join('');
+  const intro = `<section class="hero"><div class="hero-copy"><span class="hero-kicker">每日好音乐 <span>✦</span></span><h1>让喜欢的音乐，<br><em>刚好遇见你。</em></h1><p>从此刻的心情出发，听一首属于今天的歌。</p>${searchForm()}<div class="hero-notes"><span>${icon('headphones')} 随时在线聆听</span><span>${icon('spark')} 每日发现新声</span></div></div><div class="hero-graphic" aria-hidden="true"><div class="disc"><div class="disc-inner"><img src="/projects/source_code/picture/logo.svg" alt=""></div></div><span class="float-note note-one">♫</span><span class="float-note note-two">♪</span><span class="graphic-caption">听见此刻的喜欢。</span></div></section>`;
+  const featured = section('此刻热门', '此刻流行', `<div class="mood-tags">${hot}</div>`, '/viewmor.html', 'flame', 'trending-panel');
+  const latest = section('最近更新', '新歌上架', songRows(seed.latest.slice(0, 8), 1, { date: true }), '/navigation/1/', 'clock');
+  const rec = section('推荐歌曲', '为你推荐', songRows(seed.rank_recommend.slice(0, 6)), '/ranking/recommend', 'spark');
+  const popular = section('热门歌曲', '热门点播', songRows(seed.rank_hot.slice(0, 6)), '/ranking/hot', 'flame');
+  return layout('发现好音乐', `${intro}<div class="home-grid">${featured}${latest}</div><div class="home-grid ranking-grid">${rec}${popular}</div>`, '/');
 }
-
-// ---------- 搜索页 ----------
-
-function highlight(title, q) {
-  const idx = title.toLowerCase().indexOf(q.toLowerCase());
-  if (idx < 0 || !q) return esc(title);
-  return esc(title.slice(0, idx)) + '<strong>' + esc(title.slice(idx, idx + q.length)) + '</strong>' + esc(title.slice(idx + q.length));
-}
-
-function pagination(base, page, totalPages) {
-  if (totalPages <= 1 && page <= 1) return '';
+function pager(base, page, pages) {
+  if (pages <= 1) return '';
+  const window = new Set([1, pages]);
+  for (let n = Math.max(1, page - 2); n <= Math.min(pages, page + 2); n++) window.add(n);
+  const numbers = [...window].sort((a, b) => a - b);
+  let previous = 0;
   const items = [];
-  items.push(page <= 1
-    ? '    <li class="disabled"><span>&laquo;</span></li>'
-    : `    <li><a href="${base}&page=${page - 1}">&laquo;</a></li>`);
-  const show = [];
-  for (let p = 1; p <= Math.min(totalPages, 4); p++) show.push(p);
-  for (const p of show) {
-    items.push(p === page
-      ? `    <li class="active"><span>${p}</span></li>`
-      : `    <li><a href="${base}&page=${p}">${p}</a></li>`);
+  for (const n of numbers) {
+    if (n - previous > 1) items.push('<span class="pager-ellipsis">…</span>');
+    items.push(n === page ? `<span class="current" aria-current="page">${n}</span>` : `<a href="${base}${base.includes('?') ? '&' : '?'}page=${n}">${n}</a>`);
+    previous = n;
   }
-  if (totalPages > 4) items.push('    <li class="disabled"><span>...</span></li>');
-  items.push(page >= totalPages
-    ? '    <li class="disabled"><span>&raquo;</span></li>'
-    : `    <li><a href="${base}&page=${page + 1}">&raquo;</a></li>`);
-  return `
-          <div class="pagebar">
-            <ul class="pagination">
-${items.join('\n')}
-</ul>
-          </div>`;
+  return `<nav class="pager" aria-label="分页"><a class="${page <= 1 ? 'disabled' : ''}" href="${base}${base.includes('?') ? '&' : '?'}page=${Math.max(1, page - 1)}">上一页</a>${items.join('')}<a class="${page >= pages ? 'disabled' : ''}" href="${base}${base.includes('?') ? '&' : '?'}page=${Math.min(pages, page + 1)}">下一页</a></nav>`;
 }
-
-function searchPage(query, results, page, perPage = 20) {
-  const total = results.length;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  page = Math.min(Math.max(1, page), totalPages);
-  const pageItems = results.slice((page - 1) * perPage, page * perPage);
-
-  const rows = pageItems.map(s => `
-                    <div class="row">
-            <div class="col-35 col-content"> <a href="/library/${s.id}.html" class="text-primary font-weight-bold" target="_blank" title="${highlight(s.title, query)} MP3歌曲免费下载">${highlight(s.title, query)} </a> </div>
-            <div class="text-success col-34 col-content"> </div>
-            <div class="col-33 col-content text-right"> <a href="/library/${s.id}.html" target="_blank" title="${highlight(s.title, query)} MP3歌曲免费下载"><u>下载</u></a> </div>
-          </div>`).join('\n');
-
-  const hotTags = seed.keywords.slice(0, 13).map(k =>
-    `                                <li><a href="/search.php?q=${encodeURIComponent(k)}" title="${esc(k)}" class="tags2">${esc(k)}</a></li>`).join('\n');
-
-  return `${head({ title: `搜索&nbsp;"${esc(query)}"_${SITE_TITLE}` })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}    <meta name="robots" content="noindex,nofollow,noarchive" />
-
-${searchFormInner()}
-
-    
-    <div class="card mb-1">
-      <div class="card-body" style="min-height:200px;">
-        <div class="card-title clearfix font-weight-bolder">
-          <h1 class="d-inline-block" style="font-size: 1rem">
-            <mark>${esc(query)}</mark>
-          </h1>
-          <span>搜索结果</span> <small class="float-right badge badge-pill badge-warning ">共 ${total} 条</small>
-        </div>
-        <div class="card-text">
-          <div class="row mb-3">
-            <div class="col-35"><i class="fa fa-music"></i> 歌曲</div>              
-            <div class="col-34"><i class=""></i> </div>
-            <div class="col-33 text-right">操作</div>
-          </div>${rows || '\n                    <div class="row"><div class="col-35 col-content">没有找到相关歌曲，换个关键词试试吧。</div></div>'}
-                    ${pagination(`/search.php?q=${encodeURIComponent(query)}`, page, totalPages)}
-        </div>
-      </div>
-    </div>
-    <div class="card shadow-sm mb-1">
-      <div class="card-body" style="min-height:300px;">
-        <h6 class="card-title"> <i class="fa fa-history"></i> 热门搜索 <small> <a class="float-right text-muted" href="/keyword.html" title="更多热门搜索"> 更多 <i class="fa fa-angle-right"></i> </a> </small> </h6>
-        <p class="card-text">
-        <div class="right " style="width:100%">
-          <dl id="divhottag">
-            <dd class="function_c">
-              <ul style="margin-left:1.5%">
-${hotTags}
-                              </ul>
-            </dd>
-          </dl>
-        </div>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
+function rankingPage(data) {
+  const recommend = data.kind === 'recommend';
+  const title = recommend ? '推荐歌曲 · 5000 首' : '热门歌曲 · 5000 首';
+  const note = data.stale ? '当前展示本地缓存；源站暂时不可用或更新中。' : '访问时检查本地缓存，缓存有效期为 6 小时。';
+  const description = `前 10 首沿用${recommend ? '推荐' : '热门'}榜单，后续曲目取自实时更新的歌曲列表。${note}`;
+  const addAll = data.items.length ? `<button class="add-all-button" type="button" data-add-page aria-live="polite" aria-label="一键将本页 ${data.items.length} 首歌曲加入播放清单"><span class="add-all-icon">${icon('plus')}</span><span class="add-all-text">一键加入歌单</span><span class="add-all-count">${data.items.length} 首</span></button>` : '';
+  const content = `<div class="page-intro"><span class="eyebrow">精选曲库</span><h1>${title}</h1><p>${description}</p></div>${section(`第 ${data.page} / ${data.pages} 页`, '每页 20 首', data.items.length ? songRows(data.items, (data.page - 1) * 20 + 1) : `<div class="empty-state">这页暂时无法从源站获取曲目，请稍后重试。</div>`, null, recommend ? 'spark' : 'flame', '', addAll)}${pager(recommend ? '/ranking/recommend' : '/ranking/hot', data.page, data.pages)}`;
+  return layout(title, content, recommend ? '/ranking/recommend' : '/ranking/hot');
 }
-
-// ---------- 歌曲详情页 ----------
-
+function searchPage(query, results) {
+  const { items, page, hasNext, source, stale } = results;
+  const notice = stale ? `<p class="search-notice">${source === 'cached' ? '在线搜索暂时不可用，当前展示上次缓存的搜索结果。' : '在线搜索暂时不可用，当前仅显示本地已有歌曲。'}</p>` : '';
+  const base = `/search.php?q=${encodeURIComponent(query)}`;
+  const pageNav = page > 1 || hasNext ? `<nav class="pager" aria-label="搜索分页">${page > 1 ? `<a href="${base}&page=${page - 1}">上一页</a>` : ''}<span class="current" aria-current="page">第 ${page} 页</span>${hasNext ? `<a href="${base}&page=${page + 1}">下一页</a>` : ''}</nav>` : '';
+  const description = source === 'local' && !items.length ? `“${esc(query)}”暂未找到歌曲` : `“${esc(query)}”本页找到 ${items.length} 首歌曲`;
+  return layout(`搜索 ${query}`, `<div class="page-intro"><span class="eyebrow">FIND YOUR MUSIC</span><h1>搜索结果</h1><p>${description}</p>${notice}${searchForm(query)}</div>${section('歌曲', '搜索结果', items.length ? songRows(items, (page - 1) * 20 + 1) : '<div class="empty-state">没有找到相关歌曲，换个关键词试试。</div>', null, 'search')}${pageNav}`);
+}
 function songPage(song) {
-  const { id, title, artist, song: songName, cover, lyrics } = song;
-  const desc = `<strong>${esc(songName)}${artist ? '-' + esc(artist) : ''}</strong>：${esc(songName)}歌曲下载_MP3音乐免费下载${artist ? '，歌手:' + esc(artist) : ''}，语种:国语，同时网站提供${esc(songName)}${artist ? '-' + esc(artist) : ''}的QQ空间背景音乐歌曲链接，把这首歌曲的MP3链接地址推荐给你的朋友，可以让他们免费获得本歌曲音乐外链。`;
-
-  const recommend = seed.rank_hot.slice(0, 8).map((x, i) => `
-                        <tr>
-              <th scope="row" width="48"><span class="badge badge-pill    badge-warning     badge-info   ">${i + 1}</span> </th>
-              <td style="white-space:nowrap;">
-                <a href="/library/${x.id}.html" title="${esc(x.title)}" target="_blank" style="white-space:nowrap; text-overflow:ellipsis; max-width:200px; display:inline-block;">${esc(x.title)}</a>
-              </td>
-            </tr>`).join('');
-
-  return `${head({
-    title: `${title}.mp3免费在线下载播放_搜歌找词来myfreemp3音乐网`,
-    keywords: `${title},myfreemp3,mp3音乐下载`,
-    description: `${title}mp3歌曲：${title}mp3下载，myfreemp3提供《${title}》mp3音乐下载外链，${title}LRC歌词下载；搜歌找词来myfreemp3音乐网。`,
-    extraCss: `  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css">`,
-    extraHead: `  <script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/lib/browser.min.js" type="application/javascript"></script>
-  <script type="application/javascript">
-  var bloghost = window.location.origin + '/';
-  </script>`,
-  })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-
-${navbar()}
-${searchFormInner()}
-
-    
-    <div class="card shadow-sm mb-3">
-      <div class="card-body" style="padding:1.25rem 0.5rem;">
-        <div style="width:100%; text-align:center; overflow:hidden; ">
-          <h1 style="font-size:26px; font-weight:blod;">${esc(title)}歌曲免费下载</h1>
-        </div>
-        <div class="container" style="margin-bottom:20px;">
-          <div id="musiconlineplay" class="aplayer"></div>
-        </div>
-      </div>
-    </div>
-
-        <div class="card shadow-sm mb-2">
-      <div class="card-body">
-        <h5 class="card-title"> <i class="fa fa-file-text-o input-group-text"></i> 《${esc(title)}》歌曲详情</h5>
-            <p style="text-indent: 2em;">${desc}</p>${cover ? `<p style="text-align: center;"><img class="ue-image" src="${esc(cover)}" width="200" height="200"/></p>` : ''}${lyrics ? `<p style="text-indent: 2em;"><span style="text-indent: 2em;">${esc(lyrics)}</span></p>` : ''}<h5 class="card-title"><em class="fa fa-download input-group-text"></em> 下载地址：</h5><p><div class="xc_wsee_hidecontent xc_wsee_hidecontent_is" id="dl-hidden" data-aid="${esc(id)}">此为隐藏内容，需人机验证后查看下载！</div></p>
-        <div id="dl-content" style="display:none;">
-          <a class="dl-link" id="dl-mp3" href="#" target="_blank" rel="nofollow"><i class="fa fa-cloud-download"></i><span></span></a>
-          <a class="dl-link" id="dl-mp3-2" href="#" target="_blank" rel="nofollow"><i class="fa fa-link"></i><span></span></a>
-          <div id="qrcode"></div>
-          <p style="font-size:12px;color:#999;text-align:center;">手机扫码，随时随地听</p>
-        </div>
-      </div>
-    </div>
-    
-    
-    <div class="card shadow-sm mb-2">
-      <div class="card-body">
-        <h6 class="card-title"> <img src="/projects/source_code/picture/like.png" alt="热门歌曲推荐" onerror="this.style.display='none'"> 热门推荐</h6>
-        <table class="table">
-          <tbody>${recommend}
-                      </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  <div class="xc_wsee_load" id="verify-mask">
-    <div class="xc_wsee_alert">
-      <div class="tip">人机验证</div>
-      <button class="verify-btn" id="verify-btn">点击完成验证</button>
-      <div class="sub">验证通过后显示下载地址</div>
-    </div>
-  </div>
-  <script>
-    var ap1 = new APlayer({
-      element: document.getElementById('musiconlineplay'),
-      narrow: false,
-      autoplay: false,
-      showlrc: false,
-      music: {
-        title: ${JSON.stringify(title)},
-        author: ${JSON.stringify(artist || '')},
-        url: ${JSON.stringify(proxyMediaUrl(title))},
-        pic: '/projects/source_code/picture/logo.png'
-      }
-    });
-
-    (function () {
-      var mask = document.getElementById('verify-mask');
-      var hiddenBox = document.getElementById('dl-hidden');
-      var btn = document.getElementById('verify-btn');
-      var aid = hiddenBox.getAttribute('data-aid');
-
-      hiddenBox.addEventListener('click', function () {
-        mask.style.display = 'block';
-      });
-      mask.addEventListener('click', function (e) {
-        if (e.target === mask) mask.style.display = 'none';
-      });
-      btn.addEventListener('click', function () {
-        btn.disabled = true;
-        btn.textContent = '验证中…';
-        fetch('/api/reveal/' + encodeURIComponent(aid), { method: 'POST' })
-          .then(function (r) { return r.json(); })
-          .then(function (data) {
-            if (!data.ok) throw new Error('verify failed');
-            var links = data.links;
-            var a1 = document.getElementById('dl-mp3');
-            a1.href = links[0].url;
-            a1.querySelector('span').textContent = links[0].label;
-            var a2 = document.getElementById('dl-mp3-2');
-            a2.href = links[1].url;
-            a2.querySelector('span').textContent = links[1].label;
-            mask.style.display = 'none';
-            hiddenBox.style.display = 'none';
-            document.getElementById('dl-content').style.display = 'block';
-            if (window.QRCode && QRCode.toCanvas) {
-              QRCode.toCanvas(location.href, { width: 150, margin: 2 }, function (err, canvas) {
-                if (!err) document.getElementById('qrcode').appendChild(canvas);
-              });
-            }
-          })
-          .catch(function () {
-            btn.disabled = false;
-            btn.textContent = '验证失败，请重试';
-          });
-      });
-    })();
-  </script>
-${footer()}
-</body>
-
-</html>`;
+  const { title, artist, cover, lyrics } = song;
+  const coverHtml = cover ? `<img class="detail-cover" src="${esc(cover)}" alt="${esc(title)} 封面" loading="lazy">` : `<div class="detail-cover placeholder">${icon('note')}</div>`;
+  return layout(title, `<div class="page-intro"><span class="eyebrow">歌曲详情</span><h1>${esc(title)}</h1><p>${esc(artist || '秋秋音乐')}</p></div><section class="panel song-detail"><div class="detail-top">${coverHtml}<div class="detail-copy"><span class="eyebrow">好歌分享</span><h2>${esc(title)}</h2><p>${esc(artist || '音乐让此刻更动听')}</p><div class="detail-actions"><button class="primary-action" type="button" data-play-id="${esc(song.id)}" data-play-title="${esc(title)}">${icon('play')} 立即播放</button><button class="secondary-action favorite-button" type="button" data-favorite-id="${esc(song.id)}" data-song-title="${esc(title)}">${icon('heart')} 收藏</button><button class="secondary-action" type="button" data-add-id="${esc(song.id)}" data-song-title="${esc(title)}">${icon('plus')} 加入播放清单</button></div></div></div>${lyrics ? `<details class="lyrics"><summary>查看歌词</summary><p>${esc(lyrics)}</p></details>` : ''}<a class="detail-download" href="${esc(proxyMediaUrl(title))}" download>下载音频文件</a></section>${section('继续听', '听完再听', songRows(seed.rank_hot.slice(0, 6)), '/ranking/hot', 'spark')}`);
 }
-
-// ---------- 合集页 /navigation/2/ ----------
-
+function myMusicPage() {
+  return layout('我的音乐', `<div class="page-intro"><span class="eyebrow">专属音乐空间</span><h1>我的音乐</h1><p>收藏与播放清单保存在当前浏览器，未来可与微信账号同步。</p></div><div class="home-grid personal-grid">${section('我的收藏', '我的收藏', '<div id="favorites-list" class="personal-list"></div>', null, 'heart')}${section('播放清单', '我的播放清单', '<div id="playlist-list" class="personal-list"></div>', null, 'note')}</div>`, '/my-music');
+}
+function listPage(title, eyebrow, items, more = null) {
+  return layout(title, `<div class="page-intro"><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1><p>喜欢的声音，就从这里开始。</p>${searchForm()}</div>${section(title, eyebrow, songRows(items), more, 'note')}`);
+}
+function recentPage() { return listPage('最近更新', '最新收录', seed.nav1); }
+function viewmorPage(data) { return data ? rankingPage(data) : listPage('此刻热门', '此刻流行', seed.viewmor, '/ranking/hot'); }
+function downPage(data) { return data ? rankingPage(data) : listPage('热门歌曲', '热门点播', seed.down, '/ranking/hot'); }
 function collectionsPage() {
-  const items = seed.collections.map(x => `
-                            <li class=" list-group-item list-group-item-action dblistys">
-                <a href="/library/${x.id}.html" style="width:100%;" title="${esc(x.title)}">
-                  <i class="fa fa-music"></i> ${esc(x.title)} <i class="d-none d-md-inline-block dbicoys">
-                    <i class="fa fa-download"> </i> 下载 </i>
-                </a>
-              </li>`).join('');
-
-  return `${head({ title: `合集_${SITE_TITLE}` })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="jumbotron" style="background-color:#7C00F9;height:100px;padding:30px;">
-          <h1 class="text-light text-center" style="font-size: 1.75rem">热门歌曲打包下载 </h1>
-        </div>
-
-${searchFormInner()}
-
-    
-        <div class="dblist_h">
-          <div class="card-body">
-
-            <ul class="list-group list-group-flush">${items}
-              <div class="pagebar mt-5">
-                <ul class="pagination">
-    <li class="disabled"><span>&laquo;</span></li>
-    <li class="active"><span>1</span></li>
-    <li class="disabled"><span>&raquo;</span></li>
-</ul>
-              </div>
-
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
+  return layout('精选歌单', `<div class="page-intro"><span class="eyebrow">精选歌单</span><h1>精选歌单</h1><p>按心情收藏你的音乐灵感。</p></div><div class="collection-grid">${seed.collections.map((item, index) => `<article class="collection-card"><span>0${index + 1}</span><h2>${esc(item.title)}</h2><p>发现更多好音乐</p>${songLink(item, `打开歌单 ${icon('arrow')}`)}</article>`).join('')}</div>`, '/navigation/2/');
 }
-
-// ---------- 歌手页 /hotsgr.html ----------
-
 function artistsPage() {
-  const rows = seed.artists.map((name, i) => `
-            <tr>
-              <th scope="row"><span class="badge badge-pill ${i === 0 ? 'badge-success' : 'badge-info'}  ">${i + 1}</span> </th>
-              <td><a href="/search.php?q=${encodeURIComponent(name)}" title="${esc(name)}_歌曲免费下载" >${esc(name)}_歌曲免费下载</a></td>
-            </tr>`).join('\n              ');
-
-  return `${head({ title: `歌手_${SITE_TITLE}` })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="jumbotron" style="background-color:#F06">
-          <h1 class="text-light text-center" style="font-size: 1.75rem"> 热门歌手排行(Top50) </h1>
-        </div>
-        
-${searchFormInner()}
-
-    
-        <table class="table table-striped table-borderless">
-          <thead class="thead-light">
-            <tr>
-              <th scope="col" width="48" style="white-space:nowrap;">排名</th>
-              <th scope="col">歌手名</th>
-            </tr>
-          </thead>
-          <tbody>
-              ${rows}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
+  return layout('人气歌手', `<div class="page-intro"><span class="eyebrow">人气歌手</span><h1>人气歌手</h1><p>从熟悉的名字，找到下一首喜欢的歌。</p>${searchForm()}</div><div class="artist-grid">${seed.artists.map((artist, i) => `<a href="/search.php?q=${encodeURIComponent(artist)}" class="artist-card"><span>${String(i + 1).padStart(2, '0')}</span><strong>${esc(artist)}</strong>${icon('arrow')}</a>`).join('')}</div>`, '/hotsgr.html');
 }
-
-// ---------- 热搜页 /keyword.html ----------
-
 function keywordsPage() {
-  const rows = seed.keywords.map((k, i) => `
-                        <tr>
-              <th scope="row"><span class="badge badge-pill  ${i === 0 ? 'badge-success' : 'badge-info'} ">${i + 1}</span> </th>
-              <td><a href="/search.php?q=${encodeURIComponent(k)}" title="${esc(k)}" rel="nofollow">${esc(k)}</a></td>
-            </tr>`).join('');
-
-  return `${head({ title: `热搜_${SITE_TITLE}` })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="jumbotron" style="background-color:#93C">
-          <h1 class="text-light text-center" style="font-size: 1.75rem"> 关键词搜索排行(Top50) </h1>
-        </div>
-${searchFormInner()}
-
-    
-        <table class="table table-striped table-borderless">
-          <thead class="thead-light">
-            <tr>
-              <th scope="col" width="48" style="white-space:nowrap;">排名</th>
-              <th scope="col">关键词</th>
-            </tr>
-          </thead>
-          <tbody>${rows}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
+  return layout('热门搜索', `<div class="page-intro"><span class="eyebrow">热门搜索</span><h1>热门搜索</h1><p>大家正在听什么？</p>${searchForm()}</div><div class="keyword-grid">${seed.keywords.map((word, i) => `<a href="/search.php?q=${encodeURIComponent(word)}"><span>${String(i + 1).padStart(2, '0')}</span>${esc(word)}${icon('arrow')}</a>`).join('')}</div>`, '/keyword.html');
 }
-
-// ---------- 最近更新 /navigation/1/ ----------
-
-function recentPage() {
-  const rows = seed.nav1.map(x => `
-                    <a href="/library/${x.id}.html" class="text-primary font-weight-bold"  title="mp3歌曲免费下载">
-            <div class="row">
-              <div class="col-25 col-content">${esc(x.title)}</div>
-              <div class="col-32 col-content">${esc(x.quality || '高品质')}</div>
-              <div class="col-32 col-content text-right"> ${esc(x.date || '')}</div>
-            </div>
-          </a>`).join('');
-
-  return `${head({ title: `最近更新_${SITE_TITLE}` })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="jumbotron" style="background-color:#17a2b8;height:100px;padding:30px;">
-          <h1 class="text-light text-center" style="font-size: 1.75rem">最近更新 </h1>
-        </div>
-${searchFormInner()}
-        <div class="card-text">
-          <div class="row mb-3 ">
-            <div class="col-25 col-title nopc"><i class="fa fa-music"></i> 歌曲名</div>
-            <div class="col-32 col-title nopc"><i class="fa fa-file-audio-o"></i> 音质</div>
-            <div class="col-32 col-title text-right nopc"><i class="fa fa-clock-o"></i> 日期</div>
-          </div>${rows}
-        </div>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
-}
-
-// ---------- 热门音乐更多 /viewmor.html ----------
-
-function viewmorPage() {
-  const rows = seed.viewmor.map((x, i) => `
-                        <tr>
-              <th scope="row" width="48"><span class="badge badge-pill    badge-warning     badge-info   ">${i + 1}</span> </th>
-              <td style="white-space:nowrap;">
-                <a href="/library/${x.id}.html" title="${esc(x.title)}" target="_blank" style="white-space:nowrap; text-overflow:ellipsis; max-width:200px; display:inline-block;">${esc(x.title)}</a>
-              </td>
-            </tr>`).join('');
-
-  return `${head({ title: `热门音乐_${SITE_TITLE}` })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="jumbotron" style="background-color:#FF6B6B;height:100px;padding:30px;">
-          <h1 class="text-light text-center" style="font-size: 1.75rem">热门音乐 </h1>
-        </div>
-${searchFormInner()}
-        <table class="table">
-          <tbody>${rows}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
-}
-
-// ---------- 热门歌曲排行 /down.html ----------
-
-function downPage() {
-  const rows = seed.down.map((x, i) => `
-                        <tr>
-              <th scope="row" width="48"><span class="badge badge-pill    badge-warning     badge-info   ">${i + 1}</span> </th>
-              <td style="white-space:nowrap;">
-                <a href="/library/${x.id}.html" title="${esc(x.title)}" target="_blank" style="white-space:nowrap; text-overflow:ellipsis; max-width:200px; display:inline-block;">${esc(x.title)}</a>
-              </td>
-            </tr>`).join('');
-
-  return `${head({ title: `热门歌曲排行_${SITE_TITLE}` })}
-
-<body>
-  <div class="container" style="max-width: 960px">
-${navbar()}    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="jumbotron" style="background-color:#fb430a;height:100px;padding:30px;">
-          <h1 class="text-light text-center" style="font-size: 1.75rem">热门歌曲排行 </h1>
-        </div>
-${searchFormInner()}
-        <table class="table">
-          <tbody>${rows}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-${footer()}
-</body>
-
-</html>`;
-}
-
-module.exports = {
-  homePage,
-  searchPage,
-  songPage,
-  collectionsPage,
-  artistsPage,
-  keywordsPage,
-  recentPage,
-  viewmorPage,
-  downPage,
-};
+module.exports = { homePage, rankingPage, searchPage, songPage, myMusicPage, collectionsPage, artistsPage, keywordsPage, recentPage, viewmorPage, downPage };

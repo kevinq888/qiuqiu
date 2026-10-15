@@ -62,6 +62,10 @@ function addSong(id, title, extra = {}) {
   });
 }
 
+function addSongs(items) {
+  for (const item of items) addSong(item.id, item.title, item);
+}
+
 for (const x of seed.hot_tags) addSong(x.id, x.title);
 for (const x of seed.latest) addSong(x.id, x.title, { date: x.date });
 for (const x of seed.rank_recommend) addSong(x.id, x.title);
@@ -111,4 +115,5 @@ module.exports = {
   mediaUrl,
   proxyMediaUrl,
   searchSongs,
+  addSongs,
 };

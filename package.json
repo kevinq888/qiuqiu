@@ -1,8 +1,8 @@
 {
-  "name": "myfreemp3-clone",
+  "name": "qiuqiumusic",
   "version": "1.0.0",
   "private": true,
-  "description": "MyFreeMp3 站点复刻（学习用途）",
+  "description": "秋秋音乐在线聆听站点",
   "scripts": {
     "start": "node server.js"
   }

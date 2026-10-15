@@ -1,10 +1,12 @@
-// MyFreeMp3 复刻站：零依赖 Node 后端
+// 秋秋音乐：零依赖 Node 后端
 const http = require('node:http');
 const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
-const { getSong, mediaUrl, proxyMediaUrl, searchSongs } = require('./src/store');
+const { getSong, mediaUrl, proxyMediaUrl } = require('./src/store');
 const views = require('./src/views');
+const { ranking } = require('./src/rankings');
+const { search } = require('./src/search');
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -30,7 +32,7 @@ function serveStatic(req, res, urlPath) {
   if (urlPath.startsWith(prefix)) {
     rel = urlPath.slice(prefix.length);
   } else if (urlPath === '/favicon.ico') {
-    rel = 'picture/logo.png';
+    rel = 'picture/logo.svg';
   } else {
     return false;
   }
@@ -101,6 +103,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 推荐榜与热门榜：按需抓取，磁盘缓存，最多展示 5000 首
+  const rankMatch = p.match(/^\/ranking\/(recommend|hot)\/?$/);
+  if (rankMatch || p === '/viewmor.html' || p === '/down.html') {
+    const kind = rankMatch ? rankMatch[1] : 'hot';
+    const page = Number(u.searchParams.get('page') || '1');
+    ranking(kind, page).then(data => send(res, 200, views.rankingPage(data)))
+      .catch(() => send(res, 502, '榜单暂时不可用', 'text/plain; charset=utf-8'));
+    return;
+  }
+
   // 搜索
   if (p === '/search.php') {
     const q = (u.searchParams.get('q') || '').trim();
@@ -110,7 +122,8 @@ const server = http.createServer((req, res) => {
       res.end();
       return;
     }
-    send(res, 200, views.searchPage(q, searchSongs(q), page));
+    search(q, page).then(results => send(res, 200, views.searchPage(q, results)))
+      .catch(() => send(res, 502, '搜索暂时不可用', 'text/plain; charset=utf-8'));
     return;
   }
 
@@ -138,6 +151,10 @@ const server = http.createServer((req, res) => {
     send(res, 200, views.collectionsPage());
     return;
   }
+  if (p === '/my-music' || p === '/my-music/') {
+    send(res, 200, views.myMusicPage());
+    return;
+  }
   if (p === '/hotsgr.html') {
     send(res, 200, views.artistsPage());
     return;
@@ -146,15 +163,6 @@ const server = http.createServer((req, res) => {
     send(res, 200, views.keywordsPage());
     return;
   }
-  if (p === '/viewmor.html') {
-    send(res, 200, views.viewmorPage());
-    return;
-  }
-  if (p === '/down.html') {
-    send(res, 200, views.downPage());
-    return;
-  }
-
   send(res, 404, notFoundPage(), 'text/html; charset=utf-8');
 });
 
@@ -163,5 +171,5 @@ function notFoundPage() {
 }
 
 server.listen(PORT, () => {
-  console.log(`MyFreeMp3 复刻站已启动: http://localhost:${PORT}`);
+  console.log(`秋秋音乐已启动: http://localhost:${PORT}`);
 });
