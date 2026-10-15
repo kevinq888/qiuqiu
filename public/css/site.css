@@ -257,3 +257,9 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .footer-simple{flex-direction:column;justify-content:center;gap:8px;padding:2px 0}
   .footer-simple .footer-tagline{text-align:center;max-width:330px;margin:0 auto}
 }
+
+/* 悬浮球全端可拖动：抓取光标，触屏上按住拖动不触发页面滚动，拖动中禁止文本选择。 */
+.vinyl-toggle{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+.vinyl-toggle:active{cursor:grabbing}
+body.vinyl-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
+body.vinyl-dragging .vinyl-toggle{cursor:grabbing}

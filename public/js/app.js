@@ -230,6 +230,64 @@
       if (select) select.value = document.documentElement.dataset.theme;
     }
   });
+  // 悬浮黑胶球支持拖动换位（电脑鼠标与手机触摸统一用 Pointer Events），位置记忆在本地；
+  // 按下后位移超过 6px 视为拖动，否则仍点击展开。触屏滚动冲突由 touch-action:none 规避。
+  function enableVinylDrag() {
+    const POS_KEY = 'qiuqiumusic.vinylpos';
+    let left = 0, top = 0, suppressClick = false;
+    function clamp(x, y) {
+      const w = host.offsetWidth || 74, h = host.offsetHeight || 74;
+      return [
+        Math.min(Math.max(8, x), Math.max(8, window.innerWidth - w - 8)),
+        Math.min(Math.max(8, y), Math.max(8, window.innerHeight - h - 8)),
+      ];
+    }
+    function place(x, y) {
+      [left, top] = clamp(x, y);
+      host.style.left = left + 'px';
+      host.style.top = top + 'px';
+      host.style.right = 'auto';
+      host.style.bottom = 'auto';
+    }
+    try {
+      const saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+      if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) place(saved.left, saved.top);
+    } catch {}
+    toggle.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (host.classList.contains('is-expanded')) return;
+      const rect = host.getBoundingClientRect();
+      const offX = event.clientX - rect.left, offY = event.clientY - rect.top;
+      const startX = event.clientX, startY = event.clientY;
+      let moved = false;
+      if (toggle.setPointerCapture) { try { toggle.setPointerCapture(event.pointerId); } catch {} }
+      const onMove = move => {
+        const dx = move.clientX - startX, dy = move.clientY - startY;
+        if (!moved && Math.hypot(dx, dy) > 6) { moved = true; document.body.classList.add('vinyl-dragging'); }
+        if (moved) place(move.clientX - offX, move.clientY - offY);
+      };
+      const onEnd = () => {
+        toggle.removeEventListener('pointermove', onMove);
+        toggle.removeEventListener('pointerup', onEnd);
+        toggle.removeEventListener('pointercancel', onEnd);
+        document.body.classList.remove('vinyl-dragging');
+        if (moved) {
+          suppressClick = true;
+          try { localStorage.setItem(POS_KEY, JSON.stringify({ left, top })); } catch {}
+        }
+      };
+      toggle.addEventListener('pointermove', onMove);
+      toggle.addEventListener('pointerup', onEnd);
+      toggle.addEventListener('pointercancel', onEnd);
+    });
+    toggle.addEventListener('click', event => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+    window.addEventListener('resize', () => { if (host.style.left) place(left, top); });
+  }
   toggle.addEventListener('click', expand);
   if ('ResizeObserver' in window) new ResizeObserver(syncPlayerSpace).observe(panel);
   window.addEventListener('resize', syncPlayerSpace);
@@ -258,6 +316,7 @@
   });
   readSaved();
   renderCollections();
+  enableVinylDrag();
   applyTheme(document.documentElement.dataset.theme || 'mint');
   const select = document.getElementById('theme-select');
   if (select) select.value = document.documentElement.dataset.theme || 'mint';

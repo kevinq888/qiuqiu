@@ -7,6 +7,7 @@ const { seed, getSong, mediaUrl, proxyMediaUrl } = require('./src/store');
 const views = require('./src/views');
 const { ranking, sourcePage, MAX_PAGES } = require('./src/rankings');
 const { search } = require('./src/search');
+const audioCache = require('./src/audio-cache');
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -70,29 +71,11 @@ const server = http.createServer((req, res) => {
   // 静态资源
   if (serveStatic(req, res, p)) return;
 
-  // 音频代理：CDN 校验 Referer，浏览器直连 403，由服务器带 Referer 转发（支持 Range 拖动进度）
+  // 音频：优先读本地磁盘缓存（60 天未命中自动清理），未命中由服务器带 Referer 拉取上游全量落盘，
+  // 之后第二次播放直接从磁盘读取，不再访问外网；Range 拖动进度由本地文件切片实现。
   if (p.startsWith('/media/') && p.endsWith('.m4a')) {
     const title = decodeURIComponent(p.slice('/media/'.length, -'.m4a'.length));
-    const headers = {
-      Referer: 'https://myfreemp3ku.com/',
-      'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0',
-    };
-    if (req.headers.range) headers.Range = req.headers.range;
-    const upstream = https.get(mediaUrl(title), { headers }, (up) => {
-      const h = {
-        'Content-Type': up.headers['content-type'] || 'audio/x-m4a',
-        'Accept-Ranges': 'bytes',
-      };
-      if (up.headers['content-length']) h['Content-Length'] = up.headers['content-length'];
-      if (up.headers['content-range']) h['Content-Range'] = up.headers['content-range'];
-      res.writeHead(up.statusCode || 502, h);
-      up.pipe(res);
-    });
-    upstream.on('error', () => {
-      if (!res.headersSent) send(res, 502, 'Bad Gateway', 'text/plain; charset=utf-8');
-      else res.end();
-    });
-    upstream.setTimeout(30000, () => upstream.destroy(new Error('upstream timeout')));
+    serveAudio(req, res, title);
     return;
   }
 
@@ -205,6 +188,118 @@ const server = http.createServer((req, res) => {
 
 function notFoundPage() {
   return '<!doctype html><html><head><meta charset="utf-8"><title>404</title><style>body{background-color:#444;font-size:14px}h3{font-size:60px;color:#eee;text-align:center;padding-top:30px;font-weight:normal}</style></head><body><h3>404，您请求的文件不存在!</h3></body></html>';
+}
+
+// ---------- 音频缓存服务 ----------
+
+const AUDIO_CACHE_CONTROL = 'public, max-age=2592000'; // 30 天 HTTP 缓存，配合 SW 离线可用
+const inflightAudio = new Map(); // 同一首歌并发请求去重，只拉一次上游
+
+// 解析 Range 头；非法时返回 'invalid'，无 Range 返回 null
+function parseRange(header, size) {
+  if (!header) return null;
+  const m = String(header).match(/^bytes=(\d*)-(\d*)$/);
+  if (!m || (m[1] === '' && m[2] === '')) return 'invalid';
+  let start;
+  let end;
+  if (m[1] === '') {
+    const suffix = Number(m[2]);
+    start = Math.max(0, size - suffix);
+    end = size - 1;
+  } else {
+    start = Number(m[1]);
+    end = m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
+  }
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end || start >= size) return 'invalid';
+  return { start, end };
+}
+
+// 从磁盘文件响应（支持 Range 切片）
+function serveAudioFromDisk(req, res, filePath, stat) {
+  const size = stat.size;
+  const base = {
+    'Content-Type': 'audio/x-m4a',
+    'Accept-Ranges': 'bytes',
+    'Cache-Control': AUDIO_CACHE_CONTROL,
+  };
+  const parsed = parseRange(req.headers.range, size);
+  if (parsed === 'invalid') {
+    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+    res.end();
+    return;
+  }
+  if (parsed) {
+    res.writeHead(206, {
+      ...base,
+      'Content-Range': `bytes ${parsed.start}-${parsed.end}/${size}`,
+      'Content-Length': parsed.end - parsed.start + 1,
+    });
+    fs.createReadStream(filePath, { start: parsed.start, end: parsed.end }).pipe(res);
+  } else {
+    res.writeHead(200, { ...base, 'Content-Length': size });
+    fs.createReadStream(filePath).pipe(res);
+  }
+}
+
+// 拉取上游全量音频落盘；成功 true（resolve），上游不存在 false，网络错误 reject
+function fetchAudioToDisk(title) {
+  return new Promise((resolve, reject) => {
+    const finalPath = audioCache.filePathFor(title);
+    const tmpPath = `${finalPath}.part`;
+    const upstream = https.get(mediaUrl(title), {
+      headers: {
+        Referer: 'https://myfreemp3ku.com/',
+        'User-Agent': 'Mozilla/5.0',
+      },
+      timeout: 60000,
+    }, (up) => {
+      const isFull = up.statusCode === 200
+        || (up.statusCode === 206 && /^bytes 0-/.test(up.headers['content-range'] || ''));
+      if (!isFull) {
+        up.resume();
+        resolve(false);
+        return;
+      }
+      const file = fs.createWriteStream(tmpPath);
+      up.pipe(file);
+      file.on('finish', () => {
+        file.close(() => {
+          fs.rename(tmpPath, finalPath, () => {
+            audioCache.cleanup();
+            resolve(true);
+          });
+        });
+      });
+      file.on('error', () => {
+        up.destroy();
+        fs.unlink(tmpPath, () => resolve(false));
+      });
+    });
+    upstream.on('timeout', () => upstream.destroy(new Error('upstream timeout')));
+    upstream.on('error', reject);
+  });
+}
+
+function serveAudio(req, res, title) {
+  audioCache.ensureDir();
+  const cachedStat = audioCache.statFile(title);
+  if (cachedStat) {
+    serveAudioFromDisk(req, res, audioCache.filePathFor(title), cachedStat);
+    return;
+  }
+  let pending = inflightAudio.get(title);
+  if (!pending) {
+    pending = fetchAudioToDisk(title).finally(() => inflightAudio.delete(title));
+    inflightAudio.set(title, pending);
+  }
+  pending.then(ok => {
+    const stat = ok ? audioCache.statFile(title) : null;
+    if (stat) serveAudioFromDisk(req, res, audioCache.filePathFor(title), stat);
+    else send(res, 404, 'Not Found', 'text/plain; charset=utf-8'); // 上游没有这首，与原站行为一致
+  }).catch(() => {
+    if (!res.headersSent) send(res, 502, 'Bad Gateway', 'text/plain; charset=utf-8');
+    else res.end();
+  });
 }
 
 server.listen(PORT, '0.0.0.0', () => {
