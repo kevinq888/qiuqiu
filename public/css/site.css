@@ -106,15 +106,26 @@ body.player-docked{padding-bottom:var(--player-dock-height,112px)}
   .player-host.is-expanded .player-actions a{margin-left:auto}
 }
 @media(max-width:640px){
+  /* 窄屏紧凑底栏：进度条一行，歌名与操作按钮一行，整体只占两行高度。 */
   .player-host.is-expanded .player-panel{
-    grid-template-columns:minmax(0,1fr);
-    gap:10px;
-    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"audio audio" "head actions";
+    gap:6px 10px;
+    padding:9px 14px calc(9px + env(safe-area-inset-bottom));
   }
-  .player-host.is-expanded .player-actions{grid-column:1;justify-content:space-between}
+  .player-host.is-expanded .player-panel audio{grid-area:audio;margin:0;height:30px}
+  .player-host.is-expanded .player-panel-head{grid-area:head;display:flex;align-items:center;gap:6px;margin:0}
+  .player-host.is-expanded .player-panel-head small{display:none}
+  .player-host.is-expanded .player-panel-head h2{font-size:13px;margin:0}
+  .player-host.is-expanded .player-panel-head .icon-button{width:26px;height:26px;font-size:15px;flex:none}
+  .player-host.is-expanded .player-actions{grid-area:actions;justify-content:flex-end;gap:2px}
+  .player-host.is-expanded .player-actions button{min-width:32px;height:32px;font-size:15px}
+  .player-host.is-expanded .player-actions button .icon{width:15px;height:15px}
+  .player-host.is-expanded .player-actions #player-queue{padding:0 6px;font-size:11px}
+  .player-host.is-expanded .player-actions a{margin-left:0}
   .player-host.is-expanded .queue-panel{
     right:16px;
-    bottom:calc(var(--player-dock-height,190px) + 8px);
-    max-height:min(300px,calc(100dvh - var(--player-dock-height,190px) - 24px));
+    bottom:calc(var(--player-dock-height,104px) + 8px);
+    max-height:min(300px,calc(100dvh - var(--player-dock-height,104px) - 24px));
   }
 }

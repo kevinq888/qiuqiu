@@ -3,9 +3,9 @@ const http = require('node:http');
 const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
-const { getSong, mediaUrl, proxyMediaUrl } = require('./src/store');
+const { seed, getSong, mediaUrl, proxyMediaUrl } = require('./src/store');
 const views = require('./src/views');
-const { ranking } = require('./src/rankings');
+const { ranking, sourcePage, MAX_PAGES } = require('./src/rankings');
 const { search } = require('./src/search');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -18,6 +18,7 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
   '.svg': 'image/svg+xml',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 
 function send(res, status, body, type = 'text/html; charset=utf-8') {
@@ -25,7 +26,7 @@ function send(res, status, body, type = 'text/html; charset=utf-8') {
   res.end(body);
 }
 
-// 静态资源：/projects/source_code/* 映射到 public/
+// 静态资源：/projects/source_code/* 映射到 public/；PWA 文件映射到根路径
 function serveStatic(req, res, urlPath) {
   const prefix = '/projects/source_code/';
   let rel;
@@ -33,6 +34,12 @@ function serveStatic(req, res, urlPath) {
     rel = urlPath.slice(prefix.length);
   } else if (urlPath === '/favicon.ico') {
     rel = 'picture/logo.svg';
+  } else if (urlPath === '/manifest.webmanifest') {
+    rel = 'manifest.webmanifest';
+  } else if (urlPath === '/sw.js') {
+    rel = 'sw.js';
+  } else if (urlPath.startsWith('/icons/')) {
+    rel = urlPath.slice(1);
   } else {
     return false;
   }
@@ -145,11 +152,36 @@ const server = http.createServer((req, res) => {
   }
 
   if (p === '/' || p === '/index.html') {
-    send(res, 200, views.homePage());
+    // 首页区块接入实时数据（6 小时缓存），失败回退本地种子
+    Promise.all([
+      sourcePage(1).catch(() => null),
+      ranking('recommend', 1).catch(() => null),
+      ranking('hot', 1).catch(() => null),
+    ]).then(([latest, recommend, hot]) => {
+      send(res, 200, views.homePage({
+        latest: latest && latest.items,
+        recommend: recommend && recommend.items,
+        hot: hot && hot.items,
+      }));
+    });
     return;
   }
   if (p === '/navigation/1/' || p === '/navigation/1') {
-    send(res, 200, views.recentPage());
+    // 最近更新：每页 20 首 = 源站 2 页（各 10 首），分页与榜单一致
+    const page = Math.max(1, Math.min(MAX_PAGES, Number(u.searchParams.get('page') || '1') || 1));
+    const sourcePages = page === 1
+      ? [sourcePage(1), Promise.resolve({ items: seed.nav1.slice(0, 10) })]
+      : [sourcePage(2 * page - 2), sourcePage(2 * page - 1)];
+    Promise.all(sourcePages.map(promise => promise.catch(() => ({ items: [] })))).then(results => {
+      const items = [];
+      const seen = new Set();
+      for (const result of results) {
+        for (const song of result.items) {
+          if (!seen.has(String(song.id))) { items.push(song); seen.add(String(song.id)); }
+        }
+      }
+      send(res, 200, views.recentPage(items, page, MAX_PAGES));
+    });
     return;
   }
   if (p === '/navigation/2/' || p === '/navigation/2') {

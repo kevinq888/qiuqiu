@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261015-7';
+const ASSET_VERSION = '20261016-1';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -25,7 +25,7 @@ function songLink(song, label) {
   return `<a class="song-link" href="/library/${esc(song.id)}.html" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}" title="播放 ${esc(song.title)}">${label || esc(song.title)}</a>`;
 }
 function pageHead(title, description = '听见喜欢的声音。秋秋音乐，发现与分享好音乐。') {
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f5f0"><meta name="description" content="${esc(description)}"><meta name="keywords" content="秋秋音乐,qiuqiumusic,在线音乐,音乐播放"><title>${esc(title)} · ${SITE}</title><link rel="icon" href="/projects/source_code/picture/logo.svg" type="image/svg+xml"><script>try{document.documentElement.dataset.theme=localStorage.getItem('qiuqiumusic.theme')||'mint'}catch{}</script><link rel="stylesheet" href="/projects/source_code/css/site.css?v=${ASSET_VERSION}"><script src="/projects/source_code/js/app.js?v=${ASSET_VERSION}" defer></script></head><body>`;
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f1f8f5"><meta name="description" content="${esc(description)}"><meta name="keywords" content="秋秋音乐,qiuqiumusic,在线音乐,音乐播放"><title>${esc(title)} · ${SITE}</title><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="秋秋音乐"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="icon" href="/projects/source_code/picture/logo.svg" type="image/svg+xml"><script>try{document.documentElement.dataset.theme=localStorage.getItem('qiuqiumusic.theme')||'mint'}catch{}</script><link rel="stylesheet" href="/projects/source_code/css/site.css?v=${ASSET_VERSION}"><script src="/projects/source_code/js/app.js?v=${ASSET_VERSION}" defer></script></head><body>`;
 }
 function nav(active = '') {
   const links = [['/', '发现'], ['/ranking/recommend', '推荐榜'], ['/ranking/hot', '热门榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
@@ -38,7 +38,7 @@ function footer() {
   return `<footer class="site-footer"><div class="shell footer-content"><div><strong>秋秋音乐</strong><span>听见喜欢的声音。</span></div><p>让每一次播放，都刚好合你心意。<br><small>© ${new Date().getFullYear()} qiuqiumusic</small></p></div></footer>`;
 }
 function player() {
-  return `<aside class="player-host" id="site-player" aria-label="音乐播放器" hidden><button class="vinyl-toggle" id="player-toggle" type="button" aria-label="展开播放器" aria-expanded="false"><span class="vinyl-disc"><span class="vinyl-label">${icon('note')}</span></span><span class="vinyl-eq" aria-hidden="true"><i></i><i></i><i></i></span></button><section class="player-panel" id="player-panel" aria-label="当前播放" hidden><div class="player-panel-head"><div><small>正在播放 · 秋秋音乐</small><h2 id="player-title">选择一首歌</h2><span id="player-state">准备播放</span></div><button id="player-collapse" class="icon-button" type="button" aria-label="收起播放器">⌄</button></div><audio id="player-audio" controls preload="none"></audio><div class="player-actions"><button id="player-prev" type="button" aria-label="上一首">⏮</button><button id="player-play-pause" type="button" aria-label="播放或暂停">⏯</button><button id="player-next" type="button" aria-label="下一首">⏭</button><button id="player-favorite" type="button" aria-label="收藏当前歌曲">${icon('heart')}</button><button id="player-queue" type="button" aria-label="播放清单">${icon('note')} <span id="queue-count">0</span></button><a id="player-detail" href="#">歌曲详情 ${icon('arrow')}</a></div></section><section class="queue-panel" id="queue-panel" aria-label="播放清单" hidden><div class="queue-head"><div><small>我的歌单</small><h2>播放清单</h2></div><button id="queue-close" class="icon-button" type="button" aria-label="关闭播放清单">×</button></div><div id="queue-items" class="queue-items"></div></section></aside>`;
+  return `<aside class="player-host" id="site-player" aria-label="音乐播放器" hidden><button class="vinyl-toggle" id="player-toggle" type="button" aria-label="展开播放器" aria-expanded="false"><span class="vinyl-disc"><span class="vinyl-label">${icon('note')}</span></span><span class="vinyl-eq" aria-hidden="true"><i></i><i></i><i></i></span></button><section class="player-panel" id="player-panel" aria-label="当前播放" hidden><div class="player-panel-head"><div><small><span id="player-state">正在播放</span> · 秋秋音乐</small><h2 id="player-title">选择一首歌</h2></div><button id="player-collapse" class="icon-button" type="button" aria-label="收起播放器">⌄</button></div><audio id="player-audio" controls preload="none"></audio><div class="player-actions"><button id="player-prev" type="button" aria-label="上一首">⏮</button><button id="player-play-pause" type="button" aria-label="播放或暂停">⏯</button><button id="player-next" type="button" aria-label="下一首">⏭</button><button id="player-favorite" type="button" aria-label="收藏当前歌曲">${icon('heart')}</button><button id="player-queue" type="button" aria-label="播放清单">${icon('note')} <span id="queue-count">0</span></button><a id="player-detail" href="#">歌曲详情 ${icon('arrow')}</a></div></section><section class="queue-panel" id="queue-panel" aria-label="播放清单" hidden><div class="queue-head"><div><small>我的歌单</small><h2>播放清单</h2></div><button id="queue-close" class="icon-button" type="button" aria-label="关闭播放清单">×</button></div><div id="queue-items" class="queue-items"></div></section></aside>`;
 }
 function layout(title, body, active = '', description) {
   return `${pageHead(title, description)}${nav(active)}<main class="shell main-content">${body}</main>${footer()}${player()}</body></html>`;
@@ -52,13 +52,19 @@ function songRows(items, start = 1, { date = false } = {}) {
 function bulkAction(items) {
   return items.length ? `<button class="add-all-button" type="button" data-add-page aria-live="polite" aria-label="一键将本页 ${items.length} 首歌曲加入播放清单"><span class="add-all-icon">${icon('plus')}</span><span class="add-all-text">一键加入歌单</span><span class="add-all-count">${items.length} 首</span></button>` : '';
 }
-function homePage() {
+function homePage(live = {}) {
   const hot = seed.hot_tags.slice(0, 16).map(song => `<a href="/library/${esc(song.id)}.html" class="mood-tag" data-play-id="${esc(song.id)}" data-play-title="${esc(song.title)}">${esc(song.title)}</a>`).join('');
   const intro = `<section class="hero"><div class="hero-copy"><span class="hero-kicker">每日好音乐 <span>✦</span></span><h1>让喜欢的音乐，<br><em>刚好遇见你。</em></h1><p>从此刻的心情出发，听一首属于今天的歌。</p>${searchForm()}<div class="hero-notes"><span>${icon('headphones')} 随时在线聆听</span><span>${icon('spark')} 每日发现新声</span></div></div><div class="hero-graphic" aria-hidden="true"><div class="disc"><div class="disc-inner"><img src="/projects/source_code/picture/logo.svg" alt=""></div></div><span class="float-note note-one">♫</span><span class="float-note note-two">♪</span><span class="graphic-caption">听见此刻的喜欢。</span></div></section>`;
   const featured = section('此刻热门', '此刻流行', `<div class="mood-tags">${hot}</div>`, '/viewmor.html', 'flame', 'trending-panel');
-  const latest = section('最近更新', '新歌上架', songRows(seed.latest.slice(0, 8), 1, { date: true }), '/navigation/1/', 'clock');
-  const rec = section('推荐歌曲', '为你推荐', songRows(seed.rank_recommend.slice(0, 6)), '/ranking/recommend', 'spark');
-  const popular = section('热门歌曲', '热门点播', songRows(seed.rank_hot.slice(0, 6)), '/ranking/hot', 'flame');
+  const latestItems = live.latest?.length ? live.latest : seed.nav1;
+  const recItems = live.recommend?.length ? live.recommend : seed.rank_recommend;
+  const hotItems = live.hot?.length ? live.hot : seed.rank_hot;
+  // 各区块之间去重：源站同一首歌可能存在多个条目，按标题去重更符合浏览观感
+  const seen = new Set();
+  const dedup = list => list.filter(song => !seen.has(song.title) && seen.add(song.title));
+  const latest = section('最近更新', '新歌上架', songRows(dedup(latestItems).slice(0, 8), 1, { date: true }), '/navigation/1/', 'clock');
+  const rec = section('推荐歌曲', '为你推荐', songRows(dedup(recItems).slice(0, 6)), '/ranking/recommend', 'spark');
+  const popular = section('热门歌曲', '热门点播', songRows(dedup(hotItems).slice(0, 6)), '/ranking/hot', 'flame');
   return layout('发现好音乐', `${intro}<div class="home-grid">${featured}${latest}</div><div class="home-grid ranking-grid">${rec}${popular}</div>`, '/');
 }
 function pager(base, page, pages) {
@@ -102,7 +108,10 @@ function myMusicPage() {
 function listPage(title, eyebrow, items, more = null, withBulk = false) {
   return layout(title, `<div class="page-intro"><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1><p>喜欢的声音，就从这里开始。</p>${searchForm()}</div>${section(title, eyebrow, songRows(items), more, 'note', withBulk ? 'bulk-panel' : '', withBulk ? bulkAction(items) : '')}`);
 }
-function recentPage() { return listPage('最近更新', '最新收录', seed.nav1, null, true); }
+function recentPage(items, page = 1, pages = 1) {
+  const content = `${section(`第 ${page} / ${pages} 页`, '最新收录', items.length ? songRows(items, (page - 1) * 20 + 1, { date: true }) : '<div class="empty-state">这页暂时无法获取，请稍后重试。</div>', null, 'clock', 'bulk-panel', bulkAction(items))}${pager('/navigation/1/', page, pages)}`;
+  return layout('最近更新', `<div class="page-intro"><span class="eyebrow">最新收录</span><h1>最近更新</h1><p>实时同步最新上架的歌曲，每 6 小时刷新缓存。</p>${searchForm()}</div>${content}`, '/navigation/1/');
+}
 function viewmorPage(data) { return data ? rankingPage(data) : listPage('此刻热门', '此刻流行', seed.viewmor, '/ranking/hot'); }
 function downPage(data) { return data ? rankingPage(data) : listPage('热门歌曲', '热门点播', seed.down, '/ranking/hot'); }
 function collectionsPage() {

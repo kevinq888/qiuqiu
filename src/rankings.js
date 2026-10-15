@@ -110,4 +110,4 @@ async function ranking(kind, requestedPage) {
   return { kind, page, pages: MAX_PAGES, items: items.slice(0, 20), stale: results.some(x => x.stale), unavailable: results.some(x => x.error) };
 }
 
-module.exports = { ranking, parseSongs };
+module.exports = { ranking, sourcePage, MAX_PAGES, parseSongs };
