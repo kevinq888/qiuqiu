@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-1';
+const ASSET_VERSION = '20261016-2';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -29,7 +29,7 @@ function pageHead(title, description = '听见喜欢的声音。秋秋音乐，�
 }
 function nav(active = '') {
   const links = [['/', '发现'], ['/ranking/recommend', '推荐榜'], ['/ranking/hot', '热门榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
-  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><div class="theme-picker"><label class="sr-only" for="theme-select">切换皮肤</label><span aria-hidden="true">◐</span><select id="theme-select" aria-label="切换皮肤"><option value="mint">薄荷绿</option><option value="sky">晴空蓝</option><option value="lilac">晨雾紫</option></select></div></div></header>`;
+  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><div class="theme-picker"><label class="sr-only" for="theme-select">切换皮肤</label><span aria-hidden="true">◐</span><select id="theme-select" aria-label="切换皮肤"><option value="mint">薄荷绿</option><option value="sky">晴空蓝</option><option value="lilac">晨雾紫</option><option value="sunset">日落橙</option><option value="sakura">樱花粉</option><option value="dark">暗夜黑</option></select></div></div></header>`;
 }
 function searchForm(q = '') {
   return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;
@@ -65,7 +65,8 @@ function homePage(live = {}) {
   const latest = section('最近更新', '新歌上架', songRows(dedup(latestItems).slice(0, 8), 1, { date: true }), '/navigation/1/', 'clock');
   const rec = section('推荐歌曲', '为你推荐', songRows(dedup(recItems).slice(0, 6)), '/ranking/recommend', 'spark');
   const popular = section('热门歌曲', '热门点播', songRows(dedup(hotItems).slice(0, 6)), '/ranking/hot', 'flame');
-  return layout('发现好音乐', `${intro}<div class="home-grid">${featured}${latest}</div><div class="home-grid ranking-grid">${rec}${popular}</div>`, '/');
+  // 热歌与新歌板块靠前，方便打开首页先看到；标签云与推荐随后。
+  return layout('发现好音乐', `${intro}<div class="home-grid">${popular}${latest}</div><div class="home-grid ranking-grid">${featured}${rec}</div>`, '/');
 }
 function pager(base, page, pages) {
   if (pages <= 1) return '';

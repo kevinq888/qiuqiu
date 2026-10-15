@@ -1,6 +1,8 @@
 (() => {
   const KEY = 'qiuqiumusic.guest.v1';
   const THEME_KEY = 'qiuqiumusic.theme';
+  const THEMES = ['mint', 'sky', 'lilac', 'sunset', 'sakura', 'dark'];
+  const THEME_COLORS = { mint: '#f1f8f5', sky: '#f2f8fc', lilac: '#f8f5fb', sunset: '#fdf6ef', sakura: '#fdf3f6', dark: '#0f1a17' };
   const tabId = Math.random().toString(36).slice(2);
   const channel = 'BroadcastChannel' in window ? new BroadcastChannel('qiuqiumusic.playback.v1') : null;
   const host = document.getElementById('site-player');
@@ -24,6 +26,12 @@
       queue = Array.isArray(data.queue) ? data.queue.filter(validSong).slice(0, 1000) : [];
       favorites = Array.isArray(data.favorites) ? data.favorites.filter(validSong).slice(0, 1000) : [];
     } catch { queue = []; favorites = []; }
+  }
+  // 切换皮肤并同步浏览器状态栏颜色（PWA 与移动端浏览体验）
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = THEME_COLORS[theme] || THEME_COLORS.mint;
   }
   function validSong(song) { return song && /^\d+$/.test(String(song.id)) && typeof song.title === 'string'; }
   function save() {
@@ -209,15 +217,15 @@
   document.addEventListener('change', event => {
     if (event.target.id !== 'theme-select') return;
     const theme = event.target.value;
-    if (!['mint', 'sky', 'lilac'].includes(theme)) return;
-    document.documentElement.dataset.theme = theme;
+    if (!THEMES.includes(theme)) return;
+    applyTheme(theme);
     try { localStorage.setItem(THEME_KEY, theme); } catch {}
   });
   window.addEventListener('popstate', () => navigate(location.href, { pop: true }));
   window.addEventListener('storage', event => {
     if (event.key === KEY) { readSaved(); renderCollections(); }
     if (event.key === THEME_KEY) {
-      document.documentElement.dataset.theme = event.newValue || 'mint';
+      applyTheme(event.newValue || 'mint');
       const select = document.getElementById('theme-select');
       if (select) select.value = document.documentElement.dataset.theme;
     }
@@ -250,6 +258,7 @@
   });
   readSaved();
   renderCollections();
+  applyTheme(document.documentElement.dataset.theme || 'mint');
   const select = document.getElementById('theme-select');
   if (select) select.value = document.documentElement.dataset.theme || 'mint';
   message('hello');
