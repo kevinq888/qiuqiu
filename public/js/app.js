@@ -35,6 +35,9 @@
   let minimizedByUser = false;
   let remotePosition = { currentTime: 0, duration: 0 };
   let lastProgressSent = 0;
+  let lastPlaybackSave = 0;
+  let pendingRestorePosition = 0;
+  let trackLoadPending = false;
   let navigationId = 0;
   let loadingStartedAt = 0;
   let playMode = (() => { try { const value = localStorage.getItem(PLAY_MODE_KEY); return PLAY_MODES.includes(value) ? value : 'sequence'; } catch { return 'sequence'; } })();
@@ -145,11 +148,20 @@
   window.matchMedia('(display-mode: standalone)').addEventListener?.('change', updateInstallButton);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
-  function readSaved() {
+  function readSaved(restorePlayback = false) {
     try {
       const data = JSON.parse(localStorage.getItem(KEY) || '{}');
       queue = Array.isArray(data.queue) ? data.queue.filter(validSong).slice(0, 1000) : [];
       favorites = Array.isArray(data.favorites) ? data.favorites.filter(validSong).slice(0, 1000) : [];
+      if (restorePlayback && validSong(data.current)) {
+        current = data.current;
+        owner = tabId;
+        isPlaying = false;
+        pendingRestorePosition = Number.isFinite(data.position) ? Math.max(0, data.position) : 0;
+        trackLoadPending = true;
+        audio.src = `/media/${encodeURIComponent(current.title)}.m4a`;
+        audio.load();
+      }
     } catch { queue = []; favorites = []; }
   }
   // 切换皮肤并同步浏览器状态栏颜色（PWA 与移动端浏览体验）
@@ -202,8 +214,19 @@
   }
   function validSong(song) { return song && /^\d+$/.test(String(song.id)) && typeof song.title === 'string'; }
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, queue, favorites })); } catch {}
+    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, queue, favorites, current, position: savedPosition() })); } catch {}
     renderCollections();
+  }
+  function savedPosition() {
+    if (!current) return 0;
+    if (owner !== tabId) return remotePosition.currentTime || 0;
+    if (trackLoadPending) return pendingRestorePosition;
+    if (pendingRestorePosition > 0 && audio.readyState === 0) return pendingRestorePosition;
+    return Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+  }
+  function persistPlayback() {
+    if (!current) return;
+    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, queue, favorites, current, position: savedPosition() })); } catch {}
   }
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
   function songFrom(button, idKey, titleKey) { return { id: String(button.dataset[idKey]), title: button.dataset[titleKey] }; }
@@ -331,8 +354,11 @@
     owner = tabId;
     current = song;
     if (expandPanel) minimizedByUser = false;
-    addToQueue(song);
+    pendingRestorePosition = 0;
+    trackLoadPending = true;
     audio.src = `/media/${encodeURIComponent(song.title)}.m4a`;
+    addToQueue(song);
+    persistPlayback();
     stateNode.textContent = '正在加载…';
     setBuffering(true);
     isPlaying = true;
@@ -470,6 +496,8 @@
     if (query) navigate(`/search.php?q=${encodeURIComponent(query)}`);
   });
   window.addEventListener('popstate', () => navigate(location.href, { pop: true }));
+  window.addEventListener('pagehide', persistPlayback);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') persistPlayback(); });
   document.addEventListener('scroll', event => { if (event.target.classList?.contains('main-nav')) updateNavScrollHint(); }, true);
   window.addEventListener('resize', updateNavScrollHint);
   window.addEventListener('storage', event => {
@@ -559,7 +587,7 @@
   document.getElementById('queue-close').addEventListener('click', () => { queuePanel.hidden = true; });
   audio.addEventListener('playing', () => { setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放'; updatePlayer(); announce(); });
   audio.addEventListener('canplay', () => setBuffering(false));
-  audio.addEventListener('pause', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; updatePlayer(); announce(); } });
+  audio.addEventListener('pause', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; persistPlayback(); updatePlayer(); announce(); } });
   audio.addEventListener('waiting', () => { if (owner === tabId) { setBuffering(true); stateNode.textContent = '缓冲中…'; } });
   audio.addEventListener('error', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = '音频暂时不可用'; updatePlayer(); announce(); } });
   audio.addEventListener('ended', () => {
@@ -568,11 +596,23 @@
   });
   audio.addEventListener('timeupdate', () => {
     updateTimeline();
+    if (owner === tabId && current && performance.now() - lastPlaybackSave >= 4000) {
+      lastPlaybackSave = performance.now();
+      persistPlayback();
+    }
     if (owner !== tabId || !current || performance.now() - lastProgressSent < 500) return;
     lastProgressSent = performance.now();
     message('progress', playbackPosition());
   });
-  audio.addEventListener('loadedmetadata', updateTimeline);
+  audio.addEventListener('loadedmetadata', () => {
+    if (owner === tabId && current && pendingRestorePosition > 0) {
+      audio.currentTime = Math.min(pendingRestorePosition, Number.isFinite(audio.duration) ? audio.duration : pendingRestorePosition);
+      pendingRestorePosition = 0;
+    }
+    trackLoadPending = false;
+    persistPlayback();
+    updateTimeline();
+  });
   audio.addEventListener('seeked', () => { updateTimeline(); if (owner === tabId) message('progress', playbackPosition()); });
   audio.addEventListener('durationchange', () => { updateTimeline(); if (owner === tabId) message('progress', playbackPosition()); });
   if (channel) channel.addEventListener('message', event => {
@@ -594,9 +634,9 @@
     if (data.type === 'mode') setPlayMode(data.mode, false);
     if (data.type === 'hello') announce();
   });
-  readSaved();
-  renderCollections();
   enableVinylDrag();
+  readSaved(true);
+  renderCollections();
   applyTheme(document.documentElement.dataset.theme || 'mint');
   updateModeButton();
   updateInstallButton();
