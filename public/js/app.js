@@ -13,6 +13,9 @@
   const stateNode = document.getElementById('player-state');
   const detail = document.getElementById('player-detail');
   const toggle = document.getElementById('player-toggle');
+  const remoteProgress = document.getElementById('player-remote-progress');
+  const remoteTime = document.getElementById('player-remote-time');
+  const remoteBar = document.getElementById('player-remote-bar');
   const loading = document.getElementById('route-loading');
   const installDialog = document.getElementById('install-dialog');
   let installPrompt = null;
@@ -22,6 +25,9 @@
   let current = null;
   let owner = null;
   let isPlaying = false;
+  let minimizedByUser = false;
+  let remotePosition = { currentTime: 0, duration: 0 };
+  let lastProgressSent = 0;
   let navigationId = 0;
   let loadingStartedAt = 0;
 
@@ -180,16 +186,32 @@
     save();
   }
   function message(type, extra = {}) { channel?.postMessage({ type, tabId, ...extra }); }
-  function announce() { if (owner === tabId && current) message('state', { current, playing: isPlaying }); }
+  function playbackPosition() {
+    return { currentTime: Number.isFinite(audio.currentTime) ? audio.currentTime : 0, duration: Number.isFinite(audio.duration) ? audio.duration : 0 };
+  }
+  function formatTime(seconds) {
+    const value = Math.max(0, Math.floor(seconds));
+    return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
+  }
+  function renderRemoteProgress() {
+    const { currentTime, duration } = remotePosition;
+    remoteTime.textContent = `${formatTime(currentTime)} / ${duration ? formatTime(duration) : '--:--'}`;
+    remoteBar.max = duration || 1;
+    remoteBar.value = Math.min(currentTime, duration || 1);
+  }
+  function announce() { if (owner === tabId && current) message('state', { current, playing: isPlaying, ...playbackPosition() }); }
   function updatePlayer() {
     if (!current) return;
     host.hidden = false;
+    if (!minimizedByUser && !host.classList.contains('is-expanded')) expand();
     titleNode.textContent = current.title;
     detail.href = `/library/${encodeURIComponent(current.id)}.html`;
     document.getElementById('player-favorite').classList.toggle('selected', contains(favorites, current));
     document.getElementById('queue-count').textContent = String(queue.length);
     host.classList.toggle('is-playing', isPlaying);
     host.classList.toggle('is-remote', owner !== tabId);
+    remoteProgress.hidden = owner === tabId;
+    if (owner !== tabId) renderRemoteProgress();
     if (owner !== tabId) stateNode.textContent = isPlaying ? '正在另一标签页播放' : '另一标签页已暂停';
     else if (!isPlaying && audio.paused) stateNode.textContent = '已暂停';
   }
@@ -199,6 +221,7 @@
   }
   let restoreVinylPos = null;
   function expand() {
+    minimizedByUser = false;
     panel.hidden = false;
     // 展开为底部播放条：清除悬浮球拖动留下的内联定位，让 is-expanded 吸底规则生效
     host.style.left = host.style.top = host.style.right = host.style.bottom = '';
@@ -209,6 +232,7 @@
     syncPlayerSpace();
   }
   function collapse() {
+    minimizedByUser = true;
     panel.hidden = true;
     queuePanel.hidden = true;
     host.classList.remove('is-expanded');
@@ -239,6 +263,7 @@
     message('takeover');
     owner = tabId;
     current = song;
+    if (expandPanel) minimizedByUser = false;
     addToQueue(song);
     audio.src = `/media/${encodeURIComponent(song.title)}.m4a`;
     stateNode.textContent = '正在加载…';
@@ -447,13 +472,26 @@
   audio.addEventListener('waiting', () => { if (owner === tabId) { setBuffering(true); stateNode.textContent = '缓冲中…'; } });
   audio.addEventListener('error', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = '音频暂时不可用'; updatePlayer(); announce(); } });
   audio.addEventListener('ended', () => shiftSong(1));
+  audio.addEventListener('timeupdate', () => {
+    if (owner !== tabId || !current || performance.now() - lastProgressSent < 500) return;
+    lastProgressSent = performance.now();
+    message('progress', playbackPosition());
+  });
+  audio.addEventListener('seeked', () => { if (owner === tabId) message('progress', playbackPosition()); });
+  audio.addEventListener('durationchange', () => { if (owner === tabId) message('progress', playbackPosition()); });
   if (channel) channel.addEventListener('message', event => {
     const data = event.data;
     if (!data || data.tabId === tabId) return;
     if (data.type === 'takeover' && owner === tabId) { audio.pause(); owner = data.tabId; }
     if (data.type === 'state') {
       if (owner === tabId && !audio.paused) return;
-      owner = data.tabId; current = data.current; isPlaying = !!data.playing; updatePlayer();
+      owner = data.tabId; current = data.current; isPlaying = !!data.playing;
+      remotePosition = { currentTime: data.currentTime || 0, duration: data.duration || 0 };
+      updatePlayer();
+    }
+    if (data.type === 'progress' && owner === data.tabId) {
+      remotePosition = { currentTime: data.currentTime || 0, duration: data.duration || 0 };
+      renderRemoteProgress();
     }
     if (data.type === 'command' && data.owner === tabId) playbackCommand(data.action);
     if (data.type === 'hello') announce();
