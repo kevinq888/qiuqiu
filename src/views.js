@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-13';
+const ASSET_VERSION = '20261016-14';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -16,6 +16,7 @@ function icon(name) {
     arrow: '<path d="m9 5 7 7-7 7"/>',
     note: '<path d="M9 18V5l10-2v13M9 8l10-2"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
     music: '<path fill="currentColor" stroke="none" d="M18 3.2a1 1 0 0 1 1.2 1v11.2a3.6 3.6 0 1 1-2-3.2V7.1l-6 1.3v9a3.6 3.6 0 1 1-2-3.2V6.8a1 1 0 0 1 .8-1z"/>',
+    vinylNote: '<path fill="currentColor" stroke="none" d="M12 3v12.55A4 4 0 1 0 14 19V7h6V3h-8z"/>',
     minimize: '<path d="m6 10 6 6 6-6"/><path d="M5 20h14"/>',
     headphones: '<path d="M3 14v-3a9 9 0 0 1 18 0v3M3 14h3v6H4a1 1 0 0 1-1-1v-5Zm18 0h-3v6h2a1 1 0 0 0 1-1v-5Z"/>',
     heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
@@ -41,7 +42,7 @@ function footer() {
   return `<footer class="site-footer"><div class="shell footer-content footer-simple"><span class="footer-copy">© ${new Date().getFullYear()} qiuqiumusic</span><span class="footer-tagline">秋秋音乐，让每一次播放，都刚好合你心意。</span></div></footer>`;
 }
 function player() {
-  return `<aside class="player-host" id="site-player" aria-label="音乐播放器" hidden><button class="vinyl-toggle" id="player-toggle" type="button" aria-label="展开播放器" aria-expanded="false"><span class="vinyl-disc"><span class="vinyl-label">${icon('music')}</span></span><span class="vinyl-eq" aria-hidden="true"><i></i><i></i><i></i></span></button><section class="player-panel" id="player-panel" aria-label="当前播放" hidden><div class="player-panel-head"><div><small><span id="player-state">正在播放</span> · 秋秋音乐</small><h2 id="player-title">选择一首歌</h2></div><button id="player-collapse" class="icon-button" type="button" aria-label="收起播放器">${icon('minimize')}</button></div><audio id="player-audio" controls preload="none"></audio><div class="player-actions"><button id="player-prev" type="button" aria-label="上一首">⏮</button><button id="player-play-pause" type="button" aria-label="播放或暂停">⏯</button><button id="player-next" type="button" aria-label="下一首">⏭</button><button id="player-favorite" type="button" aria-label="收藏当前歌曲">${icon('heart')}</button><button id="player-queue" type="button" aria-label="播放清单">${icon('note')} <span id="queue-count">0</span></button><a id="player-detail" href="#">歌曲详情 ${icon('arrow')}</a></div></section><button id="player-collapse-desktop" class="player-collapse-desktop" type="button" aria-label="最小化播放器">${icon('minimize')}</button><section class="queue-panel" id="queue-panel" aria-label="播放清单" hidden><div class="queue-head"><div><small>我的歌单</small><h2>播放清单</h2></div><button id="queue-close" class="icon-button" type="button" aria-label="关闭播放清单">×</button></div><div id="queue-items" class="queue-items"></div></section></aside>`;
+  return `<aside class="player-host" id="site-player" aria-label="音乐播放器" hidden><button class="vinyl-toggle" id="player-toggle" type="button" aria-label="展开播放器" aria-expanded="false"><span class="vinyl-disc"><span class="vinyl-label">${icon('vinylNote')}</span></span></button><section class="player-panel" id="player-panel" aria-label="当前播放" hidden><div class="player-panel-head"><div><small><span id="player-state">正在播放</span> · 秋秋音乐</small><h2 id="player-title">选择一首歌</h2></div><button id="player-collapse" class="icon-button" type="button" aria-label="收起播放器">${icon('minimize')}</button></div><audio id="player-audio" controls preload="none"></audio><div class="player-actions"><button id="player-prev" type="button" aria-label="上一首">⏮</button><button id="player-play-pause" type="button" aria-label="播放或暂停">⏯</button><button id="player-next" type="button" aria-label="下一首">⏭</button><button id="player-favorite" type="button" aria-label="收藏当前歌曲">${icon('heart')}</button><button id="player-queue" type="button" aria-label="播放清单">${icon('note')} <span id="queue-count">0</span></button><a id="player-detail" href="#">歌曲详情 ${icon('arrow')}</a></div></section><button id="player-collapse-desktop" class="player-collapse-desktop" type="button" aria-label="最小化播放器">${icon('minimize')}</button><section class="queue-panel" id="queue-panel" aria-label="播放清单" hidden><div class="queue-head"><div><small>我的歌单</small><h2>播放清单</h2></div><button id="queue-close" class="icon-button" type="button" aria-label="关闭播放清单">×</button></div><div id="queue-items" class="queue-items"></div></section></aside>`;
 }
 function loadingOverlay() {
   return `<div class="route-loading" id="route-loading" role="status" aria-live="polite" aria-label="正在加载" hidden><div class="route-loading-card"><span class="route-loading-record" aria-hidden="true"><span>${icon('music')}</span></span><strong class="route-loading-text">正在加载，请稍候…</strong><small>好音乐，马上就来</small></div></div>`;

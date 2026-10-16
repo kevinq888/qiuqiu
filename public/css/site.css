@@ -328,13 +328,32 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   .player-host.is-expanded .player-panel{padding-right:80px}
 }
 
-/* 黑胶保留唱片轮廓，中心用高对比音乐符号，并跟随皮肤配色。 */
-.vinyl-disc{
-  background:repeating-radial-gradient(circle at center,transparent 0 5px,rgba(255,255,255,.09) 6px 7px,transparent 8px 10px),
-    conic-gradient(from 40deg,color-mix(in srgb,var(--forest) 70%,#14282b),color-mix(in srgb,var(--forest) 45%,#0c2025) 24%,color-mix(in srgb,var(--forest) 62%,#091c21) 52%,color-mix(in srgb,var(--forest) 50%,#19363a) 76%,color-mix(in srgb,var(--forest) 70%,#14282b));
+/* 最小化播放器是一张真正可辨认的唱片；播放时唱片与标签一起转动。 */
+.vinyl-toggle,[data-theme="dark"] .vinyl-toggle{
+  width:70px;height:70px;padding:3px;border:0;border-radius:50%;
+  background:color-mix(in srgb,var(--orange) 58%,var(--forest));
+  box-shadow:0 12px 25px rgba(9,33,34,.3),0 0 0 1px color-mix(in srgb,var(--forest) 24%,transparent);
+  filter:none;backdrop-filter:none;-webkit-backdrop-filter:none;
 }
-.vinyl-label{width:27px;height:27px;background:var(--white);color:var(--forest);box-shadow:0 0 0 2px color-mix(in srgb,var(--forest) 18%,white)}
-.vinyl-label .icon{width:18px;height:18px}
+.vinyl-toggle:hover{transform:translateY(-3px) scale(1.035);box-shadow:0 16px 30px rgba(9,33,34,.34)}
+.vinyl-disc{
+  width:64px;height:64px;border:2px solid rgba(255,255,255,.28);
+  background:
+    radial-gradient(circle at 28% 19%,rgba(255,255,255,.22),transparent 32%),
+    repeating-radial-gradient(circle,transparent 0 4px,rgba(255,255,255,.13) 5px,transparent 6px 8px),
+    conic-gradient(from 20deg,#101e21 0%,#254c4d 19%,#0c171a 43%,#274749 64%,#0a1518 83%,#101e21 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),inset 0 2px 8px rgba(0,0,0,.25);
+  animation-duration:4s;
+}
+.vinyl-disc:after{display:none}
+.vinyl-label{
+  position:relative;z-index:1;width:28px;height:28px;
+  background:var(--orange);color:#fff;
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 0 0 3px rgba(5,18,20,.6),inset 0 1px 3px rgba(255,255,255,.28);
+}
+.vinyl-label .icon{width:18px;height:18px;stroke:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+@media(max-width:680px){.vinyl-toggle,[data-theme="dark"] .vinyl-toggle{width:64px;height:64px}.vinyl-disc{width:58px;height:58px}.vinyl-label{width:26px;height:26px}.vinyl-label .icon{width:17px;height:17px}}
 @media(max-width:680px){
   .player-host.is-expanded .player-panel-head .icon-button .icon{width:17px;height:17px}
 }
