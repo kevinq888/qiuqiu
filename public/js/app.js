@@ -13,6 +13,9 @@
   const panel = document.getElementById('player-panel');
   const queuePanel = document.getElementById('queue-panel');
   const audio = document.getElementById('player-audio');
+  const seek = document.getElementById('player-seek');
+  const currentTimeNode = document.getElementById('player-current-time');
+  const durationNode = document.getElementById('player-duration');
   const titleNode = document.getElementById('player-title');
   const stateNode = document.getElementById('player-state');
   const toggle = document.getElementById('player-toggle');
@@ -243,11 +246,23 @@
     const value = Math.max(0, Math.floor(seconds));
     return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
   }
+  function updateTimeline() {
+    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+    const currentTime = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+    seek.max = String(duration || 0);
+    seek.value = String(Math.min(currentTime, duration || 0));
+    seek.disabled = duration <= 0 || owner !== tabId;
+    seek.style.setProperty('--played', `${duration ? Math.min(100, currentTime / duration * 100) : 0}%`);
+    seek.setAttribute('aria-valuetext', `${formatTime(currentTime)} / ${duration ? formatTime(duration) : '--:--'}`);
+    currentTimeNode.textContent = formatTime(currentTime);
+    durationNode.textContent = duration ? formatTime(duration) : '--:--';
+  }
   function renderRemoteProgress() {
     const { currentTime, duration } = remotePosition;
     remoteTime.textContent = `${formatTime(currentTime)} / ${duration ? formatTime(duration) : '--:--'}`;
     remoteBar.max = duration || 1;
     remoteBar.value = Math.min(currentTime, duration || 1);
+    remoteBar.style.setProperty('--played', `${duration ? Math.min(100, currentTime / duration * 100) : 0}%`);
   }
   function announce() { if (owner === tabId && current) message('state', { current, playing: isPlaying, ...playbackPosition() }); }
   function updatePlayer() {
@@ -261,6 +276,7 @@
     host.classList.toggle('is-remote', owner !== tabId);
     remoteProgress.hidden = owner === tabId;
     if (owner !== tabId) renderRemoteProgress();
+    updateTimeline();
     if (owner !== tabId) stateNode.textContent = isPlaying ? '正在另一标签页播放' : '另一标签页已暂停';
     else if (!isPlaying && audio.paused) stateNode.textContent = '已暂停';
   }
@@ -535,6 +551,11 @@
   document.getElementById('player-next').addEventListener('click', () => playbackCommand('next'));
   document.getElementById('player-mode').addEventListener('click', () => setPlayMode(PLAY_MODES[(PLAY_MODES.indexOf(playMode) + 1) % PLAY_MODES.length]));
   document.getElementById('player-play-pause').addEventListener('click', () => playbackCommand('toggle'));
+  seek.addEventListener('input', () => {
+    if (owner !== tabId || !Number.isFinite(audio.duration)) return;
+    audio.currentTime = Number(seek.value);
+    updateTimeline();
+  });
   document.getElementById('player-favorite').addEventListener('click', () => { if (current) toggleFavorite(current); });
   document.getElementById('player-queue').addEventListener('click', () => { queuePanel.hidden = !queuePanel.hidden; renderCollections(); });
   document.getElementById('queue-close').addEventListener('click', () => { queuePanel.hidden = true; });
@@ -548,12 +569,14 @@
     if (!shiftSong(1, true)) { isPlaying = false; stateNode.textContent = '播放完毕'; updatePlayer(); announce(); }
   });
   audio.addEventListener('timeupdate', () => {
+    updateTimeline();
     if (owner !== tabId || !current || performance.now() - lastProgressSent < 500) return;
     lastProgressSent = performance.now();
     message('progress', playbackPosition());
   });
-  audio.addEventListener('seeked', () => { if (owner === tabId) message('progress', playbackPosition()); });
-  audio.addEventListener('durationchange', () => { if (owner === tabId) message('progress', playbackPosition()); });
+  audio.addEventListener('loadedmetadata', updateTimeline);
+  audio.addEventListener('seeked', () => { updateTimeline(); if (owner === tabId) message('progress', playbackPosition()); });
+  audio.addEventListener('durationchange', () => { updateTimeline(); if (owner === tabId) message('progress', playbackPosition()); });
   if (channel) channel.addEventListener('message', event => {
     const data = event.data;
     if (!data || data.tabId === tabId) return;
@@ -567,6 +590,7 @@
     if (data.type === 'progress' && owner === data.tabId) {
       remotePosition = { currentTime: data.currentTime || 0, duration: data.duration || 0 };
       renderRemoteProgress();
+      updateTimeline();
     }
     if (data.type === 'command' && data.owner === tabId) playbackCommand(data.action);
     if (data.type === 'mode') setPlayMode(data.mode, false);

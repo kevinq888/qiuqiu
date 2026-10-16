@@ -505,3 +505,32 @@ body.theme-sheet-open{overflow:hidden}
   .player-host.is-expanded .player-panel audio{grid-area:audio}
   .player-host.is-expanded .player-remote-progress{grid-area:audio}
 }
+
+/* 深色分页按钮：区分可用、禁用和当前页状态，并保持文字清晰。 */
+[data-theme="dark"] .pager a:not(.disabled){background:#19352d;color:#d9e6e0}
+[data-theme="dark"] .pager a:not(.disabled):hover{background:#28594f;color:#fff}
+[data-theme="dark"] .pager a.disabled{opacity:1;background:transparent;color:#81988e;border:1px solid #294139}
+[data-theme="dark"] .pager .current{background:#f48d73;color:#14221e;box-shadow:0 4px 14px rgba(244,141,115,.22);font-weight:900}
+
+/* 自绘进度条采用与播放器一致的磨砂底和主题色滑块，避开原生纯白控制条。 */
+.player-panel audio{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.player-host.is-remote .player-timeline{display:none}
+.player-timeline,.player-remote-progress{min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 13px;border:1px solid color-mix(in srgb,var(--line) 74%,transparent);border-radius:999px;background:color-mix(in srgb,var(--white) 42%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 14px rgba(5,24,21,.06);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.player-timeline[hidden],.player-remote-progress[hidden]{display:none}
+.player-panel audio:focus-visible{outline:none}
+.player-timeline input[type="range"]{--played:0%;appearance:none;-webkit-appearance:none;width:100%;height:5px;margin:0;border:0;border-radius:999px;background:linear-gradient(to right,var(--forest) 0 var(--played),color-mix(in srgb,var(--forest) 18%,transparent) var(--played) 100%);cursor:pointer;touch-action:pan-y}
+.player-timeline input[type="range"]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:3px solid var(--white);border-radius:50%;background:var(--orange);box-shadow:0 1px 7px color-mix(in srgb,var(--forest) 42%,transparent)}
+.player-timeline input[type="range"]::-moz-range-thumb{width:10px;height:10px;border:3px solid var(--white);border-radius:50%;background:var(--orange);box-shadow:0 1px 7px color-mix(in srgb,var(--forest) 42%,transparent)}
+.player-timeline input[type="range"]:focus-visible{outline:3px solid color-mix(in srgb,var(--forest) 28%,transparent);outline-offset:5px}
+.player-timeline input[type="range"]:disabled{cursor:default;opacity:.6}
+.player-remote-progress{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"time bar"}
+.player-remote-progress>span{grid-area:time}
+.player-remote-progress progress{grid-area:bar;width:100%;height:5px;min-width:0;appearance:none;-webkit-appearance:none;border:0;border-radius:999px;background:color-mix(in srgb,var(--forest) 18%,transparent);overflow:hidden}
+.player-remote-progress progress::-webkit-progress-bar{background:color-mix(in srgb,var(--forest) 18%,transparent);border-radius:999px}
+.player-remote-progress progress::-webkit-progress-value{background:var(--forest);border-radius:999px}
+.player-remote-progress progress::-moz-progress-bar{background:var(--forest);border-radius:999px}
+[data-theme="dark"] .player-timeline,[data-theme="dark"] .player-remote-progress{background:rgba(26,48,41,.58);border-color:rgba(153,190,174,.18);color:#b6c9bf;box-shadow:inset 0 1px 0 rgba(237,255,247,.05),0 4px 15px rgba(0,0,0,.16)}
+@media(max-width:640px){
+  .player-host.is-expanded .player-timeline,.player-host.is-expanded .player-remote-progress{grid-area:audio}
+  .player-host.is-expanded .player-timeline{padding:7px 11px}
+}
