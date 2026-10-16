@@ -1,5 +1,6 @@
 (() => {
   const KEY = 'qiuqiumusic.guest.v1';
+  const LAST_PLAYBACK_KEY = 'qiuqiumusic.lastPlayback.v1';
   const THEME_KEY = 'qiuqiumusic.theme';
   const THEMES = ['mint', 'sky', 'lilac', 'sunset', 'sakura', 'dark'];
   const THEME_NAMES = { mint: '薄荷绿', sky: '晴空蓝', lilac: '晨雾紫', sunset: '日落橙', sakura: '樱花粉', dark: '暗夜黑' };
@@ -149,20 +150,28 @@
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
   function readSaved(restorePlayback = false) {
+    let data = {};
+    let playback = {};
     try {
-      const data = JSON.parse(localStorage.getItem(KEY) || '{}');
-      queue = Array.isArray(data.queue) ? data.queue.filter(validSong).slice(0, 1000) : [];
-      favorites = Array.isArray(data.favorites) ? data.favorites.filter(validSong).slice(0, 1000) : [];
-      if (restorePlayback && validSong(data.current)) {
-        current = data.current;
-        owner = tabId;
-        isPlaying = false;
-        pendingRestorePosition = Number.isFinite(data.position) ? Math.max(0, data.position) : 0;
-        trackLoadPending = true;
-        audio.src = `/media/${encodeURIComponent(current.title)}.m4a`;
-        audio.load();
-      }
-    } catch { queue = []; favorites = []; }
+      data = JSON.parse(localStorage.getItem(KEY) || '{}');
+    } catch {}
+    queue = Array.isArray(data.queue) ? data.queue.filter(validSong).slice(0, 1000) : [];
+    favorites = Array.isArray(data.favorites) ? data.favorites.filter(validSong).slice(0, 1000) : [];
+    if (!restorePlayback) return;
+    try { playback = JSON.parse(localStorage.getItem(LAST_PLAYBACK_KEY) || '{}'); } catch {}
+    if (Array.isArray(playback.queue)) queue = playback.queue.filter(validSong).slice(0, 1000);
+    const savedSong = validSong(playback.current) ? playback.current : data.current;
+    if (!validSong(savedSong)) return;
+    current = savedSong;
+    if (!queue.some(song => song.id === current.id)) queue.unshift(current);
+    const savedPosition = playback.current?.id === savedSong.id ? playback.position : data.position;
+    owner = tabId;
+    isPlaying = false;
+    pendingRestorePosition = Number.isFinite(savedPosition) ? Math.max(0, savedPosition) : 0;
+    trackLoadPending = true;
+    audio.src = `/media/${encodeURIComponent(current.title)}.m4a`;
+    audio.load();
+    persistPlayback();
   }
   // 切换皮肤并同步浏览器状态栏颜色（PWA 与移动端浏览体验）
   function applyTheme(theme) {
@@ -215,6 +224,7 @@
   function validSong(song) { return song && /^\d+$/.test(String(song.id)) && typeof song.title === 'string'; }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify({ version: 1, queue, favorites, current, position: savedPosition() })); } catch {}
+    persistPlayback();
     renderCollections();
   }
   function savedPosition() {
@@ -225,8 +235,12 @@
     return Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
   }
   function persistPlayback() {
-    if (!current) return;
-    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, queue, favorites, current, position: savedPosition() })); } catch {}
+    try {
+      const previous = JSON.parse(localStorage.getItem(LAST_PLAYBACK_KEY) || '{}');
+      const savedSong = current || (validSong(previous.current) ? previous.current : null);
+      const position = current ? savedPosition() : (Number.isFinite(previous.position) ? previous.position : 0);
+      localStorage.setItem(LAST_PLAYBACK_KEY, JSON.stringify({ version: 1, queue, current: savedSong, position }));
+    } catch {}
   }
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
   function songFrom(button, idKey, titleKey) { return { id: String(button.dataset[idKey]), title: button.dataset[titleKey] }; }
