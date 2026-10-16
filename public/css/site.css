@@ -339,12 +339,12 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   .player-host.is-expanded .player-panel-head .icon-button .icon{width:17px;height:17px}
 }
 
-/* 首页主视觉在桌面端等比收紧，保持图文节奏与搜索框比例。 */
+/* 首页主视觉保持与内容卡片同宽，只收紧高度与内部留白。 */
 @media(min-width:901px){
-  .hero{width:75%;min-height:308px;margin-inline:auto;border-radius:22px}
+  .hero{width:100%;min-height:308px;border-radius:22px}
   .hero:before{width:360px;height:360px;right:-60px;top:-145px}
-  .hero-copy{padding:38px 0 30px 44px}
-  .hero h1{font-size:42px;margin:14px 0 12px}
+  .hero-copy{padding:25px 0 16px 44px}
+  .hero h1{font-size:42px;margin:12px 0 10px}
   .hero p{font-size:12px;margin-bottom:18px}
   .hero .search-form{max-width:440px;min-height:47px;padding:5px 5px 5px 14px}
   .hero .search-form input{font-size:12px}
@@ -354,6 +354,43 @@ body{min-height:100dvh;display:flex;flex-direction:column}
   .float-note{font-size:42px}
   .note-two{font-size:28px}
   .graphic-caption{font-size:9px}
+}
+
+/* 安装入口与主题切换并排放在站点顶栏。 */
+.header-actions{display:flex;align-items:center;gap:8px;flex:none}
+.install-button{height:39px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 13px;border:1px solid color-mix(in srgb,var(--forest) 22%,var(--line));border-radius:999px;background:var(--forest);color:#fff;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 5px 15px color-mix(in srgb,var(--forest) 17%,transparent);transition:transform .2s,box-shadow .2s}
+.install-button:hover{transform:translateY(-2px);box-shadow:0 8px 20px color-mix(in srgb,var(--forest) 25%,transparent)}
+.install-button .icon{width:16px;height:16px}
+.install-button[hidden],.install-dialog[hidden]{display:none}
+.install-dialog{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:18px}
+.install-backdrop{position:absolute;inset:0;background:rgba(11,33,30,.52);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.install-card{position:relative;width:min(390px,100%);padding:30px;border:1px solid var(--line);border-radius:24px;background:var(--white);color:var(--ink);box-shadow:0 25px 70px rgba(0,0,0,.22)}
+.install-card-icon{width:57px;height:57px;margin-bottom:18px;border-radius:17px;overflow:hidden;box-shadow:0 8px 18px color-mix(in srgb,var(--forest) 18%,transparent)}
+.install-card-icon img{display:block;width:100%;height:100%}
+.install-card h2{font-size:23px;line-height:1.3;margin:7px 0 12px}
+.install-card p{margin:0 0 23px;color:var(--muted);line-height:1.8;font-size:14px;white-space:pre-line}
+.install-close{position:absolute;right:20px;top:17px;width:32px;height:32px;border:0;border-radius:50%;background:var(--subtle);color:var(--muted);font-size:22px;line-height:1}
+.install-done{border:0;border-radius:11px;background:var(--forest);color:white;padding:10px 21px;font-weight:800}
+@media(max-width:900px){
+  .header-actions{position:absolute;right:24px;top:15px;gap:6px}
+  .header-actions .theme-picker{position:static}
+  .nav-shell{padding-right:210px}
+}
+@media(max-width:680px){
+  .header-actions{right:16px;top:13px}
+  .header-actions .theme-picker{padding:6px 8px}
+  .header-actions .theme-picker select{max-width:68px}
+  .install-button{height:35px;padding:0 9px;gap:4px}
+  .nav-shell{padding-right:195px}
+}
+@media(max-width:360px){
+  .header-actions .theme-picker{gap:3px;padding:5px 6px}
+  .header-actions .theme-picker select{max-width:55px;font-size:11px}
+  .install-button{padding:0 7px}
+  .nav-shell{padding-right:178px}
+  .brand{gap:7px;white-space:nowrap}
+  .brand img{width:38px;height:38px}
+  .brand strong{font-size:16px;letter-spacing:0}
 }
 @media(max-width:680px){
   .hero-copy{padding:22px 20px 19px}

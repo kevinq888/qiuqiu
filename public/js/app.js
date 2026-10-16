@@ -14,6 +14,9 @@
   const detail = document.getElementById('player-detail');
   const toggle = document.getElementById('player-toggle');
   const loading = document.getElementById('route-loading');
+  const installDialog = document.getElementById('install-dialog');
+  let installPrompt = null;
+  let installReturnFocus = null;
   let queue = [];
   let favorites = [];
   let current = null;
@@ -35,6 +38,63 @@
     if (id === navigationId) loading.hidden = true;
   }
   function setBuffering(value) { host.classList.toggle('is-buffering', value); }
+
+  function installedApp() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function updateInstallButton() {
+    const button = document.getElementById('install-app');
+    if (button) button.hidden = installedApp();
+  }
+  function closeInstallDialog() {
+    installDialog.hidden = true;
+    installReturnFocus?.focus();
+    installReturnFocus = null;
+  }
+  function showInstallInstructions() {
+    const ua = navigator.userAgent;
+    const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const safari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Edg\//.test(ua);
+    let instructions;
+    if (ios) {
+      instructions = safari
+        ? '在 Safari 中点“分享”，选择“添加到主屏幕”，开启“作为网页 App 打开”，再点“添加”。'
+        : '请先用 Safari 打开本站，再点“分享”→“添加到主屏幕”，开启“作为网页 App 打开”。';
+    } else if (/Android/.test(ua)) {
+      instructions = '在浏览器菜单中选择“安装应用”或“添加到主屏幕”。安装后可从手机桌面打开。';
+    } else if (safari) {
+      instructions = '在 Safari 菜单中选择“文件”→“添加到程序坞”，或点工具栏的“分享”→“添加到程序坞”。';
+    } else {
+      instructions = '在浏览器地址栏右侧或菜单中选择“安装秋秋音乐”。如果暂时没有安装选项，请稍后刷新再试。';
+    }
+    installReturnFocus = document.activeElement;
+    document.getElementById('install-instructions').textContent = instructions;
+    installDialog.hidden = false;
+    installDialog.querySelector('.install-close').focus();
+  }
+  function startInstall() {
+    if (installedApp()) return;
+    if (!installPrompt) { showInstallInstructions(); return; }
+    const prompt = installPrompt;
+    installPrompt = null;
+    // 系统安装确认必须直接由这次点击触发，无法由网页静默安装。
+    prompt.prompt();
+    prompt.userChoice.then(({ outcome }) => {
+      if (outcome === 'accepted') updateInstallButton();
+    }).catch(showInstallInstructions);
+  }
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    installPrompt = event;
+    updateInstallButton();
+  });
+  window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    updateInstallButton();
+    closeInstallDialog();
+  });
+  window.matchMedia('(display-mode: standalone)').addEventListener?.('change', updateInstallButton);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
   function readSaved() {
     try {
@@ -212,6 +272,7 @@
       window.scrollTo({ top: 0, behavior: 'instant' });
       const themeSelect = document.getElementById('theme-select');
       themeSelect.value = document.documentElement.dataset.theme || 'mint';
+      updateInstallButton();
       renderCollections();
     } catch {
       if (id === navigationId) {
@@ -230,6 +291,8 @@
   }
 
   document.addEventListener('click', event => {
+    if (event.target.closest('#install-app')) { startInstall(); return; }
+    if (event.target.closest('[data-install-close]')) { closeInstallDialog(); return; }
     const addPage = event.target.closest('[data-add-page]');
     if (addPage) { event.preventDefault(); addPageToQueue(addPage); return; }
     const favorite = event.target.closest('[data-favorite-id]');
@@ -244,6 +307,9 @@
     if (link && internalLink(link) && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) {
       event.preventDefault(); navigate(link.href);
     }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !installDialog.hidden) closeInstallDialog();
   });
   document.addEventListener('submit', event => {
     const form = event.target.closest('form.search-form');
@@ -361,6 +427,7 @@
   renderCollections();
   enableVinylDrag();
   applyTheme(document.documentElement.dataset.theme || 'mint');
+  updateInstallButton();
   const select = document.getElementById('theme-select');
   if (select) select.value = document.documentElement.dataset.theme || 'mint';
   message('hello');

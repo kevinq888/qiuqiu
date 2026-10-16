@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-11';
+const ASSET_VERSION = '20261016-13';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -20,6 +20,7 @@ function icon(name) {
     headphones: '<path d="M3 14v-3a9 9 0 0 1 18 0v3M3 14h3v6H4a1 1 0 0 1-1-1v-5Zm18 0h-3v6h2a1 1 0 0 0 1-1v-5Z"/>',
     heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    download: '<path d="M12 3v12m-4-4 4 4 4-4M5 17v3h14v-3"/>',
   };
   return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.note}</svg>`;
 }
@@ -31,7 +32,7 @@ function pageHead(title, description = '听见喜欢的声音。秋秋音乐，�
 }
 function nav(active = '') {
   const links = [['/', '发现'], ['/charts', '排行榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
-  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><div class="theme-picker"><label class="sr-only" for="theme-select">切换皮肤</label><span aria-hidden="true">◐</span><select id="theme-select" aria-label="切换皮肤"><option value="mint">薄荷绿</option><option value="sky">晴空蓝</option><option value="lilac">晨雾紫</option><option value="sunset">日落橙</option><option value="sakura">樱花粉</option><option value="dark">暗夜黑</option></select></div></div></header>`;
+  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><div class="header-actions"><button class="install-button" id="install-app" type="button" aria-label="安装秋秋音乐应用">${icon('download')}<span>安装</span></button><div class="theme-picker"><label class="sr-only" for="theme-select">切换皮肤</label><span aria-hidden="true">◐</span><select id="theme-select" aria-label="切换皮肤"><option value="mint">薄荷绿</option><option value="sky">晴空蓝</option><option value="lilac">晨雾紫</option><option value="sunset">日落橙</option><option value="sakura">樱花粉</option><option value="dark">暗夜黑</option></select></div></div></div></header>`;
 }
 function searchForm(q = '') {
   return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;
@@ -45,8 +46,11 @@ function player() {
 function loadingOverlay() {
   return `<div class="route-loading" id="route-loading" role="status" aria-live="polite" aria-label="正在加载" hidden><div class="route-loading-card"><span class="route-loading-record" aria-hidden="true"><span>${icon('music')}</span></span><strong class="route-loading-text">正在加载，请稍候…</strong><small>好音乐，马上就来</small></div></div>`;
 }
+function installDialog() {
+  return `<div class="install-dialog" id="install-dialog" hidden><div class="install-backdrop" data-install-close></div><section class="install-card" role="dialog" aria-modal="true" aria-labelledby="install-title" aria-describedby="install-instructions"><button class="install-close" type="button" data-install-close aria-label="关闭">×</button><div class="install-card-icon"><img src="/icons/icon-192.png" alt=""></div><span class="eyebrow">随时打开秋秋音乐</span><h2 id="install-title">把音乐装进设备</h2><p id="install-instructions"></p><button class="install-done" type="button" data-install-close>知道了</button></section></div>`;
+}
 function layout(title, body, active = '', description) {
-  return `${pageHead(title, description)}${nav(active)}<main class="shell main-content">${body}</main>${footer()}${player()}${loadingOverlay()}</body></html>`;
+  return `${pageHead(title, description)}${nav(active)}<main class="shell main-content">${body}</main>${footer()}${player()}${loadingOverlay()}${installDialog()}</body></html>`;
 }
 function section(title, eyebrow, content, more, iconName = 'spark', className = '', action = '') {
   return `<section class="panel ${className}"><div class="panel-heading"><div class="heading-icon">${icon(iconName)}</div><div><span class="eyebrow">${esc(eyebrow)}</span><h2>${esc(title)}</h2></div>${action}${more ? `<a class="more-link" href="${more}">查看更多 ${icon('arrow')}</a>` : ''}</div>${content}</section>`;
