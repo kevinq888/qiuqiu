@@ -111,9 +111,10 @@ body.player-docked{padding-bottom:var(--player-dock-height,112px)}
 .player-host.is-expanded .player-panel audio{min-width:0;margin:0}
 .player-host.is-expanded .player-actions{min-width:0}
 .player-host.is-expanded .queue-panel{
-  left:24px;
-  right:max(24px,calc((100vw - 1160px)/2 + 24px));
-  width:auto;
+  left:50%;
+  right:auto;
+  transform:translateX(-50%);
+  width:min(1112px,calc(100vw - 48px));
   bottom:calc(var(--player-dock-height,112px) + 12px);
   max-height:min(420px,calc(100dvh - var(--player-dock-height,112px) - 28px));
 }
@@ -147,6 +148,7 @@ body.player-docked{padding-bottom:var(--player-dock-height,112px)}
     left:16px;
     right:16px;
     width:auto;
+    transform:none;
     bottom:calc(var(--player-dock-height,104px) + 8px);
     max-height:min(300px,calc(100dvh - var(--player-dock-height,104px) - 24px));
   }
@@ -336,3 +338,44 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 @media(max-width:680px){
   .player-host.is-expanded .player-panel-head .icon-button .icon{width:17px;height:17px}
 }
+
+/* 首页主视觉在桌面端等比收紧，保持图文节奏与搜索框比例。 */
+@media(min-width:901px){
+  .hero{width:75%;min-height:308px;margin-inline:auto;border-radius:22px}
+  .hero:before{width:360px;height:360px;right:-60px;top:-145px}
+  .hero-copy{padding:38px 0 30px 44px}
+  .hero h1{font-size:42px;margin:14px 0 12px}
+  .hero p{font-size:12px;margin-bottom:18px}
+  .hero .search-form{max-width:440px;min-height:47px;padding:5px 5px 5px 14px}
+  .hero .search-form input{font-size:12px}
+  .hero .search-form button{font-size:12px;padding:9px 12px}
+  .hero-notes{gap:16px;margin-top:14px;font-size:10px}
+  .hero-graphic .disc{width:250px}
+  .float-note{font-size:42px}
+  .note-two{font-size:28px}
+  .graphic-caption{font-size:9px}
+}
+@media(max-width:680px){
+  .hero-copy{padding:22px 20px 19px}
+  .hero-kicker{font-size:10px}
+  .hero h1{font-size:clamp(30px,8.4vw,34px);line-height:1.2;margin:10px 0 8px}
+  .hero p{font-size:12px;line-height:1.5;margin-bottom:14px}
+  .hero .search-form{min-height:49px;padding:5px 5px 5px 14px}
+  .hero .search-form button{padding:9px 11px;font-size:12px}
+  .hero-notes{gap:11px;margin-top:11px;font-size:10px}
+}
+
+/* 页面请求与音频缓冲共用唱片旋转动效。 */
+.route-loading[hidden]{display:none}
+.route-loading{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--cream) 68%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.route-loading-card{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:190px;padding:25px 29px 22px;border:1px solid var(--line);border-radius:22px;background:var(--white);box-shadow:0 22px 62px color-mix(in srgb,var(--forest) 18%,transparent);color:var(--ink);text-align:center}
+.route-loading-record{width:52px;height:52px;display:grid;place-items:center;border:4px solid color-mix(in srgb,var(--forest) 78%,#152726);border-radius:50%;background:repeating-radial-gradient(circle,color-mix(in srgb,var(--forest) 82%,#0b1c20) 0 3px,color-mix(in srgb,var(--forest) 55%,#0b1c20) 4px 5px);animation:record-spin 1.8s linear infinite}
+.route-loading-record>span{width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--mint);color:var(--forest)}
+.route-loading-record .icon{width:15px;height:15px}
+.route-loading-text{margin-top:7px;font-size:14px}
+.route-loading-card small{font-size:11px;color:var(--muted)}
+.route-loading.is-error .route-loading-record{animation-play-state:paused}
+.route-loading.is-error .route-loading-text{color:var(--orange)}
+.player-host.is-buffering #player-state:before{content:'';display:inline-block;width:9px;height:9px;margin-right:5px;border:2px solid var(--line);border-top-color:var(--forest);border-radius:50%;vertical-align:-1px;animation:buffer-spin .7s linear infinite}
+@keyframes buffer-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.route-loading-record,.player-host.is-buffering #player-state:before{animation:none}}

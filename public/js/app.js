@@ -13,12 +13,28 @@
   const stateNode = document.getElementById('player-state');
   const detail = document.getElementById('player-detail');
   const toggle = document.getElementById('player-toggle');
+  const loading = document.getElementById('route-loading');
   let queue = [];
   let favorites = [];
   let current = null;
   let owner = null;
   let isPlaying = false;
   let navigationId = 0;
+  let loadingStartedAt = 0;
+
+  function showLoading(label) {
+    loading.querySelector('.route-loading-text').textContent = label;
+    loading.classList.remove('is-error');
+    loading.hidden = false;
+    loadingStartedAt = performance.now();
+  }
+  async function hideLoading(id) {
+    if (id !== navigationId) return;
+    const remaining = Math.max(0, 320 - (performance.now() - loadingStartedAt));
+    if (remaining) await new Promise(resolve => setTimeout(resolve, remaining));
+    if (id === navigationId) loading.hidden = true;
+  }
+  function setBuffering(value) { host.classList.toggle('is-buffering', value); }
 
   function readSaved() {
     try {
@@ -132,10 +148,11 @@
     addToQueue(song);
     audio.src = `/media/${encodeURIComponent(song.title)}.m4a`;
     stateNode.textContent = '正在加载…';
+    setBuffering(true);
     isPlaying = true;
     updatePlayer();
     if (expandPanel) expand();
-    audio.play().catch(() => { isPlaying = false; stateNode.textContent = '点击播放按钮重试'; updatePlayer(); announce(); });
+    audio.play().catch(() => { setBuffering(false); isPlaying = false; stateNode.textContent = '点击播放按钮重试'; updatePlayer(); announce(); });
     announce();
   }
   function shiftSong(step) {
@@ -176,6 +193,7 @@
     const target = new URL(url, location.href);
     if (target.origin !== location.origin) { location.href = target.href; return; }
     const id = ++navigationId;
+    showLoading(target.pathname === '/search.php' ? '正在搜索音乐…' : target.searchParams.has('page') ? '正在加载歌曲列表…' : '正在打开页面…');
     try {
       const response = await fetch(target.href, { headers: { 'X-Requested-With': 'qiuqiumusic' } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -196,7 +214,13 @@
       themeSelect.value = document.documentElement.dataset.theme || 'mint';
       renderCollections();
     } catch {
-      stateNode.textContent = '页面暂时无法打开，请稍后重试';
+      if (id === navigationId) {
+        loading.classList.add('is-error');
+        loading.querySelector('.route-loading-text').textContent = '页面暂时无法打开，请稍后重试';
+        await new Promise(resolve => setTimeout(resolve, 1200));
+      }
+    } finally {
+      await hideLoading(id);
     }
   }
   function internalLink(link) {
@@ -316,10 +340,11 @@
   document.getElementById('player-favorite').addEventListener('click', () => { if (current) toggleFavorite(current); });
   document.getElementById('player-queue').addEventListener('click', () => { queuePanel.hidden = !queuePanel.hidden; renderCollections(); });
   document.getElementById('queue-close').addEventListener('click', () => { queuePanel.hidden = true; });
-  audio.addEventListener('playing', () => { isPlaying = true; stateNode.textContent = '正在播放'; updatePlayer(); announce(); });
-  audio.addEventListener('pause', () => { if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; updatePlayer(); announce(); } });
-  audio.addEventListener('waiting', () => { if (owner === tabId) stateNode.textContent = '缓冲中…'; });
-  audio.addEventListener('error', () => { if (owner === tabId) { isPlaying = false; stateNode.textContent = '音频暂时不可用'; updatePlayer(); announce(); } });
+  audio.addEventListener('playing', () => { setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放'; updatePlayer(); announce(); });
+  audio.addEventListener('canplay', () => setBuffering(false));
+  audio.addEventListener('pause', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; updatePlayer(); announce(); } });
+  audio.addEventListener('waiting', () => { if (owner === tabId) { setBuffering(true); stateNode.textContent = '缓冲中…'; } });
+  audio.addEventListener('error', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = '音频暂时不可用'; updatePlayer(); announce(); } });
   audio.addEventListener('ended', () => shiftSong(1));
   if (channel) channel.addEventListener('message', event => {
     const data = event.data;
