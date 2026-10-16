@@ -433,8 +433,10 @@ body.theme-sheet-open{overflow:hidden}
   .theme-mobile-trigger{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--ink);padding:0;font-size:11px;font-weight:800;white-space:nowrap}
   .theme-mobile-trigger:before{content:'';width:14px;height:14px;border-radius:50%;background:linear-gradient(90deg,var(--forest) 50%,var(--mint) 50%);border:1px solid var(--line)}
   .theme-mobile-trigger:after{content:'⌄';color:var(--muted);font-size:14px}
-  .player-host.is-expanded .player-actions .mode-button{min-width:32px;padding:0 5px}
-  .mode-label{display:none}
+  .player-host.is-expanded .player-actions{flex-wrap:wrap;row-gap:7px}
+  .player-host.is-expanded .player-options{flex-wrap:wrap;justify-content:flex-end}
+  .player-host.is-expanded .player-actions .mode-button{min-width:84px;padding:0 7px;gap:4px}
+  .player-host.is-expanded .mode-label{display:inline;font-size:10px}
 }
 @media(max-width:900px){
   .header-actions{position:absolute;right:24px;top:15px;gap:6px}
@@ -447,6 +449,10 @@ body.theme-sheet-open{overflow:hidden}
   .header-actions .theme-picker select{max-width:68px}
   .install-button{height:35px;padding:0 9px;gap:4px}
   .nav-shell{padding-right:16px}
+}
+@media(max-width:360px){
+  .player-host.is-expanded .player-actions .mode-button{min-width:76px;padding:0 5px;gap:3px}
+  .player-host.is-expanded .mode-label{font-size:9px}
 }
 @media(max-width:360px){
   .header-actions .theme-picker{gap:3px;padding:5px 6px}
