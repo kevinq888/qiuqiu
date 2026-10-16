@@ -159,8 +159,16 @@
     favorites = Array.isArray(data.favorites) ? data.favorites.filter(validSong).slice(0, 1000) : [];
     if (!restorePlayback) return;
     try { playback = JSON.parse(localStorage.getItem(LAST_PLAYBACK_KEY) || '{}'); } catch {}
-    if (Array.isArray(playback.queue)) queue = playback.queue.filter(validSong).slice(0, 1000);
-    const savedSong = validSong(playback.current) ? playback.current : data.current;
+    // Prefer the dedicated playback snapshot, but retain an older queue when
+    // that snapshot was written by an empty/stale tab. Older app builds saved
+    // the queue before they saved the current track, so its last item is the
+    // best available migration candidate.
+    const playbackQueue = Array.isArray(playback.queue) ? playback.queue.filter(validSong) : [];
+    const legacyQueue = Array.isArray(data.queue) ? data.queue.filter(validSong) : [];
+    queue = playbackQueue.length ? playbackQueue.slice(0, 1000) : legacyQueue.slice(0, 1000);
+    const savedSong = validSong(playback.current) ? playback.current
+      : validSong(data.current) ? data.current
+        : [...playbackQueue, ...legacyQueue].at(-1);
     if (!validSong(savedSong)) return;
     current = savedSong;
     if (!queue.some(song => song.id === current.id)) queue.unshift(current);
@@ -239,7 +247,7 @@
       const previous = JSON.parse(localStorage.getItem(LAST_PLAYBACK_KEY) || '{}');
       const savedSong = current || (validSong(previous.current) ? previous.current : null);
       const position = current ? savedPosition() : (Number.isFinite(previous.position) ? previous.position : 0);
-      localStorage.setItem(LAST_PLAYBACK_KEY, JSON.stringify({ version: 1, queue, current: savedSong, position }));
+      localStorage.setItem(LAST_PLAYBACK_KEY, JSON.stringify({ version: 1, queue, current: savedSong, position, savedAt: Date.now() }));
     } catch {}
   }
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
@@ -348,6 +356,9 @@
   // 播放计数上报：每首歌每个会话只计一次，驱动本站"本站点播榜"。
   audio.addEventListener('play', () => {
     if (!current || owner !== tabId) return;
+    // Save on the actual start event as a second checkpoint. This covers
+    // browsers that suspend or kill an installed PWA before its next timer.
+    persistPlayback();
     const key = `qiuqiumusic.played.${current.id}`;
     try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch {}
     fetch('/api/stats/play', {
