@@ -8,8 +8,8 @@
 | --- | --- |
 | 线上地址 | <https://qiuqiumusic.onrender.com/> |
 | 托管平台 | Render Web Service，Free，新加坡区域 |
-| 部署源码 | GitHub `ravinque/qiuqiu` 的 `master` 分支 |
-| 自动部署 | `master` 有新提交时触发 |
+| 部署源码 | GitHub `queshouhui/qiuqiu` 的 `main` 分支 |
+| 自动部署 | `main` 有新提交时触发 |
 | 运行环境 | Node.js 22 或更新版本 |
 | 构建命令 | `node --check server.js` |
 | 启动命令 | `npm start` |
@@ -69,12 +69,12 @@ docker run --rm -p 3000:3000 qiuqiumusic
 
 ## 更新与排障
 
-更新线上站点：将经过检查的更改推送到 GitHub `master`，在 Render 的 **Deploys** 页面确认新提交部署为 **Live**，再访问首页和 `/healthz`。更新 Codeup 副本时，推送到 Codeup 对应分支即可；它不会改变线上 Render 服务。
+更新线上站点：将经过检查的更改推送到 GitHub `queshouhui/qiuqiu` 的 `main` 分支，在 Render 的 **Deploys** 页面确认新提交部署为 **Live**，再访问首页和 `/healthz`。更新 Codeup 副本时，推送到 Codeup 对应分支即可；它不会改变线上 Render 服务。
 
 当前本地远程名为 `github`（GitHub）和 `origin`（Codeup）。从本地 `mp3` 分支同步这两个仓库的示例：
 
 ```sh
-git push github HEAD:master
+git push github HEAD:main
 git push origin HEAD:mp3
 git push origin HEAD:main
 ```
