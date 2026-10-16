@@ -23,7 +23,7 @@ npm start
 - 监听端口：平台提供的 `PORT` 环境变量，默认 3000
 - Docker：仓库根目录的 `Dockerfile`
 
-仓库根目录的 `render.yaml` 配置了 Render 免费 Web Service，可在首次部署时通过 Render Blueprint 连接 GitHub 仓库。新 Render 服务从 GitHub `kevinq888/qiuqiu` 的 `main` 分支自动部署；Codeup 副本的提交不会自动更新该服务。
+仓库根目录的 `render.yaml` 配置了 Render 免费 Web Service，可在首次部署时通过 Render Blueprint 连接 GitHub 仓库。当前线上服务从 GitHub `kevinq888/qiuqiu` 的 `main` 分支拉取代码；它通过公开仓库 URL 创建，推送后需在 Render 手动部署。Codeup 副本的提交不会更新线上服务。
 
 免费实例闲置后会休眠，首次访问需要等待启动；文件系统在休眠或重新部署后重置，因此榜单和搜索缓存可能需要重新抓取。若需要稳定的持久缓存，可改用带持久化磁盘的服务计划。
 

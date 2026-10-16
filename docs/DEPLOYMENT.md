@@ -8,14 +8,15 @@
 | --- | --- |
 | 线上地址 | <https://qiuqiumusic.onrender.com/> |
 | 托管平台 | Render Web Service，Free，新加坡区域 |
+| 服务管理 | <https://dashboard.render.com/web/srv-db8pbv3l550s73enl0ag>（旧 Render 账号） |
 | 部署源码 | GitHub `kevinq888/qiuqiu` 的 `main` 分支 |
-| 自动部署 | `main` 有新提交时触发 |
+| 部署方式 | 手动部署；当前服务通过公共 Git 仓库地址创建，推送代码不会自动部署 |
 | 运行环境 | Node.js 22 或更新版本 |
 | 构建命令 | `node --check server.js` |
 | 启动命令 | `npm start` |
 | 健康检查 | `/healthz`，成功时返回 `ok` |
 
-Codeup 仓库是同一项目的代码副本。**推送 Codeup 本身不会触发当前 Render 服务部署**；线上服务仍从上述 GitHub 分支拉取代码。
+Codeup 仓库是同一项目的代码副本。线上服务从上述 GitHub 分支拉取代码；推送 GitHub 或 Codeup 后，都需要在当前 Render 服务中手动部署最新提交。
 
 ## 本地启动与检查
 
@@ -38,10 +39,10 @@ curl -f http://localhost:3100/healthz
 
 已有线上服务时，不要再次导入 Blueprint 创建同名服务；直接在现有服务中查看部署或更新配置。
 
-1. 将代码推送到 GitHub，并在 Render 中连接能访问该仓库的 GitHub 账号。
-2. 在 Render 创建 **Web Service**，选择仓库及需要自动部署的分支。
+1. 将代码推送到 GitHub。在 Render 中连接能访问该仓库的 GitHub 账号，或者使用公开仓库 URL。
+2. 在 Render 创建 **Web Service**，选择仓库及 `main` 分支。
 3. 选择 **Node**，填写上表中的构建命令、启动命令和健康检查路径；选择合适的区域与实例规格。当前线上服务使用 Free 和 Singapore。
-4. 启用按提交自动部署，提交创建。等待部署状态变为 **Live**。
+4. 提交创建，等待部署状态变为 **Live**。通过公开仓库 URL 创建的服务需要手动触发后续部署；若需要按提交自动部署，请连接 Git 提供商，或按 Render 的 Blueprint 方式配置。
 5. 打开分配的 `onrender.com` 地址，检查首页与 `/healthz`。当前项目也提供根目录的 [`render.yaml`](../render.yaml)，可用于首次通过 Render Blueprint 创建服务。
 
 无需设置应用密钥或数据库环境变量。若自定义域名、修改源码分支或调整实例规格，请在 Render 服务设置中同步修改。
@@ -69,7 +70,7 @@ docker run --rm -p 3000:3000 qiuqiumusic
 
 ## 更新与排障
 
-更新线上站点：将经过检查的更改推送到 GitHub `kevinq888/qiuqiu` 的 `main` 分支，在 Render 的 **Deploys** 页面确认新提交部署为 **Live**，再访问首页和 `/healthz`。更新 Codeup 副本时，推送到 Codeup 对应分支即可；它不会改变线上 Render 服务。
+更新线上站点：将经过检查的更改推送到 GitHub `kevinq888/qiuqiu` 的 `main` 分支，然后在当前 Render 服务的 **Deploys** 页面手动部署最新提交。确认新提交部署为 **Live** 后，再访问首页和 `/healthz`。更新 Codeup 副本时，推送到 Codeup 对应分支即可；它不会改变线上 Render 服务。
 
 当前本地远程名为 `github`（GitHub）和 `origin`（Codeup）。从本地 `mp3` 分支同步这两个仓库的示例：
 
