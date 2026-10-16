@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-19';
+const ASSET_VERSION = '20261016-20';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -35,7 +35,7 @@ function pageHead(title, description = '听见喜欢的声音。秋秋音乐，�
 }
 function nav(active = '') {
   const links = [['/', '发现'], ['/charts', '排行榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
-  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><button id="nav-scroll-next" class="nav-scroll-next" type="button" aria-label="向右查看更多导航">${icon('arrow')}</button><div class="header-actions"><button class="install-button" id="install-app" type="button" aria-label="安装秋秋音乐应用">${icon('download')}<span>安装</span></button><div class="theme-picker"><label class="sr-only" for="theme-select">切换皮肤</label><span aria-hidden="true">◐</span><select id="theme-select" aria-label="切换皮肤"><option value="mint">薄荷绿</option><option value="sky">晴空蓝</option><option value="lilac">晨雾紫</option><option value="sunset">日落橙</option><option value="sakura">樱花粉</option><option value="dark">暗夜黑</option></select><button class="theme-mobile-trigger" id="theme-mobile-trigger" type="button" aria-label="切换皮肤" aria-haspopup="dialog" aria-expanded="false"><span id="theme-mobile-label">薄荷绿</span></button></div></div></div></header>`;
+  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><button id="nav-scroll-next" class="nav-scroll-next" type="button" aria-label="向右查看更多导航">${icon('arrow')}</button><div class="header-actions"><button class="install-button" id="install-app" type="button" aria-label="安装秋秋音乐应用">${icon('download')}<span>安装</span></button><div class="theme-picker"><button class="theme-trigger" id="theme-mobile-trigger" type="button" aria-label="切换皮肤" aria-haspopup="dialog" aria-expanded="false"><span class="theme-trigger-mark" aria-hidden="true">◐</span><span id="theme-mobile-label">薄荷绿</span></button></div></div></div></header>`;
 }
 function searchForm(q = '') {
   return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;

@@ -161,8 +161,6 @@
   }
   function updateThemeControls() {
     const theme = document.documentElement.dataset.theme || 'mint';
-    const select = document.getElementById('theme-select');
-    if (select) select.value = theme;
     const label = document.getElementById('theme-mobile-label');
     if (label) label.textContent = THEME_NAMES[theme];
     themeSheet.querySelectorAll('[data-theme-choice]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme)));
@@ -466,10 +464,6 @@
     event.preventDefault();
     const query = new FormData(form).get('q')?.toString().trim();
     if (query) navigate(`/search.php?q=${encodeURIComponent(query)}`);
-  });
-  document.addEventListener('change', event => {
-    if (event.target.id !== 'theme-select') return;
-    setTheme(event.target.value);
   });
   window.addEventListener('popstate', () => navigate(location.href, { pop: true }));
   document.addEventListener('scroll', event => { if (event.target.classList?.contains('main-nav')) updateNavScrollHint(); }, true);

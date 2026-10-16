@@ -534,3 +534,38 @@ body.theme-sheet-open{overflow:hidden}
   .player-host.is-expanded .player-timeline,.player-host.is-expanded .player-remote-progress{grid-area:audio}
   .player-host.is-expanded .player-timeline{padding:7px 11px}
 }
+
+/* 用站内皮肤弹层代替系统原生选择菜单，避免选项被浏览器挤到视口上方。 */
+.theme-picker{padding:4px 7px;background:color-mix(in srgb,var(--white) 74%,transparent);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%)}
+.theme-trigger{display:inline-flex;align-items:center;gap:7px;padding:3px 4px;border:0;background:transparent;color:var(--ink);font-size:12px;font-weight:800;white-space:nowrap}
+.theme-trigger-mark{color:var(--forest);font-size:17px;line-height:1}
+.theme-trigger:after{content:'⌄';color:var(--muted);font-size:14px}
+@media(min-width:681px){
+  .theme-sheet{position:fixed;inset:0;z-index:90;display:block;pointer-events:none}
+  .theme-sheet-backdrop{position:fixed;inset:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:auto}
+  .theme-sheet-card{position:fixed;top:88px;right:max(24px,calc((100vw - 1160px)/2));width:min(320px,calc(100vw - 32px));max-height:calc(100dvh - 108px);overflow:auto;padding:18px;border-radius:22px;pointer-events:auto;animation:theme-pop-in .18s ease-out}
+  @keyframes theme-pop-in{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+}
+@media(min-width:681px) and (max-width:900px){.theme-sheet-card{top:136px;right:24px}}
+@media(max-width:680px){.theme-trigger{gap:5px;font-size:11px}.theme-trigger-mark{font-size:15px}}
+
+/* 搜索框与页面标题并排，让结果页顶部更紧凑；手机端自然回到纵向排列。 */
+.page-intro:has(.search-form){display:grid;grid-template-columns:minmax(280px,1.2fr) minmax(260px,.8fr);align-items:center;column-gap:clamp(24px,4vw,56px);row-gap:0;padding:16px 2px 20px}
+.page-intro:has(.search-form) .search-form{grid-column:1;grid-row:1/5;width:100%;max-width:none;min-width:0;min-height:56px;margin:0}
+.page-intro:has(.search-form)>.eyebrow,.page-intro:has(.search-form)>h1,.page-intro:has(.search-form)>p,.page-intro:has(.search-form)>.search-notice{grid-column:2}
+.page-intro:has(.search-form)>h1{font-size:clamp(28px,3.4vw,40px);margin:2px 0}
+.page-intro:has(.search-form)>p{font-size:13px}
+@media(max-width:680px){
+  .page-intro:has(.search-form){grid-template-columns:minmax(0,1fr);row-gap:0;padding:12px 2px 18px}
+  .page-intro:has(.search-form) .search-form{grid-column:1;grid-row:auto;margin-top:13px}
+  .page-intro:has(.search-form)>.eyebrow,.page-intro:has(.search-form)>h1,.page-intro:has(.search-form)>p,.page-intro:has(.search-form)>.search-notice{grid-column:1}
+}
+
+/* 全站表面统一使用半透明底色、柔和高光与背景模糊，形成轻盈磨砂层次。 */
+body{background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--mint) 46%,transparent),transparent 42%),radial-gradient(ellipse at 94% 26%,color-mix(in srgb,var(--orange) 7%,transparent),transparent 34%),var(--cream)}
+.site-header{background:color-mix(in srgb,var(--cream) 78%,transparent);backdrop-filter:blur(18px) saturate(145%);-webkit-backdrop-filter:blur(18px) saturate(145%)}
+.panel,.collection-card,.artist-card,.keyword-grid a,.search-form,.theme-picker,.player-panel,.queue-panel,.install-card,.theme-sheet-card{background:linear-gradient(145deg,color-mix(in srgb,var(--white) 83%,transparent),color-mix(in srgb,var(--white) 66%,transparent));border-color:color-mix(in srgb,var(--line) 78%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 14px 38px color-mix(in srgb,var(--forest) 8%,transparent);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%)}
+.hero{background:linear-gradient(130deg,color-mix(in srgb,var(--hero) 92%,transparent),color-mix(in srgb,var(--white) 48%,transparent));border:1px solid color-mix(in srgb,var(--line) 55%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 18px 50px color-mix(in srgb,var(--forest) 8%,transparent);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%)}
+[data-theme="dark"] .site-header{background:rgba(15,26,23,.78)}
+[data-theme="dark"] .panel,[data-theme="dark"] .collection-card,[data-theme="dark"] .artist-card,[data-theme="dark"] .keyword-grid a,[data-theme="dark"] .search-form,[data-theme="dark"] .theme-picker,[data-theme="dark"] .player-panel,[data-theme="dark"] .queue-panel,[data-theme="dark"] .install-card,[data-theme="dark"] .theme-sheet-card{background:linear-gradient(145deg,rgba(28,48,41,.83),rgba(18,34,29,.72));border-color:rgba(148,193,171,.18);box-shadow:inset 0 1px 0 rgba(237,255,247,.06),0 16px 40px rgba(0,0,0,.2)}
+[data-theme="dark"] .hero{background:linear-gradient(130deg,rgba(21,48,39,.9),rgba(17,35,29,.72));border-color:rgba(148,193,171,.14)}
