@@ -15,7 +15,6 @@
   const audio = document.getElementById('player-audio');
   const titleNode = document.getElementById('player-title');
   const stateNode = document.getElementById('player-state');
-  const detail = document.getElementById('player-detail');
   const toggle = document.getElementById('player-toggle');
   const remoteProgress = document.getElementById('player-remote-progress');
   const remoteTime = document.getElementById('player-remote-time');
@@ -256,7 +255,6 @@
     host.hidden = false;
     if (!minimizedByUser && !host.classList.contains('is-expanded')) expand();
     titleNode.textContent = current.title;
-    detail.href = `/library/${encodeURIComponent(current.id)}.html`;
     document.getElementById('player-favorite').classList.toggle('selected', contains(favorites, current));
     document.getElementById('queue-count').textContent = String(queue.length);
     host.classList.toggle('is-playing', isPlaying);
