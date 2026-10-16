@@ -293,3 +293,46 @@ body.vinyl-dragging .vinyl-toggle{cursor:grabbing}
 .song-plays{flex:none;font-size:11px;color:var(--muted);white-space:nowrap}
 [data-theme="dark"] .trend-up{color:#4cd38f}
 [data-theme="dark"] .trend-down{color:#ff7b74}
+
+/* 短页面的页脚贴住视口底部；展开播放栏时由现有停靠空间托起。 */
+body{min-height:100dvh;display:flex;flex-direction:column}
+.main-content{flex:1;min-height:0;min-width:0;width:100%}
+.site-footer{flex:none}
+
+/* 桌面端把最小化控件放在播放栏最右侧，避免混在歌曲标题中。 */
+.player-collapse-desktop{display:none}
+@media(min-width:681px){
+  .player-host.is-expanded .player-panel-head .icon-button{display:none}
+  .player-host.is-expanded .player-collapse-desktop{
+    position:absolute;
+    right:clamp(14px,1.5vw,28px);
+    bottom:calc((var(--player-dock-height,88px) - 42px)/2);
+    z-index:2;
+    width:42px;
+    height:42px;
+    display:grid;
+    place-items:center;
+    border:1px solid color-mix(in srgb,var(--forest) 22%,transparent);
+    border-radius:14px;
+    background:var(--mint);
+    color:var(--forest);
+    box-shadow:0 4px 14px color-mix(in srgb,var(--forest) 12%,transparent);
+    transition:background .2s,transform .2s,box-shadow .2s;
+  }
+  .player-host.is-expanded .player-collapse-desktop:hover{background:var(--forest);color:var(--white);transform:translateY(-2px);box-shadow:0 7px 18px color-mix(in srgb,var(--forest) 20%,transparent)}
+  .player-collapse-desktop .icon{width:20px;height:20px;stroke-width:2.3}
+}
+@media(min-width:681px) and (max-width:1280px){
+  .player-host.is-expanded .player-panel{padding-right:80px}
+}
+
+/* 黑胶保留唱片轮廓，中心用高对比音乐符号，并跟随皮肤配色。 */
+.vinyl-disc{
+  background:repeating-radial-gradient(circle at center,transparent 0 5px,rgba(255,255,255,.09) 6px 7px,transparent 8px 10px),
+    conic-gradient(from 40deg,color-mix(in srgb,var(--forest) 70%,#14282b),color-mix(in srgb,var(--forest) 45%,#0c2025) 24%,color-mix(in srgb,var(--forest) 62%,#091c21) 52%,color-mix(in srgb,var(--forest) 50%,#19363a) 76%,color-mix(in srgb,var(--forest) 70%,#14282b));
+}
+.vinyl-label{width:27px;height:27px;background:var(--white);color:var(--forest);box-shadow:0 0 0 2px color-mix(in srgb,var(--forest) 18%,white)}
+.vinyl-label .icon{width:18px;height:18px}
+@media(max-width:680px){
+  .player-host.is-expanded .player-panel-head .icon-button .icon{width:17px;height:17px}
+}

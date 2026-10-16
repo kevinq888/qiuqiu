@@ -194,7 +194,6 @@
       window.scrollTo({ top: 0, behavior: 'instant' });
       const themeSelect = document.getElementById('theme-select');
       themeSelect.value = document.documentElement.dataset.theme || 'mint';
-      collapse();
       renderCollections();
     } catch {
       stateNode.textContent = '页面暂时无法打开，请稍后重试';
@@ -310,6 +309,7 @@
   if ('ResizeObserver' in window) new ResizeObserver(syncPlayerSpace).observe(panel);
   window.addEventListener('resize', syncPlayerSpace);
   document.getElementById('player-collapse').addEventListener('click', collapse);
+  document.getElementById('player-collapse-desktop').addEventListener('click', collapse);
   document.getElementById('player-prev').addEventListener('click', () => playbackCommand('prev'));
   document.getElementById('player-next').addEventListener('click', () => playbackCommand('next'));
   document.getElementById('player-play-pause').addEventListener('click', () => playbackCommand('toggle'));
