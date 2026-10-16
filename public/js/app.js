@@ -264,8 +264,12 @@
   }
   function announce() { if (owner === tabId && current) message('state', { current, playing: isPlaying, ...playbackPosition() }); }
   function updatePlayer() {
-    if (!current) return;
     host.hidden = false;
+    host.classList.toggle('has-track', !!current);
+    for (const id of ['player-prev', 'player-play-pause', 'player-next', 'player-favorite']) {
+      document.getElementById(id).disabled = !current;
+    }
+    if (!current) { stateNode.textContent = '待命中'; return; }
     if (!minimizedByUser && !host.classList.contains('is-expanded')) expand();
     titleNode.textContent = current.title;
     document.getElementById('player-favorite').classList.toggle('selected', contains(favorites, current));
