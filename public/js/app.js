@@ -42,9 +42,21 @@
   function installedApp() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   }
+  function installEnvironment() {
+    const ua = navigator.userAgent;
+    return {
+      ios: /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+      android: /Android/.test(ua),
+      inApp: /MicroMessenger|WeChat|QQ\/|AlipayClient|DingTalk|Weibo/i.test(ua),
+      safari: /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Edg\//.test(ua),
+    };
+  }
   function updateInstallButton() {
     const button = document.getElementById('install-app');
-    if (button) button.hidden = installedApp();
+    if (!button) return;
+    button.hidden = installedApp();
+    const env = installEnvironment();
+    button.querySelector('span').textContent = env.inApp ? '浏览器安装' : env.ios ? '添加到桌面' : '安装';
   }
   function closeInstallDialog() {
     installDialog.hidden = true;
@@ -52,25 +64,47 @@
     installReturnFocus = null;
   }
   function showInstallInstructions() {
-    const ua = navigator.userAgent;
-    const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const safari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Edg\//.test(ua);
+    const env = installEnvironment();
     let instructions;
-    if (ios) {
-      instructions = safari
-        ? '在 Safari 中点“分享”，选择“添加到主屏幕”，开启“作为网页 App 打开”，再点“添加”。'
-        : '请先用 Safari 打开本站，再点“分享”→“添加到主屏幕”，开启“作为网页 App 打开”。';
-    } else if (/Android/.test(ua)) {
-      instructions = '在浏览器菜单中选择“安装应用”或“添加到主屏幕”。安装后可从手机桌面打开。';
-    } else if (safari) {
+    if (env.inApp && env.ios) {
+      instructions = '当前在微信等应用内打开，无法由网页直接安装。\n1. 点右上角“···”，选择“在 Safari 中打开”。\n2. 在 Safari 点“分享”→“添加到主屏幕”→“添加”。\n如果没有“在 Safari 中打开”，请复制链接并粘贴到 Safari。';
+    } else if (env.inApp && env.android) {
+      instructions = '当前在微信等应用内打开，系统安装按钮不会出现。\n1. 点右上角“···”，选择“在浏览器打开”。\n2. 在 Chrome 中点本站“安装”，确认安装。\n如果没有“在浏览器打开”，请复制链接并粘贴到 Chrome。';
+    } else if (env.ios) {
+      instructions = env.safari
+        ? 'iPhone 需要通过 Safari 添加网页 App：点“分享”→“添加到主屏幕”→“添加”。如果看到“作为网页 App 打开”，请开启。'
+        : '请用 Safari 打开本站，再点“分享”→“添加到主屏幕”→“添加”。';
+    } else if (env.android) {
+      instructions = '请在 Chrome 菜单中选择“安装应用”或“添加到主屏幕”。如果没有安装选项，请稍后刷新页面再试。';
+    } else if (env.safari) {
       instructions = '在 Safari 菜单中选择“文件”→“添加到程序坞”，或点工具栏的“分享”→“添加到程序坞”。';
     } else {
       instructions = '在浏览器地址栏右侧或菜单中选择“安装秋秋音乐”。如果暂时没有安装选项，请稍后刷新再试。';
     }
     installReturnFocus = document.activeElement;
+    document.getElementById('install-title').textContent = env.inApp ? '用浏览器安装秋秋音乐' : '把音乐装进设备';
     document.getElementById('install-instructions').textContent = instructions;
+    const copy = document.getElementById('install-copy-link');
+    copy.hidden = !env.inApp;
+    copy.textContent = '复制网站链接';
     installDialog.hidden = false;
-    installDialog.querySelector('.install-close').focus();
+    (env.inApp ? copy : installDialog.querySelector('.install-close')).focus();
+  }
+  async function copyInstallLink() {
+    const url = new URL('/', location.href).href;
+    let copied = false;
+    try { await navigator.clipboard.writeText(url); copied = true; } catch {}
+    if (!copied) {
+      const field = document.createElement('textarea');
+      field.value = url;
+      field.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.append(field);
+      field.select();
+      try { copied = document.execCommand('copy'); } catch {}
+      field.remove();
+    }
+    if (copied) document.getElementById('install-copy-link').textContent = '链接已复制';
+    else window.prompt('请复制链接，在手机浏览器中打开：', url);
   }
   function startInstall() {
     if (installedApp()) return;
@@ -292,6 +326,7 @@
 
   document.addEventListener('click', event => {
     if (event.target.closest('#install-app')) { startInstall(); return; }
+    if (event.target.closest('#install-copy-link')) { copyInstallLink(); return; }
     if (event.target.closest('[data-install-close]')) { closeInstallDialog(); return; }
     const addPage = event.target.closest('[data-add-page]');
     if (addPage) { event.preventDefault(); addPageToQueue(addPage); return; }

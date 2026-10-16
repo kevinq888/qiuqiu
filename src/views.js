@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-14';
+const ASSET_VERSION = '20261016-15';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -48,7 +48,7 @@ function loadingOverlay() {
   return `<div class="route-loading" id="route-loading" role="status" aria-live="polite" aria-label="正在加载" hidden><div class="route-loading-card"><span class="route-loading-record" aria-hidden="true"><span>${icon('music')}</span></span><strong class="route-loading-text">正在加载，请稍候…</strong><small>好音乐，马上就来</small></div></div>`;
 }
 function installDialog() {
-  return `<div class="install-dialog" id="install-dialog" hidden><div class="install-backdrop" data-install-close></div><section class="install-card" role="dialog" aria-modal="true" aria-labelledby="install-title" aria-describedby="install-instructions"><button class="install-close" type="button" data-install-close aria-label="关闭">×</button><div class="install-card-icon"><img src="/icons/icon-192.png" alt=""></div><span class="eyebrow">随时打开秋秋音乐</span><h2 id="install-title">把音乐装进设备</h2><p id="install-instructions"></p><button class="install-done" type="button" data-install-close>知道了</button></section></div>`;
+  return `<div class="install-dialog" id="install-dialog" hidden><div class="install-backdrop" data-install-close></div><section class="install-card" role="dialog" aria-modal="true" aria-labelledby="install-title" aria-describedby="install-instructions"><button class="install-close" type="button" data-install-close aria-label="关闭">×</button><div class="install-card-icon"><img src="/icons/icon-192.png" alt=""></div><span class="eyebrow">随时打开秋秋音乐</span><h2 id="install-title">把音乐装进设备</h2><p id="install-instructions"></p><div class="install-actions"><button class="install-copy-link" id="install-copy-link" type="button" hidden>复制网站链接</button><button class="install-done" type="button" data-install-close>知道了</button></div></section></div>`;
 }
 function layout(title, body, active = '', description) {
   return `${pageHead(title, description)}${nav(active)}<main class="shell main-content">${body}</main>${footer()}${player()}${loadingOverlay()}${installDialog()}</body></html>`;

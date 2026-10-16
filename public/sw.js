@@ -1,6 +1,6 @@
 // 秋秋音乐 Service Worker：静态资源缓存优先，页面网络优先；音频 Cache API 缓存（60 天过期），
 // 第二次播放直接读本地缓存，不再发起网络请求。
-const CACHE = 'qiuqiumusic.v6';
+const CACHE = 'qiuqiumusic.v7';
 const ASSETS = [
   '/',
   '/projects/source_code/css/site.css',
