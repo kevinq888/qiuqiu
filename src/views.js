@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261016-20';
+const ASSET_VERSION = '20261016-21';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -39,6 +39,9 @@ function nav(active = '') {
 }
 function searchForm(q = '') {
   return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;
+}
+function searchIntro(title, description, query = '', notice = '') {
+  return `<div class="page-intro search-intro"><div class="search-intro-form">${searchForm(query)}</div><h1>${title}</h1><p>${description}</p>${notice}</div>`;
 }
 function footer() {
   return `<footer class="site-footer"><div class="shell footer-content footer-simple"><span class="footer-copy">© ${new Date().getFullYear()} qiuqiumusic</span><span class="footer-tagline">秋秋音乐，让每一次播放，都刚好合你心意。</span></div></footer>`;
@@ -125,7 +128,7 @@ function searchPage(query, results) {
   const base = `/search.php?q=${encodeURIComponent(query)}`;
   const pageNav = page > 1 || hasNext ? `<nav class="pager" aria-label="搜索分页">${page > 1 ? `<a href="${base}&page=${page - 1}">上一页</a>` : ''}<span class="current" aria-current="page">第 ${page} 页</span>${hasNext ? `<a href="${base}&page=${page + 1}">下一页</a>` : ''}</nav>` : '';
   const description = source === 'local' && !items.length ? `“${esc(query)}”暂未找到歌曲` : `“${esc(query)}”本页找到 ${items.length} 首歌曲`;
-  return layout(`搜索 ${query}`, `<div class="page-intro"><span class="eyebrow">FIND YOUR MUSIC</span><h1>搜索结果</h1><p>${description}</p>${notice}${searchForm(query)}</div>${section('歌曲', '搜索结果', items.length ? songRows(items, (page - 1) * 20 + 1) : '<div class="empty-state">没有找到相关歌曲，换个关键词试试。</div>', null, 'search', 'bulk-panel', bulkAction(items))}${pageNav}`);
+  return layout(`搜索 ${query}`, `${searchIntro('搜索结果', description, query, notice)}${section('歌曲', '搜索结果', items.length ? songRows(items, (page - 1) * 20 + 1) : '<div class="empty-state">没有找到相关歌曲，换个关键词试试。</div>', null, 'search', 'bulk-panel', bulkAction(items))}${pageNav}`);
 }
 function songPage(song) {
   const { title, artist, cover, lyrics } = song;
@@ -136,11 +139,11 @@ function myMusicPage() {
   return layout('我的音乐', `<div class="page-intro"><span class="eyebrow">专属音乐空间</span><h1>我的音乐</h1><p>收藏与播放清单保存在当前浏览器，未来可与微信账号同步。</p></div><div class="home-grid personal-grid">${section('我的收藏', '我的收藏', '<div id="favorites-list" class="personal-list"></div>', null, 'heart')}${section('播放清单', '我的播放清单', '<div id="playlist-list" class="personal-list"></div>', null, 'note')}</div>`, '/my-music');
 }
 function listPage(title, eyebrow, items, more = null, withBulk = false) {
-  return layout(title, `<div class="page-intro"><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1><p>喜欢的声音，就从这里开始。</p>${searchForm()}</div>${section(title, eyebrow, songRows(items), more, 'note', withBulk ? 'bulk-panel' : '', withBulk ? bulkAction(items) : '')}`);
+  return layout(title, `${searchIntro(esc(title), '喜欢的声音，就从这里开始。')}${section(title, eyebrow, songRows(items), more, 'note', withBulk ? 'bulk-panel' : '', withBulk ? bulkAction(items) : '')}`);
 }
 function recentPage(items, page = 1, pages = 1) {
   const content = `${section(`第 ${page} / ${pages} 页`, '最新收录', items.length ? songRows(items, (page - 1) * 20 + 1, { date: true }) : '<div class="empty-state">这页暂时无法获取，请稍后重试。</div>', null, 'clock', 'bulk-panel', bulkAction(items))}${pager('/navigation/1/', page, pages)}`;
-  return layout('最近更新', `<div class="page-intro"><span class="eyebrow">最新收录</span><h1>最近更新</h1><p>实时同步最新上架的歌曲，每 6 小时刷新缓存。</p>${searchForm()}</div>${content}`, '/navigation/1/');
+  return layout('最近更新', `${searchIntro('最近更新', '实时同步最新上架的歌曲，每 6 小时刷新缓存。')}${content}`, '/navigation/1/');
 }
 function viewmorPage(data) { return data ? rankingPage(data) : listPage('此刻热门', '此刻流行', seed.viewmor, '/ranking/hot'); }
 function downPage(data) { return data ? rankingPage(data) : listPage('热门歌曲', '热门点播', seed.down, '/ranking/hot'); }
@@ -158,7 +161,7 @@ function chartsHubPage(charts) {
     }).join('')}</div>` : '<div class="empty-state">榜单数据暂时不可用，稍后刷新试试。</div>';
     return `<section class="panel chart-card chart-${chart.kind}"><div class="panel-heading"><div class="heading-icon">${icon(chart.def.icon)}</div><div><span class="eyebrow">${esc(chart.def.eyebrow)}</span><h2>${esc(chart.def.name)}</h2></div><a class="more-link" href="/charts/${chart.kind}">完整榜单 ${icon('arrow')}</a></div><p class="chart-desc">${esc(chart.def.description)}</p>${list}</section>`;
   }).join('');
-  return layout('排行榜', `<div class="page-intro"><span class="eyebrow">QIUQIU CHARTS</span><h1>排行榜</h1><p>热门、新歌、编辑推荐与本站真实点播，走势每日更新。</p>${searchForm()}</div><div class="charts-grid">${cards}</div>`, '/charts');
+  return layout('排行榜', `${searchIntro('排行榜', '热门、新歌、编辑推荐与本站真实点播，走势每日更新。')}<div class="charts-grid">${cards}</div>`, '/charts');
 }
 // 完整榜单页：金银铜徽章 + 走势列 + 点播数（本站榜）+ 分页
 function chartPage(kind, def, data) {
@@ -166,16 +169,16 @@ function chartPage(kind, def, data) {
   const list = data.items.length
     ? songRows(data.items, (data.page - 1) * 20 + 1, { trend: data.trend, plays: data.plays })
     : `<div class="empty-state">${kind === 'local' ? '还没有点播记录，播放过的歌曲会自动上榜。' : '榜单数据暂时不可用，稍后刷新试试。'}</div>`;
-  const content = `<div class="page-intro"><span class="eyebrow">${esc(def.eyebrow)}</span><h1>${esc(def.name)}</h1><p>${esc(def.description)}${note}</p>${searchForm()}</div>${section(`第 ${data.page} / ${data.pages} 页`, def.name, list, '/charts', def.icon, 'bulk-panel', bulkAction(data.items))}${data.pages > 1 ? pager(`/charts/${kind}`, data.page, data.pages) : ''}`;
+  const content = `${searchIntro(esc(def.name), `${esc(def.description)}${note}`)}${section(`第 ${data.page} / ${data.pages} 页`, def.name, list, '/charts', def.icon, 'bulk-panel', bulkAction(data.items))}${data.pages > 1 ? pager(`/charts/${kind}`, data.page, data.pages) : ''}`;
   return layout(def.name, content, '/charts');
 }
 function collectionsPage() {
   return layout('精选歌单', `<div class="page-intro"><span class="eyebrow">精选歌单</span><h1>精选歌单</h1><p>按心情收藏你的音乐灵感。</p></div><div class="collection-grid">${seed.collections.map((item, index) => `<article class="collection-card"><span>0${index + 1}</span><h2>${esc(item.title)}</h2><p>发现更多好音乐</p>${songLink(item, `打开歌单 ${icon('arrow')}`)}</article>`).join('')}</div>`, '/navigation/2/');
 }
 function artistsPage() {
-  return layout('人气歌手', `<div class="page-intro"><span class="eyebrow">人气歌手</span><h1>人气歌手</h1><p>从熟悉的名字，找到下一首喜欢的歌。</p>${searchForm()}</div><div class="artist-grid">${seed.artists.map((artist, i) => `<a href="/search.php?q=${encodeURIComponent(artist)}" class="artist-card"><span>${String(i + 1).padStart(2, '0')}</span><strong>${esc(artist)}</strong>${icon('arrow')}</a>`).join('')}</div>`, '/hotsgr.html');
+  return layout('人气歌手', `${searchIntro('人气歌手', '从熟悉的名字，找到下一首喜欢的歌。')}<div class="artist-grid">${seed.artists.map((artist, i) => `<a href="/search.php?q=${encodeURIComponent(artist)}" class="artist-card"><span>${String(i + 1).padStart(2, '0')}</span><strong>${esc(artist)}</strong>${icon('arrow')}</a>`).join('')}</div>`, '/hotsgr.html');
 }
 function keywordsPage() {
-  return layout('热门搜索', `<div class="page-intro"><span class="eyebrow">热门搜索</span><h1>热门搜索</h1><p>大家正在听什么？</p>${searchForm()}</div><div class="keyword-grid">${seed.keywords.map((word, i) => `<a href="/search.php?q=${encodeURIComponent(word)}"><span>${String(i + 1).padStart(2, '0')}</span>${esc(word)}${icon('arrow')}</a>`).join('')}</div>`, '/keyword.html');
+  return layout('热门搜索', `${searchIntro('热门搜索', '大家正在听什么？')}<div class="keyword-grid">${seed.keywords.map((word, i) => `<a href="/search.php?q=${encodeURIComponent(word)}"><span>${String(i + 1).padStart(2, '0')}</span>${esc(word)}${icon('arrow')}</a>`).join('')}</div>`, '/keyword.html');
 }
 module.exports = { homePage, rankingPage, searchPage, songPage, myMusicPage, collectionsPage, artistsPage, keywordsPage, recentPage, viewmorPage, downPage, chartsHubPage, chartPage };
