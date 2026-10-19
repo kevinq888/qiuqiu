@@ -20,4 +20,4 @@ npm run build:mac -- --arm64  # Apple Silicon Mac .dmg
 npm run build:win             # Windows NSIS 安装程序（在 Windows 环境构建）
 ```
 
-桌面悬浮球只在 Mac/Windows 桌面版运行。iPhone 和 Android 继续使用网页/PWA 播放器；移动系统不允许普通网页在应用关闭后保留系统级悬浮窗。Mac 安装包当前未做 Developer ID 公证签名，首次打开可能需要在系统设置中允许运行。
+桌面悬浮球可按住唱片拖动，轻点恢复主播放器，右上角 X 退出应用；它只在 Mac/Windows 桌面版运行。iPhone 和 Android 继续使用网页/PWA 播放器；移动系统不允许普通网页在应用关闭后保留系统级悬浮窗。Mac 安装包当前未做 Developer ID 公证签名，首次打开可能需要在系统设置中允许运行。

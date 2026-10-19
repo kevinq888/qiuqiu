@@ -10,6 +10,7 @@ let floatingWindow;
 let tray;
 let quitting = false;
 let pollTimer;
+let floatingDragOrigin;
 
 function setFloatingVisible(visible) {
   if (!floatingWindow || floatingWindow.isDestroyed()) return;
@@ -104,6 +105,28 @@ function createFloatingWindow() {
   floatingWindow.on('closed', () => { floatingWindow = null; });
 }
 
+function isFloatingEvent(event) {
+  return floatingWindow && !floatingWindow.isDestroyed() && event.sender === floatingWindow.webContents;
+}
+
+function registerFloatingDrag() {
+  ipcMain.on('floating:drag-start', (event, point) => {
+    if (!isFloatingEvent(event) || !Number.isFinite(point?.x) || !Number.isFinite(point?.y)) return;
+    const [x, y] = floatingWindow.getPosition();
+    floatingDragOrigin = { x, y, pointerX: point.x, pointerY: point.y };
+  });
+  ipcMain.on('floating:drag-move', (event, point) => {
+    if (!isFloatingEvent(event) || !floatingDragOrigin || !Number.isFinite(point?.x) || !Number.isFinite(point?.y)) return;
+    floatingWindow.setPosition(
+      Math.round(floatingDragOrigin.x + point.x - floatingDragOrigin.pointerX),
+      Math.round(floatingDragOrigin.y + point.y - floatingDragOrigin.pointerY),
+    );
+  });
+  ipcMain.on('floating:drag-end', event => {
+    if (isFloatingEvent(event)) floatingDragOrigin = null;
+  });
+}
+
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -187,6 +210,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     ipcMain.on('floating:open', showMain);
     ipcMain.on('floating:quit', quitApp);
+    registerFloatingDrag();
     createFloatingWindow();
     createMainWindow();
     createTray();

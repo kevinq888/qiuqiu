@@ -11,8 +11,9 @@ body { -webkit-app-region: drag; user-select: none; }
   width: 78px; height: 78px; padding: 0; border: 2px solid rgba(90, 186, 166, .18); border-radius: 50%;
   background: radial-gradient(circle, #f58a70 0 22%, #173b36 23% 27%, #0c201d 29% 48%, #173b36 50% 54%, #0c201d 56% 72%, #193c36 74% 78%, #0b1a18 80%);
   box-shadow: 0 5px 19px rgba(0, 0, 0, .45), inset 0 0 0 2px rgba(255,255,255,.13);
-  cursor: pointer; -webkit-app-region: no-drag;
+  cursor: grab; -webkit-app-region: no-drag;
 }
+.record:active { cursor: grabbing; }
 .record::before, .record::after { content: ""; position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; border: 1px solid rgba(90, 186, 166, .22); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .record::after { width: 42px; height: 42px; }
 .label { position: absolute; left: 50%; top: 50%; width: 33px; height: 33px; display: grid; place-items: center; transform: translate(-50%,-50%); border: 2px solid rgba(255,255,255,.4); border-radius: 50%; color: #fff4de; }
