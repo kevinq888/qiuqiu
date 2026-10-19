@@ -11,6 +11,20 @@ let tray;
 let quitting = false;
 let pollTimer;
 
+function setFloatingVisible(visible) {
+  if (!floatingWindow || floatingWindow.isDestroyed()) return;
+  if (visible) floatingWindow.showInactive();
+  else floatingWindow.hide();
+}
+
+function expandWebPlayer() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.executeJavaScript(`(() => {
+    const panel = document.querySelector('#player-panel');
+    if (panel?.hidden) document.querySelector('#player-toggle')?.click();
+  })()`).catch(() => {});
+}
+
 function readBounds() {
   try {
     const bounds = JSON.parse(fs.readFileSync(BOUNDS_PATH, 'utf8'));
@@ -29,10 +43,17 @@ function readBounds() {
 }
 
 function showMain() {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
+  setFloatingVisible(false);
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    if (!quitting) createMainWindow();
+    return;
+  }
+  app.focus({ steal: true });
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.show();
   mainWindow.focus();
+  if (mainWindow.webContents.isLoading()) mainWindow.webContents.once('did-finish-load', expandWebPlayer);
+  else expandWebPlayer();
 }
 
 function sendPlaybackState() {
@@ -41,11 +62,14 @@ function sendPlaybackState() {
     const audio = document.querySelector('#player-audio');
     const title = document.querySelector('#player-title');
     const host = document.querySelector('#site-player');
+    const panel = document.querySelector('#player-panel');
     return { title: title?.textContent?.trim() || '', playing: !!audio && !audio.paused,
       currentTime: audio?.currentTime || 0, duration: audio?.duration || 0,
-      hasTrack: !!host?.classList.contains('has-track') };
+      hasTrack: !!host?.classList.contains('has-track'), progressVisible: !!panel && !panel.hidden };
   })()`, true).then(state => {
-    if (!floatingWindow.isDestroyed()) floatingWindow.webContents.send('playback-state', state);
+    if (!mainWindow || mainWindow.isDestroyed() || !floatingWindow || floatingWindow.isDestroyed()) return;
+    setFloatingVisible(!mainWindow.isVisible() || !state.progressVisible);
+    floatingWindow.webContents.send('playback-state', state);
   }).catch(() => {});
 }
 
@@ -71,7 +95,7 @@ function createFloatingWindow() {
   floatingWindow.setAlwaysOnTop(true, 'floating');
   floatingWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   floatingWindow.loadFile(path.join(__dirname, 'floating.html'));
-  floatingWindow.once('ready-to-show', () => floatingWindow.showInactive());
+  floatingWindow.once('ready-to-show', () => floatingWindow.hide());
   floatingWindow.on('move', () => {
     if (!floatingWindow.isDestroyed()) {
       try { fs.writeFileSync(BOUNDS_PATH, JSON.stringify(floatingWindow.getBounds())); } catch {}
@@ -97,19 +121,33 @@ function createMainWindow() {
     },
   });
   mainWindow.loadURL(SITE_URL);
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  // The desktop app supplies its own always-on-top vinyl widget. Hide only
+  // the website's in-page floating toggle so users never see two record icons.
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.insertCSS('.vinyl-toggle { display: none !important; }').catch(() => {});
+  });
+  mainWindow.once('ready-to-show', () => {
+    app.focus({ steal: true });
+    mainWindow.show();
+    mainWindow.focus();
+    expandWebPlayer();
+    setFloatingVisible(false);
+  });
   mainWindow.on('minimize', event => {
     event.preventDefault();
     mainWindow.hide();
-    floatingWindow?.showInactive();
+    setFloatingVisible(true);
   });
   mainWindow.on('close', event => {
     if (quitting) return;
     event.preventDefault();
     mainWindow.hide();
-    floatingWindow?.showInactive();
+    setFloatingVisible(true);
   });
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+    if (!quitting) setFloatingVisible(true);
+  });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (new URL(url).origin !== new URL(SITE_URL).origin) shell.openExternal(url);
     return { action: 'deny' };
@@ -142,14 +180,19 @@ function quitApp() {
   app.quit();
 }
 
-app.whenReady().then(() => {
-  ipcMain.on('floating:open', showMain);
-  ipcMain.on('floating:quit', quitApp);
-  createFloatingWindow();
-  createMainWindow();
-  createTray();
-  pollTimer = setInterval(sendPlaybackState, 800);
-  app.on('activate', showMain);
-});
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', showMain);
+  app.whenReady().then(() => {
+    ipcMain.on('floating:open', showMain);
+    ipcMain.on('floating:quit', quitApp);
+    createFloatingWindow();
+    createMainWindow();
+    createTray();
+    pollTimer = setInterval(sendPlaybackState, 800);
+    app.on('activate', showMain);
+  });
+}
 
 app.on('before-quit', () => { quitting = true; });

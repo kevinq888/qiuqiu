@@ -1,14 +1,19 @@
 * { box-sizing: border-box; }
-html, body { width: 92px; height: 92px; margin: 0; overflow: hidden; background: transparent; }
+html, body { width: 92px; height: 92px; margin: 0; overflow: hidden; background: transparent !important; }
 body { -webkit-app-region: drag; user-select: none; }
-.widget { position: relative; width: 92px; height: 92px; display: grid; place-items: center; }
+.widget { position: relative; width: 92px; height: 92px; display: grid; place-items: center; background: transparent; }
+.progress-ring { position: absolute; inset: 0; width: 92px; height: 92px; overflow: visible; pointer-events: none; transform: rotate(-90deg); }
+.progress-ring circle { fill: none; stroke-width: 3.4; }
+.ring-track { stroke: rgba(220, 196, 138, .2); }
+.ring-progress { stroke: #ffd75e; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(255,215,94,.82)); transition: stroke-dashoffset .35s linear; }
 .record {
-  width: 78px; height: 78px; padding: 0; border: 3px solid rgba(247, 231, 190, .75); border-radius: 50%;
+  position: relative;
+  width: 78px; height: 78px; padding: 0; border: 2px solid rgba(90, 186, 166, .18); border-radius: 50%;
   background: radial-gradient(circle, #f58a70 0 22%, #173b36 23% 27%, #0c201d 29% 48%, #173b36 50% 54%, #0c201d 56% 72%, #193c36 74% 78%, #0b1a18 80%);
   box-shadow: 0 5px 19px rgba(0, 0, 0, .45), inset 0 0 0 2px rgba(255,255,255,.13);
   cursor: pointer; -webkit-app-region: no-drag;
 }
-.record::before, .record::after { content: ""; position: absolute; width: 56px; height: 56px; border: 1px solid rgba(90, 186, 166, .22); border-radius: 50%; pointer-events: none; }
+.record::before, .record::after { content: ""; position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; border: 1px solid rgba(90, 186, 166, .22); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .record::after { width: 42px; height: 42px; }
 .label { position: absolute; left: 50%; top: 50%; width: 33px; height: 33px; display: grid; place-items: center; transform: translate(-50%,-50%); border: 2px solid rgba(255,255,255,.4); border-radius: 50%; color: #fff4de; }
 .note { font: 700 21px/1 system-ui, sans-serif; transform: translateY(-1px); }

@@ -16,6 +16,7 @@
   "build": {
     "appId": "com.qiuqiumusic.desktop",
     "productName": "秋秋音乐",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
     "files": [
       "*.js",
       "*.html",

@@ -15,8 +15,9 @@ npm start
 ## 打包
 
 ```sh
-npm run build:mac  # macOS .dmg
-npm run build:win  # Windows 安装程序
+npm run build:mac -- --x64    # Intel Mac .dmg
+npm run build:mac -- --arm64  # Apple Silicon Mac .dmg
+npm run build:win             # Windows NSIS 安装程序（在 Windows 环境构建）
 ```
 
-目前构建未配置开发者签名；macOS 首次打开可能需要在系统设置中确认允许运行。浏览器/PWA 本身无法提供应用退出后仍存在的桌面悬浮窗，此行为只在桌面版中可用。
+桌面悬浮球只在 Mac/Windows 桌面版运行。iPhone 和 Android 继续使用网页/PWA 播放器；移动系统不允许普通网页在应用关闭后保留系统级悬浮窗。Mac 安装包当前未做 Developer ID 公证签名，首次打开可能需要在系统设置中允许运行。
