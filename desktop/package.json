@@ -11,14 +11,35 @@
   },
   "devDependencies": {
     "electron": "^37.2.6",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "26.0.12"
   },
   "build": {
     "appId": "com.qiuqiumusic.desktop",
     "productName": "秋秋音乐",
-    "files": ["*.js", "*.html", "*.css", "icon.png"],
-    "mac": { "category": "public.app-category.music", "target": ["dmg"] },
-    "win": { "target": ["nsis"] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+    "files": [
+      "*.js",
+      "*.html",
+      "*.css",
+      "icon.png"
+    ],
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "allowScripts": {
+    "electron@37.10.3": true,
+    "electron-winstaller@5.4.0": true
   }
 }
