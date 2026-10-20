@@ -96,7 +96,10 @@ function createFloatingWindow() {
   floatingWindow.setAlwaysOnTop(true, 'floating');
   floatingWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   floatingWindow.loadFile(path.join(__dirname, 'floating.html'));
-  floatingWindow.once('ready-to-show', () => floatingWindow.hide());
+  // Show the ball immediately so the app is visibly alive while the site loads
+  // (Render free tier cold start can take 20s+). sendPlaybackState keeps it in
+  // sync afterwards and hides it once the main window is up with a player panel.
+  floatingWindow.once('ready-to-show', () => floatingWindow.showInactive());
   floatingWindow.on('move', () => {
     if (!floatingWindow.isDestroyed()) {
       try { fs.writeFileSync(BOUNDS_PATH, JSON.stringify(floatingWindow.getBounds())); } catch {}
@@ -144,12 +147,20 @@ function createMainWindow() {
     },
   });
   mainWindow.loadURL(SITE_URL);
+  // Fallback: never leave the user staring at a blank screen. If the site is
+  // slow or ready-to-show is delayed, reveal the main window after 20s.
+  const showFallback = setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible() && !quitting) {
+      mainWindow.showInactive();
+    }
+  }, 20000);
   // The desktop app supplies its own always-on-top vinyl widget. Hide only
   // the website's in-page floating toggle so users never see two record icons.
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.insertCSS('.vinyl-toggle { display: none !important; }').catch(() => {});
   });
   mainWindow.once('ready-to-show', () => {
+    clearTimeout(showFallback);
     app.focus({ steal: true });
     mainWindow.show();
     mainWindow.focus();
