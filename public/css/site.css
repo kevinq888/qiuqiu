@@ -111,6 +111,7 @@ body.player-docked{padding-bottom:var(--player-dock-height,112px)}
 .player-host.is-expanded .player-panel audio{min-width:0;margin:0}
 .player-host.is-expanded .player-actions{min-width:0}
 .player-host.is-expanded .queue-panel{
+  z-index:3;
   left:50%;
   right:auto;
   transform:translateX(-50%);

@@ -20,6 +20,7 @@
   const titleNode = document.getElementById('player-title');
   const stateNode = document.getElementById('player-state');
   const toggle = document.getElementById('player-toggle');
+  const queueButton = document.getElementById('player-queue');
   const remoteProgress = document.getElementById('player-remote-progress');
   const remoteTime = document.getElementById('player-remote-time');
   const remoteBar = document.getElementById('player-remote-bar');
@@ -341,12 +342,14 @@
     document.body.classList.add('player-docked');
     toggle.setAttribute('aria-expanded', 'true');
     queuePanel.hidden = true;
+    queueButton.setAttribute('aria-expanded', 'false');
     syncPlayerSpace();
   }
   function collapse() {
     minimizedByUser = true;
     panel.hidden = true;
     queuePanel.hidden = true;
+    queueButton.setAttribute('aria-expanded', 'false');
     host.classList.remove('is-expanded');
     document.body.classList.remove('player-docked');
     document.documentElement.style.removeProperty('--player-dock-height');
@@ -608,8 +611,19 @@
     updateTimeline();
   });
   document.getElementById('player-favorite').addEventListener('click', () => { if (current) toggleFavorite(current); });
-  document.getElementById('player-queue').addEventListener('click', () => { queuePanel.hidden = !queuePanel.hidden; renderCollections(); });
-  document.getElementById('queue-close').addEventListener('click', () => { queuePanel.hidden = true; });
+  queueButton.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    queuePanel.hidden = !queuePanel.hidden;
+    queueButton.setAttribute('aria-expanded', String(!queuePanel.hidden));
+    if (!queuePanel.hidden) renderCollections();
+  });
+  document.getElementById('queue-close').addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    queuePanel.hidden = true;
+    queueButton.setAttribute('aria-expanded', 'false');
+  });
   audio.addEventListener('playing', () => { setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放'; updatePlayer(); announce(); });
   audio.addEventListener('canplay', () => setBuffering(false));
   audio.addEventListener('pause', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; persistPlayback(); updatePlayer(); announce(); } });

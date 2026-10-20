@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('qiuqiuDesktop', {
   startDrag: point => ipcRenderer.send('floating:drag-start', point),
   moveDrag: point => ipcRenderer.send('floating:drag-move', point),
   endDrag: () => ipcRenderer.send('floating:drag-end'),
+  ignoreMouse: ignore => ipcRenderer.send('floating:ignore-mouse', ignore),
+  control: command => ipcRenderer.send('floating:control', command),
   onPlaybackState: callback => {
     const listener = (_event, state) => callback(state);
     ipcRenderer.on('playback-state', listener);

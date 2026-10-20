@@ -1,13 +1,15 @@
 {
   "name": "qiuqiumusic-desktop",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "private": true,
   "description": "秋秋音乐桌面迷你播放器",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:mac": "electron-builder --mac dmg",
-    "build:win": "electron-builder --win nsis"
+    "generate:icons": "node generate-icons.js",
+    "build:mac": "node scripts/build-desktop.cjs mac",
+    "build:win": "node scripts/build-desktop.cjs win",
+    "build:all": "node scripts/build-desktop.cjs all"
   },
   "devDependencies": {
     "electron": "^37.2.6",
@@ -21,18 +23,24 @@
       "*.js",
       "*.html",
       "*.css",
-      "icon.png"
+      "icon.png",
+      "app-icon.png",
+      "tray-icon.png"
     ],
+    "icon": "app-icon.png",
     "mac": {
+      "icon": "app-icon.png",
       "category": "public.app-category.music",
       "target": [
         "dmg"
-      ]
+      ],
+      "artifactName": "${productName}-${version}-macos-${arch}.${ext}"
     },
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "artifactName": "${productName}-${version}-windows-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

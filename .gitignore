@@ -3,4 +3,5 @@ data/play-stats.json
 data/chart-snapshots.json
 node_modules/
 desktop/dist/
+desktop/.build/
 .DS_Store
