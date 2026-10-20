@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const SITE_URL = process.env.QIUQIU_URL || 'https://qiuqiumusic.onrender.com/';
-const ICON_PATH = path.join(__dirname, 'icon.png');
+const ICON_PATH = path.join(__dirname, 'tray-icon.png');
 const BOUNDS_PATH = path.join(app.getPath('userData'), 'floating-window.json');
 let mainWindow;
 let floatingWindow;
@@ -27,19 +27,26 @@ function expandWebPlayer() {
 }
 
 function readBounds() {
-  try {
-    const bounds = JSON.parse(fs.readFileSync(BOUNDS_PATH, 'utf8'));
+  const safeBounds = bounds => {
     const display = screen.getDisplayMatching(bounds);
     const area = display.workArea;
+    const edge = 16;
     return {
-      x: Math.max(area.x, Math.min(bounds.x, area.x + area.width - 92)),
-      y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - 92)),
+      x: Math.max(area.x + edge, Math.min(bounds.x, area.x + area.width - 92 - edge)),
+      y: Math.max(area.y + edge, Math.min(bounds.y, area.y + area.height - 92 - edge)),
       width: 92,
       height: 92,
     };
+  };
+  try {
+    const bounds = JSON.parse(fs.readFileSync(BOUNDS_PATH, 'utf8'));
+    return safeBounds(bounds);
   } catch {
     const { workArea } = screen.getPrimaryDisplay();
-    return { x: workArea.x + workArea.width - 112, y: workArea.y + 100, width: 92, height: 92 };
+    return safeBounds({
+      x: workArea.x + workArea.width - 92 - 24,
+      y: workArea.y + 80,
+    });
   }
 }
 
@@ -77,15 +84,20 @@ function sendPlaybackState() {
 function createFloatingWindow() {
   floatingWindow = new BrowserWindow({
     ...readBounds(),
+    ...(process.platform === 'darwin' ? { type: 'panel' } : {}),
     show: false,
     frame: false,
     transparent: true,
     resizable: false,
     movable: true,
     skipTaskbar: true,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
     alwaysOnTop: true,
     hasShadow: false,
     backgroundColor: '#00000000',
+    ...(process.platform === 'darwin' ? { roundedCorners: false } : {}),
     webPreferences: {
       preload: path.join(__dirname, 'floating-preload.js'),
       contextIsolation: true,
@@ -184,7 +196,7 @@ function createMainWindow() {
 }
 
 function createTray() {
-  let icon = nativeImage.createFromPath(ICON_PATH);
+  let icon = nativeImage.createFromPath(ICON_PATH).resize({ width: 32, height: 32, quality: 'best' });
   if (icon.isEmpty()) icon = nativeImage.createEmpty();
   tray = new Tray(icon);
   tray.setToolTip('秋秋音乐仍在运行');

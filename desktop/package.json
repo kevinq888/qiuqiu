@@ -1,11 +1,12 @@
 {
   "name": "qiuqiumusic-desktop",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "private": true,
   "description": "秋秋音乐桌面迷你播放器",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "generate:icons": "node generate-icons.js",
     "build:mac": "electron-builder --mac dmg",
     "build:win": "electron-builder --win nsis"
   },
@@ -21,9 +22,13 @@
       "*.js",
       "*.html",
       "*.css",
-      "icon.png"
+      "icon.png",
+      "app-icon.png",
+      "tray-icon.png"
     ],
+    "icon": "app-icon.png",
     "mac": {
+      "icon": "app-icon.png",
       "category": "public.app-category.music",
       "target": [
         "dmg"
