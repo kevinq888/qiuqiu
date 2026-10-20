@@ -6,7 +6,19 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.0.6（当前版本）
+### v1.0.7（当前版本）
+
+正式安装包位于 `desktop/dist/1.0.7/`，目录只保留两个 macOS DMG 和一个 Windows EXE。GitHub 下载使用 ZIP 保存中文名安装包，请先解压再安装。
+
+| 系统 | 下载 | ZIP 内的安装包 |
+| --- | --- | --- |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.7/1.0.7-macos-arm64.zip) | 秋秋音乐-1.0.7-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.7/1.0.7-macos-x64.zip) | 秋秋音乐-1.0.7-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.7/1.0.7-windows-x64.zip) | 秋秋音乐-1.0.7-windows-x64.exe |
+
+程序坞图标按 QQ、微信的图形占比调整，启动时刷新当前图标；菜单栏改为带音符的单色图标。悬停面板去掉整块底色，标题宽度随内容变化，文字描边和独立按钮底保证清晰可见。
+
+### v1.0.6
 
 本地正式安装包位于 `desktop/dist/1.0.6/`，该目录只保留两个 macOS DMG 和一个 Windows EXE；后续版本使用各自的版本号目录。
 

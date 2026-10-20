@@ -165,6 +165,7 @@ function createMainWindow() {
     minWidth: 375,
     minHeight: 620,
     title: '秋秋音乐',
+    icon: APP_ICON_PATH,
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#0f1a17',
@@ -244,6 +245,7 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   app.on('second-instance', showMain);
   app.whenReady().then(() => {
+    if (process.platform === 'darwin') app.dock.setIcon(APP_ICON_PATH);
     ipcMain.on('floating:open', showMain);
     ipcMain.on('floating:quit', quitApp);
     ipcMain.on('floating:ignore-mouse', (event, ignore) => {

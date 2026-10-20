@@ -144,9 +144,10 @@ function applyMask(pixels, mode, customRadius, inset = 0) {
 
 const original = decodePng(source);
 const base = original.pixels.subarray(3, 4).length ? original.pixels.subarray(0, 3) : [241, 248, 245];
-const appArtworkScale = 0.88;
+// Match the visible footprint of the installed QQ / WeChat Dock tiles (~81%).
+const appArtworkScale = 0.84;
 const smallerAppArt = placeScaled(original.pixels, original.width, original.height, appArtworkScale, base);
-applyMask(smallerAppArt, 'rounded', 96, 32);
+applyMask(smallerAppArt, 'rounded', 88, 48);
 encodePng(size, size, smallerAppArt, appIconPath);
 
 // The macOS menu bar needs a small monochrome template, independent of the Dock tile.
@@ -156,8 +157,15 @@ for (let y = 0; y < size; y++) {
     let coverage = 0;
     for (let sy = 0; sy < 4; sy++) {
       for (let sx = 0; sx < 4; sx++) {
-        const radius = Math.hypot(x + (sx + 0.5) / 4 - size / 2, y + (sy + 0.5) / 4 - size / 2);
-        if ((radius >= 184 && radius <= 216) || (radius >= 118 && radius <= 136) || radius <= 40) coverage++;
+        const px = x + (sx + 0.5) / 4;
+        const py = y + (sy + 0.5) / 4;
+        const radius = Math.hypot(px - size / 2, py - size / 2);
+        const dx = px - 244, dy = py - 315;
+        const u = dx * .966 - dy * .259, v = dx * .259 + dy * .966;
+        const noteHead = (u / 60) ** 2 + (v / 40) ** 2 <= 1;
+        const stem = px >= 272 && px <= 308 && py >= 132 && py <= 315;
+        const flag = px >= 300 && px <= 364 && py >= 132 + .4 * (px - 300) && py <= 174 + .4 * (px - 300);
+        if ((radius >= 192 && radius <= 216) || noteHead || stem || flag) coverage++;
       }
     }
     tray[(y * size + x) * 4 + 3] = Math.round(255 * coverage / 16);

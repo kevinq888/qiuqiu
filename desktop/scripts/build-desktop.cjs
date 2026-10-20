@@ -16,6 +16,9 @@ function build() {
   if (!Object.hasOwn(targets, platform)) throw Error('Specify mac, win, or all.');
   if (platform === 'all' && args.length) throw Error('build:all already selects both Mac architectures and Windows x64.');
   if (!/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(pkg.version)) throw Error('Invalid release version.');
+  const icons = spawnSync(process.execPath, [path.join(desktop, 'generate-icons.js')], { cwd: desktop, stdio: 'inherit' });
+  if (icons.error) throw icons.error;
+  if (icons.status !== 0) throw Error('Icon generation failed.');
   const release = path.join(desktop, 'dist', pkg.version);
   const prefix = `${pkg.build.productName}-${pkg.version}`;
   const allowed = new Set([`${prefix}-macos-arm64.dmg`, `${prefix}-macos-x64.dmg`, `${prefix}-windows-x64.exe`]);

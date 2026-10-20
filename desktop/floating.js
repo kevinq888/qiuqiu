@@ -19,7 +19,9 @@ progressRing.style.strokeDashoffset = String(ringLength);
 controls.forEach(button => { button.disabled = true; });
 
 function fitTrackTitle() {
-  const distance = Math.max(0, trackText.scrollWidth - track.clientWidth);
+  const style = getComputedStyle(track);
+  const visibleWidth = track.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  const distance = Math.max(0, trackText.scrollWidth - visibleWidth);
   track.classList.toggle('is-marquee', distance > 2);
   track.style.setProperty('--scroll-distance', `${distance}px`);
   track.style.setProperty('--marquee-duration', `${Math.max(7, distance / 22)}s`);
@@ -56,7 +58,8 @@ document.addEventListener('mousemove', event => {
   const x = event.clientX, y = event.clientY;
   const overRecord = Math.hypot(x - 180, y - 46) <= 46;
   const overClose = x >= 202 && x <= 222 && y >= 4 && y <= 24;
-  const overPanel = widget.classList.contains('is-hovered') && x >= 8 && x <= 352 && y >= 88 && y <= 174;
+  const panelBounds = panel.getBoundingClientRect();
+  const overPanel = widget.classList.contains('is-hovered') && x >= panelBounds.left - 8 && x <= panelBounds.right + 8 && y >= 88 && y <= panelBounds.bottom + 6;
   const interactive = overRecord || overClose || overPanel || !!pointerStart;
   setMousePassthrough(!interactive);
   if (interactive) expandPanel();
