@@ -45,26 +45,35 @@ function expandWebPlayer() {
 }
 
 function readBounds() {
-  const safeBounds = bounds => {
-    const display = screen.getDisplayMatching(bounds);
-    const area = display.workArea;
-    const edge = 16;
+  const fallback = () => {
+    const { workArea } = screen.getPrimaryDisplay();
     return {
-      x: Math.max(area.x + edge, Math.min(bounds.x, area.x + area.width - FLOATING_WIDTH - edge)),
-      y: Math.max(area.y + edge, Math.min(bounds.y, area.y + area.height - FLOATING_HEIGHT - edge)),
+      x: workArea.x + workArea.width - FLOATING_WIDTH - 24,
+      y: workArea.y + 80,
       width: FLOATING_WIDTH,
       height: FLOATING_HEIGHT,
     };
   };
   try {
-    const bounds = JSON.parse(fs.readFileSync(BOUNDS_PATH, 'utf8'));
-    return safeBounds(bounds.version === 2 ? bounds : { ...bounds, x: bounds.x + (bounds.width || FLOATING_SIZE) / 2 - FLOATING_WIDTH / 2 });
+    const raw = JSON.parse(fs.readFileSync(BOUNDS_PATH, 'utf8'));
+    const src = raw.version === 2 ? raw : { ...raw, x: raw.x + (raw.width || FLOATING_SIZE) / 2 - FLOATING_WIDTH / 2 };
+    // getDisplayMatching rejects objects with missing/NaN fields; guard before use
+    if (!Number.isFinite(src.x) || !Number.isFinite(src.y)) return fallback();
+    const area = screen.getDisplayMatching({
+      x: src.x,
+      y: src.y,
+      width: Number.isFinite(raw.width) ? raw.width : FLOATING_WIDTH,
+      height: Number.isFinite(raw.height) ? raw.height : FLOATING_HEIGHT,
+    }).workArea;
+    const edge = 16;
+    return {
+      x: Math.max(area.x + edge, Math.min(src.x, area.x + area.width - FLOATING_WIDTH - edge)),
+      y: Math.max(area.y + edge, Math.min(src.y, area.y + area.height - FLOATING_HEIGHT - edge)),
+      width: FLOATING_WIDTH,
+      height: FLOATING_HEIGHT,
+    };
   } catch {
-    const { workArea } = screen.getPrimaryDisplay();
-    return safeBounds({
-      x: workArea.x + workArea.width - FLOATING_WIDTH - 24,
-      y: workArea.y + 80,
-    });
+    return fallback();
   }
 }
 
