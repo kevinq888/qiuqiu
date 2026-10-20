@@ -312,14 +312,16 @@
   function updatePlayer() {
     host.hidden = false;
     host.classList.toggle('has-track', !!current);
-    for (const id of ['player-prev', 'player-play-pause', 'player-next', 'player-favorite']) {
+    for (const id of ['player-prev', 'player-next', 'player-favorite']) {
       document.getElementById(id).disabled = !current;
     }
-    if (!current) { stateNode.textContent = '待命中'; return; }
+    // 计数徽标无条件刷新；清单有歌时播放键保持可用，解决"清单有歌却显示 0 首且无法播放"
+    document.getElementById('player-play-pause').disabled = !current && !queue.length;
+    document.getElementById('queue-count').textContent = String(queue.length);
+    if (!current) { stateNode.textContent = queue.length ? '按播放键开始' : '待命中'; return; }
     if (!minimizedByUser && !host.classList.contains('is-expanded')) expand();
     titleNode.textContent = current.title;
     document.getElementById('player-favorite').classList.toggle('selected', contains(favorites, current));
-    document.getElementById('queue-count').textContent = String(queue.length);
     host.classList.toggle('is-playing', isPlaying);
     host.classList.toggle('is-remote', owner !== tabId);
     remoteProgress.hidden = owner === tabId;
@@ -414,10 +416,18 @@
     return true;
   }
   function playbackCommand(action) {
-    if (owner !== tabId) { message('command', { action, owner }); return; }
+    // owner 为 null 说明没有任何标签页在播，本页直接接管；只有其他标签页在播时才转发遥控
+    if (owner !== tabId) {
+      if (owner !== null) { message('command', { action, owner }); return; }
+      owner = tabId;
+    }
     if (action === 'next') shiftSong(1);
     if (action === 'prev') shiftSong(-1);
-    if (action === 'toggle') audio.paused ? audio.play().catch(() => {}) : audio.pause();
+    if (action === 'toggle') {
+      // 清单有歌但尚未加载曲目时，播放键直接开播第一首
+      if (!current && queue.length) { playSong(queue[0]); return; }
+      audio.paused ? audio.play().catch(() => {}) : audio.pause();
+    }
   }
   function listMarkup(items, kind) {
     if (!items.length) return `<p class="empty-personal">${kind === 'favorites' ? '还没有收藏歌曲，点击歌曲旁的爱心开始收藏。' : '播放清单还是空的，点击歌曲旁的加号添加。'}</p>`;
