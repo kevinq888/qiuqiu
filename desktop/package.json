@@ -7,8 +7,9 @@
   "scripts": {
     "start": "electron .",
     "generate:icons": "node generate-icons.js",
-    "build:mac": "electron-builder --mac dmg",
-    "build:win": "electron-builder --win nsis"
+    "build:mac": "node scripts/build-desktop.cjs mac",
+    "build:win": "node scripts/build-desktop.cjs win",
+    "build:all": "node scripts/build-desktop.cjs all"
   },
   "devDependencies": {
     "electron": "^37.2.6",

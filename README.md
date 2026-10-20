@@ -8,6 +8,8 @@
 
 ### v1.0.6（当前版本）
 
+本地正式安装包位于 `desktop/dist/1.0.6/`，该目录只保留两个 macOS DMG 和一个 Windows EXE；后续版本使用各自的版本号目录。
+
 安装包统一命名为“秋秋音乐-版本号-系统-架构”。[GitHub 会过滤上传文件名中的中文](https://docs.github.com/en/rest/releases/assets)，因此此版本提供 ZIP 下载；请解压后运行其中的中文名安装包。
 
 | 系统 | 下载 | ZIP 内的安装包 |
