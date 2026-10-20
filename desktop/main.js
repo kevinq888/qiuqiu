@@ -4,38 +4,36 @@ const path = require('node:path');
 
 const SITE_URL = process.env.QIUQIU_URL || 'https://qiuqiumusic.onrender.com/';
 const ICON_PATH = path.join(__dirname, 'tray-icon.png');
+const APP_ICON_PATH = path.join(__dirname, 'app-icon.png');
 const BOUNDS_PATH = path.join(app.getPath('userData'), 'floating-window.json');
 const FLOATING_SIZE = 92;
-const MAX_FLOATING_WIDTH = 360;
+const FLOATING_WIDTH = 360;
+const FLOATING_HEIGHT = 180;
 let mainWindow;
 let floatingWindow;
 let tray;
 let quitting = false;
 let pollTimer;
 let floatingDragOrigin;
-let floatingAnchorCenter;
+let floatingIgnoresMouse = true;
 
 function setFloatingVisible(visible) {
   if (!floatingWindow || floatingWindow.isDestroyed()) return;
-  if (visible) floatingWindow.showInactive();
-  else floatingWindow.hide();
+  if (visible && !floatingWindow.isVisible()) floatingWindow.showInactive();
+  else if (!visible && floatingWindow.isVisible()) floatingWindow.hide();
 }
 
-function resizeFloatingTrack(width) {
-  if (!floatingWindow || floatingWindow.isDestroyed() || !Number.isFinite(width)) return;
-  const bounds = floatingWindow.getBounds();
-  const nextWidth = Math.max(FLOATING_SIZE, Math.min(MAX_FLOATING_WIDTH, Math.round(width)));
-  if (nextWidth > FLOATING_SIZE && floatingAnchorCenter === undefined) {
-    floatingAnchorCenter = bounds.x + bounds.width / 2;
-  }
-  const center = nextWidth === FLOATING_SIZE
-    ? (floatingAnchorCenter ?? bounds.x + bounds.width / 2)
-    : (floatingAnchorCenter ?? bounds.x + bounds.width / 2);
-  const area = screen.getDisplayMatching(bounds).workArea;
-  const x = Math.max(area.x, Math.min(Math.round(center - nextWidth / 2), area.x + area.width - nextWidth));
-  floatingWindow.setBounds({ x, y: bounds.y, width: nextWidth, height: FLOATING_SIZE }, false);
-  if (nextWidth === FLOATING_SIZE) floatingAnchorCenter = undefined;
-  else floatingAnchorCenter = x + nextWidth / 2;
+function setFloatingMouseEvents(ignore) {
+  if (!floatingWindow || floatingWindow.isDestroyed() || typeof ignore !== 'boolean' || ignore === floatingIgnoresMouse) return;
+  floatingIgnoresMouse = ignore;
+  floatingWindow.setIgnoreMouseEvents(ignore, { forward: true });
+}
+
+function controlPlayback(command) {
+  const selectors = { prev: '#player-prev', toggle: '#player-play-pause', next: '#player-next' };
+  if (!Object.hasOwn(selectors, command) || !mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(selectors[command])})?.click()`, true)
+    .then(sendPlaybackState).catch(() => {});
 }
 
 function expandWebPlayer() {
@@ -52,19 +50,19 @@ function readBounds() {
     const area = display.workArea;
     const edge = 16;
     return {
-      x: Math.max(area.x + edge, Math.min(bounds.x, area.x + area.width - 92 - edge)),
-      y: Math.max(area.y + edge, Math.min(bounds.y, area.y + area.height - 92 - edge)),
-      width: 92,
-      height: 92,
+      x: Math.max(area.x + edge, Math.min(bounds.x, area.x + area.width - FLOATING_WIDTH - edge)),
+      y: Math.max(area.y + edge, Math.min(bounds.y, area.y + area.height - FLOATING_HEIGHT - edge)),
+      width: FLOATING_WIDTH,
+      height: FLOATING_HEIGHT,
     };
   };
   try {
     const bounds = JSON.parse(fs.readFileSync(BOUNDS_PATH, 'utf8'));
-    return safeBounds(bounds);
+    return safeBounds(bounds.version === 2 ? bounds : { ...bounds, x: bounds.x + (bounds.width || FLOATING_SIZE) / 2 - FLOATING_WIDTH / 2 });
   } catch {
     const { workArea } = screen.getPrimaryDisplay();
     return safeBounds({
-      x: workArea.x + workArea.width - 92 - 24,
+      x: workArea.x + workArea.width - FLOATING_WIDTH - 24,
       y: workArea.y + 80,
     });
   }
@@ -127,11 +125,13 @@ function createFloatingWindow() {
   });
   floatingWindow.setAlwaysOnTop(true, 'floating');
   floatingWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  floatingIgnoresMouse = true;
+  floatingWindow.setIgnoreMouseEvents(true, { forward: true });
   floatingWindow.loadFile(path.join(__dirname, 'floating.html'));
   floatingWindow.once('ready-to-show', () => floatingWindow.hide());
   floatingWindow.on('move', () => {
     if (!floatingWindow.isDestroyed()) {
-      try { fs.writeFileSync(BOUNDS_PATH, JSON.stringify(floatingWindow.getBounds())); } catch {}
+      try { fs.writeFileSync(BOUNDS_PATH, JSON.stringify({ ...floatingWindow.getBounds(), version: 2 })); } catch {}
     }
   });
   floatingWindow.on('closed', () => { floatingWindow = null; });
@@ -152,7 +152,6 @@ function registerFloatingDrag() {
     const x = Math.round(floatingDragOrigin.x + point.x - floatingDragOrigin.pointerX);
     const y = Math.round(floatingDragOrigin.y + point.y - floatingDragOrigin.pointerY);
     floatingWindow.setPosition(x, y);
-    if (floatingAnchorCenter !== undefined) floatingAnchorCenter = x + floatingWindow.getBounds().width / 2;
   });
   ipcMain.on('floating:drag-end', event => {
     if (isFloatingEvent(event)) floatingDragOrigin = null;
@@ -216,7 +215,12 @@ function createMainWindow() {
 }
 
 function createTray() {
-  let icon = nativeImage.createFromPath(ICON_PATH).resize({ width: 32, height: 32, quality: 'best' });
+  const isMac = process.platform === 'darwin';
+  const size = isMac ? 18 : 16;
+  const source = nativeImage.createFromPath(isMac ? ICON_PATH : APP_ICON_PATH);
+  let icon = source.resize({ width: size, height: size, quality: 'best' });
+  if (!source.isEmpty()) icon.addRepresentation({ scaleFactor: 2, buffer: source.resize({ width: size * 2, height: size * 2, quality: 'best' }).toPNG() });
+  if (isMac) icon.setTemplateImage(true);
   if (icon.isEmpty()) icon = nativeImage.createEmpty();
   tray = new Tray(icon);
   tray.setToolTip('秋秋音乐仍在运行');
@@ -242,8 +246,11 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     ipcMain.on('floating:open', showMain);
     ipcMain.on('floating:quit', quitApp);
-    ipcMain.on('floating:track-width', (event, width) => {
-      if (isFloatingEvent(event)) resizeFloatingTrack(width);
+    ipcMain.on('floating:ignore-mouse', (event, ignore) => {
+      if (isFloatingEvent(event)) setFloatingMouseEvents(ignore);
+    });
+    ipcMain.on('floating:control', (event, command) => {
+      if (isFloatingEvent(event)) controlPlayback(command);
     });
     registerFloatingDrag();
     createFloatingWindow();

@@ -6,7 +6,17 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.0.4（当前版本）
+### v1.0.5（当前版本）
+
+| 系统 | 安装包 | 架构 |
+| --- | --- | --- |
+| macOS（Apple 芯片） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.5/qiuqiumusic-1.0.5-macos-arm64.dmg) | arm64 |
+| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.5/qiuqiumusic-1.0.5-macos-x64.dmg) | x64 |
+| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.5/qiuqiumusic-1.0.5-windows-x64.exe) | x64 |
+
+菜单栏使用独立的小尺寸单色图标，程序坞使用正常大小的圆角图标。悬浮播放器支持悬停快捷切歌和播放/暂停，进度环采用珊瑚色；固定窗口尺寸减少悬停闪烁。
+
+### v1.0.4
 
 | 系统 | 安装包 | 架构 |
 | --- | --- | --- |

@@ -116,7 +116,7 @@ function placeScaled(sourcePixels, sourceWidth, sourceHeight, scale, base) {
   return output;
 }
 
-function applyMask(pixels, mode, customRadius) {
+function applyMask(pixels, mode, customRadius, inset = 0) {
   const radius = customRadius ?? (mode === 'circle' ? 248 : 112);
   const samples = 4;
   for (let y = 0; y < size; y++) {
@@ -130,8 +130,8 @@ function applyMask(pixels, mode, customRadius) {
             const dx = px - size / 2, dy = py - size / 2;
             if (dx * dx + dy * dy <= radius * radius) covered++;
           } else {
-            const dx = Math.max(radius - px, 0, px - (size - radius));
-            const dy = Math.max(radius - py, 0, py - (size - radius));
+            const dx = Math.max(inset + radius - px, 0, px - (size - inset - radius));
+            const dy = Math.max(inset + radius - py, 0, py - (size - inset - radius));
             if (dx * dx + dy * dy <= radius * radius) covered++;
           }
         }
@@ -144,13 +144,24 @@ function applyMask(pixels, mode, customRadius) {
 
 const original = decodePng(source);
 const base = original.pixels.subarray(3, 4).length ? original.pixels.subarray(0, 3) : [241, 248, 245];
-const appArtworkScale = 0.62;
+const appArtworkScale = 0.88;
 const smallerAppArt = placeScaled(original.pixels, original.width, original.height, appArtworkScale, base);
-applyMask(smallerAppArt, 'circle', size * appArtworkScale / 2);
+applyMask(smallerAppArt, 'rounded', 96, 32);
 encodePng(size, size, smallerAppArt, appIconPath);
 
-const smallerArt = placeScaled(original.pixels, original.width, original.height, 0.75, base);
-const tray = Buffer.from(smallerArt);
-applyMask(tray, 'circle');
+// The macOS menu bar needs a small monochrome template, independent of the Dock tile.
+const tray = Buffer.alloc(size * size * 4);
+for (let y = 0; y < size; y++) {
+  for (let x = 0; x < size; x++) {
+    let coverage = 0;
+    for (let sy = 0; sy < 4; sy++) {
+      for (let sx = 0; sx < 4; sx++) {
+        const radius = Math.hypot(x + (sx + 0.5) / 4 - size / 2, y + (sy + 0.5) / 4 - size / 2);
+        if ((radius >= 184 && radius <= 216) || (radius >= 118 && radius <= 136) || radius <= 40) coverage++;
+      }
+    }
+    tray[(y * size + x) * 4 + 3] = Math.round(255 * coverage / 16);
+  }
+}
 encodePng(size, size, tray, trayIconPath);
-console.log('Generated a smaller circular app icon and circular tray icon.');
+console.log('Generated a full-size rounded Dock tile and a monochrome menu-bar template.');

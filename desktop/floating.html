@@ -31,7 +31,14 @@
       </svg>
     </button>
     <button class="close" type="button" aria-label="退出秋秋音乐" title="退出秋秋音乐">×</button>
-    <span class="track" aria-live="polite"><span class="track-text"></span></span>
+    <section class="hover-panel" aria-label="快捷播放控制" inert>
+      <div class="track" aria-live="polite"><span class="track-text">秋秋音乐</span></div>
+      <div class="quick-controls">
+        <button class="quick-control" data-command="prev" type="button" aria-label="上一曲" title="上一曲"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h3v14H5zM19 5v14L9 12z"/></svg></button>
+        <button class="quick-control play-control" data-command="toggle" type="button" aria-label="播放" title="播放"><svg class="play-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg><svg class="pause-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+        <button class="quick-control" data-command="next" type="button" aria-label="下一曲" title="下一曲"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5h3v14h-3zM5 5l10 7-10 7z"/></svg></button>
+      </div>
+    </section>
   </main>
   <script src="floating.js"></script>
 </body>

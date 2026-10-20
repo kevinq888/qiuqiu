@@ -1,37 +1,71 @@
 const widget = document.querySelector('.widget');
 const record = document.querySelector('.record');
 const close = document.querySelector('.close');
+const panel = document.querySelector('.hover-panel');
 const track = document.querySelector('.track');
 const trackText = document.querySelector('.track-text');
+const controls = [...document.querySelectorAll('[data-command]')];
+const playControl = document.querySelector('.play-control');
 const progressRing = document.querySelector('.ring-progress');
 const ringLength = 2 * Math.PI * 42;
 let pointerStart = null;
 let dragMoved = false;
 let suppressClick = false;
-let resizeBackTimer;
+let hideTimer;
 let currentTitle = '';
+let ignoresMouse = true;
 progressRing.style.strokeDasharray = `${ringLength} ${ringLength}`;
 progressRing.style.strokeDashoffset = String(ringLength);
+controls.forEach(button => { button.disabled = true; });
 
 function fitTrackTitle() {
-  const textWidth = trackText.scrollWidth;
-  const windowWidth = Math.max(92, Math.min(360, Math.ceil(textWidth + 32)));
-  const visibleTextWidth = Math.max(1, windowWidth - 42);
-  const distance = Math.max(0, textWidth - visibleTextWidth);
-  track.classList.toggle('is-marquee', distance > 4);
+  const distance = Math.max(0, trackText.scrollWidth - track.clientWidth);
+  track.classList.toggle('is-marquee', distance > 2);
   track.style.setProperty('--scroll-distance', `${distance}px`);
-  track.style.setProperty('--marquee-duration', `${Math.max(6, distance / 20)}s`);
-  window.qiuqiuDesktop.resizeTrack(windowWidth);
+  track.style.setProperty('--marquee-duration', `${Math.max(7, distance / 22)}s`);
 }
 
-widget.addEventListener('pointerenter', () => {
-  clearTimeout(resizeBackTimer);
-  widget.classList.add('is-hovered');
-  fitTrackTitle();
+function expandPanel() {
+  clearTimeout(hideTimer);
+  hideTimer = undefined;
+  if (!widget.classList.contains('is-hovered')) {
+    widget.classList.add('is-hovered');
+    panel.inert = false;
+    fitTrackTitle();
+  }
+}
+
+function scheduleHide() {
+  if (hideTimer) return;
+  hideTimer = setTimeout(() => {
+    widget.classList.remove('is-hovered');
+    panel.inert = true;
+    hideTimer = undefined;
+  }, 200);
+}
+
+function setMousePassthrough(ignore) {
+  if (ignore === ignoresMouse) return;
+  ignoresMouse = ignore;
+  window.qiuqiuDesktop.ignoreMouse(ignore);
+}
+
+// The native canvas stays fixed. Only the visible disc and popup accept clicks;
+// transparent space forwards input to the application underneath it.
+document.addEventListener('mousemove', event => {
+  const x = event.clientX, y = event.clientY;
+  const overRecord = Math.hypot(x - 180, y - 46) <= 46;
+  const overClose = x >= 202 && x <= 222 && y >= 4 && y <= 24;
+  const overPanel = widget.classList.contains('is-hovered') && x >= 8 && x <= 352 && y >= 88 && y <= 174;
+  const interactive = overRecord || overClose || overPanel || !!pointerStart;
+  setMousePassthrough(!interactive);
+  if (interactive) expandPanel();
+  else scheduleHide();
 });
-widget.addEventListener('pointerleave', () => {
-  widget.classList.remove('is-hovered');
-  resizeBackTimer = setTimeout(() => window.qiuqiuDesktop.resizeTrack(92), 220);
+document.documentElement.addEventListener('mouseleave', () => {
+  if (pointerStart) return;
+  setMousePassthrough(true);
+  scheduleHide();
 });
 
 record.addEventListener('pointerdown', event => {
@@ -65,15 +99,21 @@ close.addEventListener('click', event => {
   event.stopPropagation();
   window.qiuqiuDesktop.quit();
 });
+controls.forEach(button => button.addEventListener('click', () => {
+  window.qiuqiuDesktop.control(button.dataset.command);
+}));
 window.qiuqiuDesktop.onPlaybackState(state => {
   widget.classList.toggle('is-playing', !!state.playing);
   const hasTrack = !!state.hasTrack && !!state.title;
+  controls.forEach(button => { button.disabled = !hasTrack; });
+  playControl.setAttribute('aria-label', state.playing ? '暂停' : '播放');
+  playControl.title = state.playing ? '暂停' : '播放';
   const title = hasTrack ? state.title : '秋秋音乐';
   if (title !== currentTitle) {
     currentTitle = title;
     trackText.textContent = title;
     track.title = title;
-    if (widget.classList.contains('is-hovered')) fitTrackTitle();
+    fitTrackTitle();
   }
   const duration = Number(state.duration) || 0;
   const currentTime = Number(state.currentTime) || 0;
