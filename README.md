@@ -12,9 +12,9 @@
 
 | 系统 | 安装包 | 说明 |
 | --- | --- | --- |
-| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.0.2-arm64.dmg) | arm64 |
-| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.0.2-x64.dmg) | x64 |
-| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.0.2-x64.exe) | x64 |
+| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-arm64.dmg) | arm64 |
+| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-x64.dmg) | x64 |
+| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-windows-x64.exe) | x64 |
 
 也可以在 [GitHub Releases](https://github.com/kevinq888/qiuqiu/releases) 查看各版本的更新记录和安装包。macOS 安装包尚未进行 Developer ID 签名和公证；首次打开时若系统拦截，请在“系统设置 → 隐私与安全性”中允许打开。
 
