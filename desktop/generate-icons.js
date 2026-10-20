@@ -144,7 +144,7 @@ function applyMask(pixels, mode, customRadius) {
 
 const original = decodePng(source);
 const base = original.pixels.subarray(3, 4).length ? original.pixels.subarray(0, 3) : [241, 248, 245];
-const appArtworkScale = 0.72;
+const appArtworkScale = 0.62;
 const smallerAppArt = placeScaled(original.pixels, original.width, original.height, appArtworkScale, base);
 applyMask(smallerAppArt, 'circle', size * appArtworkScale / 2);
 encodePng(size, size, smallerAppArt, appIconPath);

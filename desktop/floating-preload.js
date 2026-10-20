@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('qiuqiuDesktop', {
   startDrag: point => ipcRenderer.send('floating:drag-start', point),
   moveDrag: point => ipcRenderer.send('floating:drag-move', point),
   endDrag: () => ipcRenderer.send('floating:drag-end'),
+  resizeTrack: width => ipcRenderer.send('floating:track-width', width),
   onPlaybackState: callback => {
     const listener = (_event, state) => callback(state);
     ipcRenderer.on('playback-state', listener);

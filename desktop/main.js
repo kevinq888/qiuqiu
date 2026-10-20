@@ -5,17 +5,37 @@ const path = require('node:path');
 const SITE_URL = process.env.QIUQIU_URL || 'https://qiuqiumusic.onrender.com/';
 const ICON_PATH = path.join(__dirname, 'tray-icon.png');
 const BOUNDS_PATH = path.join(app.getPath('userData'), 'floating-window.json');
+const FLOATING_SIZE = 92;
+const MAX_FLOATING_WIDTH = 360;
 let mainWindow;
 let floatingWindow;
 let tray;
 let quitting = false;
 let pollTimer;
 let floatingDragOrigin;
+let floatingAnchorCenter;
 
 function setFloatingVisible(visible) {
   if (!floatingWindow || floatingWindow.isDestroyed()) return;
   if (visible) floatingWindow.showInactive();
   else floatingWindow.hide();
+}
+
+function resizeFloatingTrack(width) {
+  if (!floatingWindow || floatingWindow.isDestroyed() || !Number.isFinite(width)) return;
+  const bounds = floatingWindow.getBounds();
+  const nextWidth = Math.max(FLOATING_SIZE, Math.min(MAX_FLOATING_WIDTH, Math.round(width)));
+  if (nextWidth > FLOATING_SIZE && floatingAnchorCenter === undefined) {
+    floatingAnchorCenter = bounds.x + bounds.width / 2;
+  }
+  const center = nextWidth === FLOATING_SIZE
+    ? (floatingAnchorCenter ?? bounds.x + bounds.width / 2)
+    : (floatingAnchorCenter ?? bounds.x + bounds.width / 2);
+  const area = screen.getDisplayMatching(bounds).workArea;
+  const x = Math.max(area.x, Math.min(Math.round(center - nextWidth / 2), area.x + area.width - nextWidth));
+  floatingWindow.setBounds({ x, y: bounds.y, width: nextWidth, height: FLOATING_SIZE }, false);
+  if (nextWidth === FLOATING_SIZE) floatingAnchorCenter = undefined;
+  else floatingAnchorCenter = x + nextWidth / 2;
 }
 
 function expandWebPlayer() {
@@ -129,10 +149,10 @@ function registerFloatingDrag() {
   });
   ipcMain.on('floating:drag-move', (event, point) => {
     if (!isFloatingEvent(event) || !floatingDragOrigin || !Number.isFinite(point?.x) || !Number.isFinite(point?.y)) return;
-    floatingWindow.setPosition(
-      Math.round(floatingDragOrigin.x + point.x - floatingDragOrigin.pointerX),
-      Math.round(floatingDragOrigin.y + point.y - floatingDragOrigin.pointerY),
-    );
+    const x = Math.round(floatingDragOrigin.x + point.x - floatingDragOrigin.pointerX);
+    const y = Math.round(floatingDragOrigin.y + point.y - floatingDragOrigin.pointerY);
+    floatingWindow.setPosition(x, y);
+    if (floatingAnchorCenter !== undefined) floatingAnchorCenter = x + floatingWindow.getBounds().width / 2;
   });
   ipcMain.on('floating:drag-end', event => {
     if (isFloatingEvent(event)) floatingDragOrigin = null;
@@ -222,6 +242,9 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     ipcMain.on('floating:open', showMain);
     ipcMain.on('floating:quit', quitApp);
+    ipcMain.on('floating:track-width', (event, width) => {
+      if (isFloatingEvent(event)) resizeFloatingTrack(width);
+    });
     registerFloatingDrag();
     createFloatingWindow();
     createMainWindow();
