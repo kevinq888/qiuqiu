@@ -6,19 +6,23 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
+### v1.0.3（当前版本）
+
+| 系统 | 安装包 | 架构 |
+| --- | --- | --- |
+| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.3/qiuqiumusic-1.0.3-macos-arm64.dmg) | arm64 |
+| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.3/qiuqiumusic-1.0.3-macos-x64.dmg) | x64 |
+| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.3/qiuqiumusic-1.0.3-windows-x64.exe) | x64 |
+
 ### v1.0.2
 
-> v1.0.2 安装包已在本地生成。GitHub 目前还没有对应 Release，因此下列直链会在将安装包上传到该版本 Release 后生效。
-
-| 系统 | 安装包 | 说明 |
+| 系统 | 安装包 | 架构 |
 | --- | --- | --- |
 | macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-arm64.dmg) | arm64 |
 | macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-x64.dmg) | x64 |
 | Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-windows-x64.exe) | x64 |
 
-也可以在 [GitHub Releases](https://github.com/kevinq888/qiuqiu/releases) 查看各版本的更新记录和安装包。macOS 安装包尚未进行 Developer ID 签名和公证；首次打开时若系统拦截，请在“系统设置 → 隐私与安全性”中允许打开。
-
-> 下载链接采用 GitHub Release 的版本标签和资产文件名。发布新版本时，请将对应安装包上传到该版本的 Release，再在本表增加新版本条目；不要覆盖旧版本下载地址。
+全部版本的更新记录和安装包见 [GitHub Releases](https://github.com/kevinq888/qiuqiu/releases)。macOS 安装包尚未进行 Developer ID 签名和公证；首次打开时若系统拦截，请在“系统设置 → 隐私与安全性”中允许打开。
 
 ## 本地运行
 

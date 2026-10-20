@@ -116,8 +116,8 @@ function placeScaled(sourcePixels, sourceWidth, sourceHeight, scale, base) {
   return output;
 }
 
-function applyMask(pixels, mode) {
-  const radius = mode === 'circle' ? 248 : 112;
+function applyMask(pixels, mode, customRadius) {
+  const radius = customRadius ?? (mode === 'circle' ? 248 : 112);
   const samples = 4;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -144,12 +144,13 @@ function applyMask(pixels, mode) {
 
 const original = decodePng(source);
 const base = original.pixels.subarray(3, 4).length ? original.pixels.subarray(0, 3) : [241, 248, 245];
-const smallerArt = placeScaled(original.pixels, original.width, original.height, 0.75, base);
-const rounded = Buffer.from(smallerArt);
-applyMask(rounded, 'rounded');
-encodePng(size, size, rounded, appIconPath);
+const appArtworkScale = 0.72;
+const smallerAppArt = placeScaled(original.pixels, original.width, original.height, appArtworkScale, base);
+applyMask(smallerAppArt, 'circle', size * appArtworkScale / 2);
+encodePng(size, size, smallerAppArt, appIconPath);
 
+const smallerArt = placeScaled(original.pixels, original.width, original.height, 0.75, base);
 const tray = Buffer.from(smallerArt);
 applyMask(tray, 'circle');
 encodePng(size, size, tray, trayIconPath);
-console.log('Generated rounded app icon and circular tray icon with 25% more inner spacing.');
+console.log('Generated a smaller circular app icon and circular tray icon.');

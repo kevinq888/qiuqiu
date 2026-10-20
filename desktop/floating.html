@@ -13,8 +13,22 @@
       <circle class="ring-progress" cx="46" cy="46" r="42"></circle>
     </svg>
     <button class="record" type="button" aria-label="打开秋秋音乐">
-      <span class="groove groove-one"></span><span class="groove groove-two"></span>
-      <span class="label"><span class="note">♪</span></span>
+      <svg class="record-art" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <radialGradient id="vinyl" cx="50%" cy="46%" r="58%">
+            <stop offset="0" stop-color="#214c46"></stop>
+            <stop offset=".58" stop-color="#0b211e"></stop>
+            <stop offset=".82" stop-color="#183c37"></stop>
+            <stop offset="1" stop-color="#071714"></stop>
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="50" r="47" fill="url(#vinyl)" stroke="#37766b" stroke-width="1.5"></circle>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#246157" stroke-width="1.6"></circle>
+        <circle cx="50" cy="50" r="31" fill="none" stroke="#246157" stroke-width="1.4"></circle>
+        <circle cx="50" cy="50" r="24" fill="none" stroke="#246157" stroke-width="1.2"></circle>
+        <circle cx="50" cy="50" r="16" fill="#f58a70" stroke="#f8d6c4" stroke-width="1.8"></circle>
+        <text x="50" y="56" text-anchor="middle" fill="#fff4de" font-size="17" font-family="system-ui,sans-serif">♪</text>
+      </svg>
     </button>
     <button class="close" type="button" aria-label="退出秋秋音乐" title="退出秋秋音乐">×</button>
     <span class="track" aria-live="polite"></span>
