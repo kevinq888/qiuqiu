@@ -275,9 +275,13 @@ if (!app.requestSingleInstanceLock()) {
       if (isFloatingEvent(event)) controlPlayback(command);
     });
     registerFloatingDrag();
-    createFloatingWindow();
+    // Main window must be created before the floating panel: on macOS,
+    // launching with a non-activating NSPanel as the first window leaves the
+    // activation policy at "accessory" and the Dock icon never appears.
     createMainWindow();
+    createFloatingWindow();
     createTray();
+    if (process.platform === 'darwin') app.dock.show();
     pollTimer = setInterval(sendPlaybackState, 800);
     app.on('activate', showMain);
   });
