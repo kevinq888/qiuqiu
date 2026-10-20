@@ -6,7 +6,17 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.0.5（当前版本）
+### v1.0.6（当前版本）
+
+安装包统一命名为“秋秋音乐-版本号-系统-架构”。[GitHub 会过滤上传文件名中的中文](https://docs.github.com/en/rest/releases/assets)，因此此版本提供 ZIP 下载；请解压后运行其中的中文名安装包。
+
+| 系统 | 下载 | ZIP 内的安装包 |
+| --- | --- | --- |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.6/1.0.6-macos-arm64.zip) | 秋秋音乐-1.0.6-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.6/1.0.6-macos-x64.zip) | 秋秋音乐-1.0.6-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.6/1.0.6-windows-x64.zip) | 秋秋音乐-1.0.6-windows-x64.exe |
+
+### v1.0.5
 
 | 系统 | 安装包 | 架构 |
 | --- | --- | --- |
