@@ -28,6 +28,8 @@
   const installDialog = document.getElementById('install-dialog');
   const themeSheet = document.getElementById('theme-sheet');
   let installPrompt = null;
+  let installPromptConsumed = false;
+  let installPromptWaiters = [];
   let installReturnFocus = null;
   let queue = [];
   let favorites = [];
@@ -104,7 +106,7 @@
         ? 'iPhone 需要通过 Safari 添加网页 App：点“分享”→“添加到主屏幕”→“添加”。如果看到“作为网页 App 打开”，请开启。'
         : '请用 Safari 打开本站，再点“分享”→“添加到主屏幕”→“添加”。';
     } else if (env.android) {
-      instructions = '请在 Chrome 菜单中选择“安装应用”或“添加到主屏幕”。如果没有安装选项，请稍后刷新页面再试。';
+      instructions = '浏览器暂未准备好或不支持直接安装，可以手动添加：\n· Chrome：点右上角菜单（⋮）→"安装应用"或"添加到主屏幕"。\n· 小米/华为/OPPO/vivo 等浏览器：点菜单 →"添加到桌面"（有的在"工具箱"里）。\n添加后桌面会出现"秋秋音乐"图标。也可以刷新本页后再点一次"保存链接"重试直接安装。';
     } else if (env.safari) {
       instructions = '在 Safari 菜单中选择“文件”→“添加到程序坞”，或点工具栏的“分享”→“添加到程序坞”。';
     } else {
@@ -137,20 +139,35 @@
   async function copyInstallLink() {
     if (await copySiteLink()) document.getElementById('install-copy-link').textContent = '链接已复制';
   }
-  function startInstall() {
+  async function startInstall() {
     if (installedApp()) return;
-    if (!installPrompt) { showInstallInstructions(); return; }
-    const prompt = installPrompt;
+    // 移动端浏览器常在页面加载后一小段时间才触发 beforeinstallprompt，
+    // 点击时先短暂等待，避免过早落到复制链接的说明弹窗。
+    const prompt = installPrompt || (installPromptConsumed ? null : await waitForInstallPrompt());
+    if (!prompt) { showInstallInstructions(); return; }
     installPrompt = null;
+    installPromptConsumed = true;
     // 系统安装确认必须直接由这次点击触发，无法由网页静默安装。
     prompt.prompt();
     prompt.userChoice.then(({ outcome }) => {
       if (outcome === 'accepted') updateInstallButton();
-    }).catch(showInstallInstructions);
+    }).catch(() => {});
+  }
+  function waitForInstallPrompt(timeout = 2500) {
+    return new Promise(resolve => {
+      const timer = setTimeout(() => {
+        installPromptWaiters = installPromptWaiters.filter(item => item !== settle);
+        resolve(null);
+      }, timeout);
+      const settle = event => { clearTimeout(timer); resolve(event); };
+      installPromptWaiters.push(settle);
+    });
   }
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
     installPrompt = event;
+    installPromptWaiters.forEach(settle => settle(event));
+    installPromptWaiters = [];
     updateInstallButton();
   });
   window.addEventListener('appinstalled', () => {
