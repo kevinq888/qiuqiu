@@ -120,7 +120,10 @@ function createFloatingWindow() {
     skipTaskbar: true,
     minimizable: false,
     maximizable: false,
-    closable: false,
+    // A frameless window has no system close button, but it must remain
+    // closable: macOS otherwise cancels app.quit(), leaving an orphaned
+    // floating window after the main player and polling have stopped.
+    closable: true,
     alwaysOnTop: true,
     hasShadow: false,
     backgroundColor: '#00000000',
