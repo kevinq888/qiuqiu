@@ -6,15 +6,18 @@
 
 | 项目 | 配置 |
 | --- | --- |
-| 线上地址 | <https://qiuqiumusic.onrender.com/> |
+| 当前重建服务地址 | <https://qiuqiumusic-2lkp.onrender.com/> |
+| 要求的正式域名 | <https://qiuqiumusic.onrender.com/>（尚未分配，当前返回 404） |
 | 托管平台 | Render Web Service，Free，新加坡区域 |
-| 服务管理 | <https://dashboard.render.com/web/srv-db8pbv3l550s73enl0ag>（旧 Render 账号） |
+| 服务管理 | <https://dashboard.render.com/web/srv-dbc2a7tg1s2s73bj5dfg/settings> |
 | 部署源码 | GitHub `kevinq888/qiuqiumusic` 的 `main` 分支 |
 | 部署方式 | 手动部署；当前服务通过公共 Git 仓库地址创建，推送代码不会自动部署 |
 | 运行环境 | Node.js 22 或更新版本 |
 | 构建命令 | `node --check server.js` |
 | 启动命令 | `npm start` |
 | 健康检查 | `/healthz`，成功时返回 `ok` |
+
+2026-10-21 已按确认删除旧服务 `srv-dbbosnnavr4c738b0jt0`，从新仓库重建。Render 仍分配带后缀的域名；创建表单没有提供单独指定默认子域名的选项。此处记录实际结果，不代表正式域名已恢复。桌面客户端仍以要求的正式域名为默认地址，域名恢复前不发布依赖该地址的新安装包。
 
 Codeup 仓库是同一项目的代码副本。线上服务从上述 GitHub 分支拉取代码；推送 GitHub 或 Codeup 后，都需要在当前 Render 服务中手动部署最新提交。
 
