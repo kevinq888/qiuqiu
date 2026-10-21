@@ -2,7 +2,7 @@ name: Desktop update validation
 on:
   push:
     branches: [main, 'codex/**']
-    paths: ['desktop/**', 'public/js/desktop-update.js', '.github/workflows/desktop-update.yml']
+    paths: ['desktop/**', '!desktop/release.json', 'public/js/desktop-update.js', '.github/workflows/desktop-update.yml']
   workflow_dispatch:
 concurrency:
   group: desktop-update-${{ github.ref }}

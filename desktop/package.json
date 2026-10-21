@@ -1,6 +1,6 @@
 {
   "name": "qiuqiumusic-desktop",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "秋秋音乐本地桌面播放器",
   "main": "main.js",

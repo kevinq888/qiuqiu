@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { UpdateManager, candidateFrom, newer, targetFor, downloadVerified, RELEASE_API } = require('../update/manager.cjs');
+const { UpdateManager, candidateFrom, newer, targetFor, downloadVerified, RELEASE_API, RELEASE_MANIFEST } = require('../update/manager.cjs');
 const runtime = { version: '1.1.0', platform: 'darwin', arch: 'arm64', packaged: true };
 const bytes = Buffer.from('test installer payload');
 function release(version = '1.2.0') {
@@ -91,4 +91,18 @@ test('ZIP inspection reads Chinese UTF-8 names and rejects traversal or conflict
       await fs.writeFile(file, data); await assert.rejects(inspectInstallerZip(file, expected), /内容异常/);
     }
   } finally { await fs.rm(root, { recursive: true, force: true }); }
+});
+
+test('GitHub API quota exhaustion falls back to official manifest with identical verification', async () => {
+  const seen = [];
+  const manager = new UpdateManager(runtime, { fetch: async url => {
+    seen.push(url);
+    return url === RELEASE_API ? new Response('quota exhausted', {status:403}) : Response.json(release());
+  } });
+  assert.equal((await manager.check()).status, 'available');
+  assert.deepEqual(seen, [RELEASE_API, RELEASE_MANIFEST]);
+  const invalid = release(); invalid.assets[0].browser_download_url='https://example.com/foreign.zip';
+  const unsafe = new UpdateManager(runtime, {fetch:async url=>url===RELEASE_API?new Response('',{status:403}):Response.json(invalid)});
+  assert.equal((await unsafe.check()).status,'idle');
+  assert.equal(unsafe.candidate,null);
 });

@@ -6,8 +6,9 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.2.0（当前版本）
+### v1.2.1（当前版本）
 
+- GitHub 匿名 API 限流时，使用官方仓库发布清单检查更新，无需用户登录 GitHub。
 - 修复音源响应断线可能导致桌面进程退出的问题；播放失败会保留明确提示，点击播放可重新加载音源并重试。
 - 调整应用图标唱片比例，与大唱片圆角图标参考保持一致。
 
@@ -16,13 +17,13 @@
 - 使用官方 GitHub Releases，不依赖 Render；校验失败不替换应用。Mac 新版启动失败会恢复备份。Windows 使用 NSIS 静默安装，失败保留恢复副本；系统要求的权限提示仍会显示。
 - 1.1.0 及更早版本需先手动安装一次本版本，之后才具备一键更新能力。安装位置必须可写；Mac 请先将应用移入“应用程序”目录。
 
-安装包位于 `desktop/dist/1.2.0/`，目录仅包含以下三个文件。ZIP 下载后先解压。
+安装包位于 `desktop/dist/1.2.1/`，目录仅包含以下三个文件。ZIP 下载后先解压。
 
 | 系统 | 下载 | ZIP 内的安装包 |
 | --- | --- | --- |
-| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.0/1.2.0-macos-arm64.zip) | 秋秋音乐-1.2.0-macos-arm64.dmg |
-| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.0/1.2.0-macos-x64.zip) | 秋秋音乐-1.2.0-macos-x64.dmg |
-| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.0/1.2.0-windows-x64.zip) | 秋秋音乐-1.2.0-windows-x64.exe |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.1/1.2.1-macos-arm64.zip) | 秋秋音乐-1.2.1-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.1/1.2.1-macos-x64.zip) | 秋秋音乐-1.2.1-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.1/1.2.1-windows-x64.zip) | 秋秋音乐-1.2.1-windows-x64.exe |
 
 ### v1.1.0
 

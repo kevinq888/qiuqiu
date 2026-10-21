@@ -7,6 +7,7 @@ const { Readable, Transform } = require('node:stream');
 const { pipeline } = require('node:stream/promises');
 
 const RELEASE_API = 'https://api.github.com/repos/kevinq888/qiuqiumusic/releases/latest';
+const RELEASE_MANIFEST = 'https://raw.githubusercontent.com/kevinq888/qiuqiumusic/main/desktop/release.json';
 const RELEASE_BASE = 'https://github.com/kevinq888/qiuqiumusic/releases/download/';
 const MAX_BYTES = 1024 * 1024 * 1024;
 function versionParts(version) {
@@ -82,12 +83,22 @@ class UpdateManager extends EventEmitter {
     if (this.checking) return this.checking;
     this.checking = (async () => {
       try {
-        const response = await this.dependencies.fetch(RELEASE_API, {
+        const options = () => ({
           headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'qiuqiumusic-updater' },
           signal: AbortSignal.timeout(10000), cache: 'no-store',
         });
-        if (!response.ok) throw Error('暂时无法连接更新服务');
-        const candidate = candidateFrom(await response.json(), this.runtime);
+        let candidate;
+        try {
+          const response = await this.dependencies.fetch(RELEASE_API, options());
+          if (!response.ok) throw Error('暂时无法连接更新服务');
+          candidate = candidateFrom(await response.json(), this.runtime);
+        } catch {
+          // Shared networks can exhaust GitHub's anonymous API quota. The
+          // maintainer-published manifest uses the same exact URL/hash checks.
+          const response = await this.dependencies.fetch(RELEASE_MANIFEST, options());
+          if (!response.ok) throw Error('暂时无法连接更新服务');
+          candidate = candidateFrom(await response.json(), this.runtime);
+        }
         this.candidate = candidate;
         this.setState({ status: candidate ? 'available' : 'idle', version: candidate?.version || '', error: '', progress: 0 });
       } catch (error) {
@@ -137,4 +148,4 @@ class UpdateManager extends EventEmitter {
     return this.installing;
   }
 }
-module.exports = { UpdateManager, candidateFrom, newer, targetFor, downloadVerified, RELEASE_API };
+module.exports = { UpdateManager, candidateFrom, newer, targetFor, downloadVerified, RELEASE_API, RELEASE_MANIFEST };
