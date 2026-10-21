@@ -44,7 +44,9 @@ async function stopTestApp() {
   const userData = await profile;
   console.log('Disposable profile:', userData);
   try {
+    await fs.access(exe);
     child = spawn(exe, ['--inspect=127.0.0.1:9349', `--user-data-dir=${userData}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    child.on('error',error=>console.error('Disposable application launch failed:',error));
     child.stderr.on('data', bytes => process.stderr.write(bytes));
     let endpoints;
     for (let i = 0; i < 100; i++) {
@@ -74,6 +76,7 @@ async function stopTestApp() {
     const target = process.platform === 'darwin' ? `macos-${process.arch}` : 'windows-x64';
     const asset = { name: `${version}-${target}.zip`, size: metadata.size, state: 'uploaded', digest: 'sha256:' + hash.digest('hex'), browser_download_url: `https://github.com/kevinq888/qiuqiumusic/releases/download/v${version}/${version}-${target}.zip` };
     const modulePath = path.resolve(__dirname, '../update/electron.cjs');
+    const packagedUpdater = process.env.QIUQIU_USE_PACKAGED_UPDATER === '1';
     const saved = await evaluate(`(async()=>{
       const w=e.BrowserWindow.fromId(${mainId});
       const title=await w.webContents.executeJavaScript("document.querySelector('[data-play-id]').dataset.playTitle");
@@ -88,7 +91,10 @@ async function stopTestApp() {
       await sleep(100);
     }
     await evaluate(`e.BrowserWindow.fromId(${mainId}).webContents.executeJavaScript("document.querySelector('#player-audio').currentTime=7.5;localStorage.setItem('qiuqiumusic.theme','dark')")`);
-    await evaluate(`globalThis.testUpdater=process.getBuiltinModule('module').createRequire(process.execPath)(${JSON.stringify(modulePath)}).createUpdater({getMainWindow:()=>e.BrowserWindow.fromId(${mainId}),quit:()=>e.app.quit()});true`);
+    if (packagedUpdater) await evaluate(`for(const channel of ['desktop:update-state','desktop:update-check','desktop:update-install'])e.ipcMain.removeHandler(channel);true`);
+    await evaluate(`globalThis.testUpdater=process.getBuiltinModule('module').createRequire(process.execPath)(${packagedUpdater ? "process.getBuiltinModule('path').join(process.resourcesPath,'app.asar/update/electron.cjs')" : JSON.stringify(modulePath)}).createUpdater({getMainWindow:()=>e.BrowserWindow.fromId(${mainId}),quit:()=>e.app.quit()});true`);
+    // A same-version reinstall fixture exercises the updater shipped inside ASAR.
+    if (packagedUpdater) await evaluate(`testUpdater.manager.runtime.version='1.1.0';true`);
     // Only replace network transport. Preparation, digest verification, helper,
     // real installer, saved playback and new app health confirmation remain real.
     await evaluate(`testUpdater.manager.dependencies.fetch=async url=>url.endsWith('/latest')?Response.json({tag_name:'v${version}',assets:[${JSON.stringify(asset)}]}):new Response(process.getBuiltinModule('fs').createReadStream(${JSON.stringify(archive)}),{headers:{'content-length':'${metadata.size}'}});true`);
