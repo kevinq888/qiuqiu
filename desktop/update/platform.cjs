@@ -1,4 +1,5 @@
 const fs = require('node:fs/promises');
+const disk = require('./disk.cjs').promises;
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { execFile, spawn } = require('node:child_process');
@@ -56,9 +57,9 @@ async function prepareMac(input) {
     const architectures = (await run('/usr/bin/lipo', ['-archs', executable])).stdout.trim().split(/\s+/);
     if (!architectures.includes(runtime.arch === 'x64' ? 'x86_64' : 'arm64')) throw Error('安装包芯片架构不匹配');
     await run('/usr/bin/ditto', [source, stage], { timeout: 120000 });
-    return { target, stage, backup, binary: path.join('Contents', 'MacOS', binary), cleanup: () => fs.rm(stage, { recursive: true, force: true }) };
+    return { target, stage, backup, binary: path.join('Contents', 'MacOS', binary), cleanup: () => disk.rm(stage, { recursive: true, force: true }) };
   } catch (error) {
-    await fs.rm(stage, { recursive: true, force: true }).catch(() => {});
+    await disk.rm(stage, { recursive: true, force: true }).catch(() => {});
     throw error;
   } finally {
     if (mounted) await run('/usr/bin/hdiutil', ['detach', mount], { timeout: 30000 });
@@ -70,7 +71,7 @@ async function prepareWindows(input) {
   if (path.relative(target, input.workspace).split(path.sep)[0] !== '..') throw Error('更新缓存不能位于安装目录内');
   if (target === path.parse(target).root) throw Error('安装目录无效，请重新安装后更新');
   const backup = path.join(input.workspace, 'previous-app');
-  await fs.cp(target, backup, { recursive: true, force: false, errorOnExist: true });
+  await disk.cp(target, backup, { recursive: true, force: false, errorOnExist: true });
   return { installer, target, backup, exe: input.runtime.exePath, helperExe: path.join(backup, path.basename(input.runtime.exePath)), cleanup: async () => {} };
 }
 async function prepare(input) {
@@ -86,13 +87,13 @@ async function launch(input) {
   let command, args;
   if (runtime.platform === 'darwin') {
     const helper = path.join(workspace, 'apply.sh');
-    await fs.copyFile(path.join(__dirname, 'apply-mac.sh'), helper);
+    await fs.writeFile(helper, await fs.readFile(path.join(__dirname, 'apply-mac.sh')));
     command = '/bin/sh';
     args = [helper, target, input.stage, backup, String(process.pid), result, healthy, input.binary, JSON.stringify(success), JSON.stringify(failure), runtime.userData];
   } else {
     const helper = path.join(workspace, 'apply.cjs');
     const config = path.join(workspace, 'apply.json');
-    await fs.copyFile(path.join(__dirname, 'apply-win.cjs'), helper);
+    await fs.writeFile(helper, await fs.readFile(path.join(__dirname, 'apply-win.cjs')));
     await fs.writeFile(config, JSON.stringify({ ...input, cleanup: undefined, runtime: undefined, candidate: undefined, pid: process.pid, userData: runtime.userData, healthy, result, success, failure, log: path.join(workspace, 'install.log') }), { mode: 0o600 });
     command = input.helperExe;
     args = [helper, config];
@@ -146,7 +147,7 @@ async function cleanupCompleted(runtime) {
     const result = JSON.parse(await fs.readFile(pending.result, 'utf8'));
     if (result.status !== 'success') return;
     try { process.kill(pending.helperPid, 0); return; } catch {}
-    await fs.rm(pending.workspace, { recursive: true, force: true });
+    await disk.rm(pending.workspace, { recursive: true, force: true });
     await fs.rm(path.join(runtime.userData, 'updates', 'pending.json'), { force: true });
   } catch {}
 }

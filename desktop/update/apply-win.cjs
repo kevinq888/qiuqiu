@@ -1,6 +1,6 @@
 // Runs with ELECTRON_RUN_AS_NODE from a private copy of the current app runtime.
 // It never loads renderer code and remains alive after the original app quits.
-const fs = require('node:fs/promises');
+const fs = (() => { try { return require('original-fs').promises; } catch { return require('node:fs/promises'); } })();
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const config = require(process.argv[2]);

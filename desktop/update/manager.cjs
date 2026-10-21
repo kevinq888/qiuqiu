@@ -1,5 +1,6 @@
 const { EventEmitter } = require('node:events');
 const fs = require('node:fs');
+const disk = require('./disk.cjs').promises;
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { Readable, Transform } = require('node:stream');
@@ -122,7 +123,7 @@ class UpdateManager extends EventEmitter {
         await this.dependencies.quit();
       } catch (error) {
         await prepared?.cleanup?.().catch(() => {});
-        if (workspace) await fs.promises.rm(workspace, { recursive: true, force: true }).catch(() => {});
+        if (workspace) await disk.rm(workspace, { recursive: true, force: true }).catch(() => {});
         console.error('Desktop update failed:', error);
         const message = ['EACCES', 'EPERM'].includes(error.code) ? '没有更新权限，请将应用移到可写目录后重试'
           : error.code === 'ENOSPC' ? '磁盘空间不足，请清理后重试'
