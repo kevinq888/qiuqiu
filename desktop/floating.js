@@ -121,5 +121,7 @@ window.qiuqiuDesktop.onPlaybackState(state => {
   const duration = Number(state.duration) || 0;
   const currentTime = Number(state.currentTime) || 0;
   const progress = duration > 0 ? Math.max(0, Math.min(1, currentTime / duration)) : 0;
+  // No track underneath: only elapsed audio is painted, including no cap at 0%.
+  progressRing.style.opacity = progress > 0 ? '1' : '0';
   progressRing.style.strokeDashoffset = String(ringLength * (1 - progress));
 });

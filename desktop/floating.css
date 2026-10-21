@@ -3,9 +3,8 @@ html, body { width: 360px; height: 180px; margin: 0; overflow: hidden; backgroun
 body { user-select: none; -webkit-app-region: no-drag; }
 .widget { position: relative; width: 360px; height: 180px; background: transparent; --coral: #f58a70; }
 .progress-ring { position: absolute; top: 0; left: 134px; width: 92px; height: 92px; pointer-events: none; transform: rotate(-90deg); }
-.progress-ring circle { fill: none; stroke-width: 3.2; }
-.ring-track { stroke: rgba(245,138,112,.24); }
-.ring-progress { stroke: var(--coral); stroke-linecap: round; transition: stroke-dashoffset .75s linear; }
+.progress-ring circle { fill: none; stroke-width: 4.5; }
+.ring-progress { stroke: var(--coral); stroke-linecap: round; opacity: 0; transition: stroke-dashoffset .75s linear; }
 .record { position: absolute; top: 7px; left: 141px; width: 78px; height: 78px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; overflow: hidden; cursor: grab; }
 .record:active { cursor: grabbing; }
 .record-art { display: block; width: 100%; height: 100%; border-radius: 50%; animation: spin 3.2s linear infinite; animation-play-state: paused; transform-origin: 50% 50%; }

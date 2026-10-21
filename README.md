@@ -6,7 +6,19 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.0.8（当前版本）
+### v1.0.9（当前版本）
+
+悬浮播放器移除外圈进度底色，仅显示已播放的珊瑚色弧线；加粗弧线，0% 时完全隐藏。已验证深浅背景和 0%、25%、50%、100% 的透明像素表现。
+
+正式安装包位于 `desktop/dist/1.0.9/`，目录仅保留以下三个文件。下载 ZIP 后解压安装。
+
+| 系统 | 下载 | ZIP 内的安装包 |
+| --- | --- | --- |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.9/1.0.9-macos-arm64.zip) | 秋秋音乐-1.0.9-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.9/1.0.9-macos-x64.zip) | 秋秋音乐-1.0.9-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.9/1.0.9-windows-x64.zip) | 秋秋音乐-1.0.9-windows-x64.exe |
+
+### v1.0.8
 
 修复 macOS 点击悬浮窗口 × 后未完全退出、随后播放控制失效的问题；已验证关闭/重开主界面，以及连续暂停、恢复后的真实音频进度。正式站点恢复为 <https://qiuqiumusic.onrender.com/>。
 
