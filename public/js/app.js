@@ -476,6 +476,7 @@
       updateNavScrollHint();
       updateInstallButton();
       window.qiuqiuDownloads?.refresh();
+      window.qiuqiuUpdateUI?.refresh();
       renderCollections();
     } catch {
       if (id === navigationId) {
@@ -693,4 +694,5 @@
   updateInstallButton();
   updateNavScrollHint();
   message('hello');
+  document.documentElement.dataset.playerReady = 'true';
 })();

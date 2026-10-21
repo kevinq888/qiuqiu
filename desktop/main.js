@@ -8,6 +8,7 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'qiuqiu', privileges: {
   standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true,
 } }]);
 let localServer;
+let updater;
 
 async function startLocalApp() {
   const crypto = require('node:crypto');
@@ -251,6 +252,7 @@ function createMainWindow() {
     autoHideMenuBar: true,
     backgroundColor: '#0f1a17',
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -270,6 +272,7 @@ function createMainWindow() {
   // the website's in-page floating toggle so users never see two record icons.
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.insertCSS('.vinyl-toggle, #install-app { display: none !important; }').catch(() => {});
+    updater?.loaded().catch(console.error);
   });
   mainWindow.once('ready-to-show', () => {
     clearTimeout(showFallback);
@@ -337,6 +340,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', showMain);
   app.whenReady().then(async () => {
     await startLocalApp();
+    updater = require('./update/electron.cjs').createUpdater({ getMainWindow: () => mainWindow, quit: quitApp });
     if (process.platform === 'darwin') app.dock.setIcon(APP_ICON_PATH);
     ipcMain.on('floating:open', showMain);
     ipcMain.on('floating:quit', quitApp);
@@ -365,6 +369,7 @@ if (!app.requestSingleInstanceLock()) {
 app.on('before-quit', () => {
   quitting = true;
   if (pollTimer) clearInterval(pollTimer);
+  updater?.dispose();
   localServer?.close();
   localServer?.closeAllConnections();
 });

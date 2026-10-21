@@ -6,7 +6,22 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.1.0（当前版本）
+### v1.2.0（当前版本）
+
+- 桌面顶栏新增更新提醒：发现正式新版本后显示，点击一次自动匹配系统和芯片、下载、核对 SHA-256、保存播放记录、安装并重启。
+- 下载期间可继续听歌；重启后恢复歌曲、进度及更新前的播放状态。页面切换不丢失更新进度，重复点击不会创建多次更新。
+- 使用官方 GitHub Releases，不依赖 Render；校验失败不替换应用。Mac 新版启动失败会恢复备份。Windows 使用 NSIS 静默安装，失败保留恢复副本；系统要求的权限提示仍会显示。
+- 1.1.0 及更早版本需先手动安装一次本版本，之后才具备一键更新能力。安装位置必须可写；Mac 请先将应用移入“应用程序”目录。
+
+安装包位于 `desktop/dist/1.2.0/`，目录仅包含以下三个文件。ZIP 下载后先解压。
+
+| 系统 | 下载 | ZIP 内的安装包 |
+| --- | --- | --- |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.0/1.2.0-macos-arm64.zip) | 秋秋音乐-1.2.0-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.0/1.2.0-macos-x64.zip) | 秋秋音乐-1.2.0-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.0/1.2.0-windows-x64.zip) | 秋秋音乐-1.2.0-windows-x64.exe |
+
+### v1.1.0
 
 桌面版将界面、后端、基础曲库和静态资源全部打包，本地运行，不再依赖 Render 网站。首页断网可打开，已缓存音频可离线播放；在线搜索、榜单更新及未缓存音频仍需连接外部音源。首次升级自动迁移旧桌面版的歌单、收藏、主题和播放进度。架构、数据位置及缓存限制见[桌面端说明](desktop/README.md)。
 

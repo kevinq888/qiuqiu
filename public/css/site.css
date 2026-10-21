@@ -609,3 +609,8 @@ body{background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--mint) 4
   .header-actions:has(.desktop-download-button:not([hidden])) .install-button{display:none}
   .desktop-download-choices{position:fixed;right:16px;top:64px;width:min(280px,calc(100vw - 32px))}
 }
+
+/* Native desktop updater shares the header action position across SPA navigation. */
+.desktop-update-button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-height:40px;padding:0 16px;border:1px solid rgba(245,138,112,.55);border-radius:999px;background:rgba(245,138,112,.13);color:var(--ink);font:inherit;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
+.desktop-update-button[hidden]{display:none}.desktop-update-button:not(:disabled):hover{background:rgba(245,138,112,.24)}.desktop-update-button:focus-visible{outline:2px solid #f58a70;outline-offset:3px}.desktop-update-button:disabled{cursor:progress;opacity:.85}.desktop-update-button[data-status=error]{border-color:#f58a70}
+@media(max-width:1100px){.desktop-update-button{padding:0 10px;font-size:12px;min-height:36px}}

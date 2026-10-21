@@ -1,0 +1,46 @@
+name: Desktop update validation
+on:
+  push:
+    branches: [main, 'codex/**']
+    paths: ['desktop/**', 'public/js/desktop-update.js', '.github/workflows/desktop-update.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-real-installer:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Use public npm registry in runner lockfile
+        working-directory: desktop
+        run: |
+          node -e "const fs=require('fs');const p=require('./package-lock.json');for(const item of Object.values(p.packages)){if(item.resolved)item.resolved=item.resolved.replace(/^https:\/\/nexus[^/]+\/nexus\/content\/groups\/npm-all\//,'https://registry.npmjs.org/');}fs.writeFileSync('package-lock.json',JSON.stringify(p));"
+          npm ci --registry=https://registry.npmjs.org
+      - name: Updater validation and real Windows build
+        working-directory: desktop
+        run: |
+          npm run test:update
+          npm run build:win
+      - name: Install previous public version into disposable directory
+        run: |
+          $root = Join-Path ([IO.Path]::GetTempPath()) ('qiuqiu-installer-ci-' + [guid]::NewGuid())
+          New-Item -ItemType Directory -Path $root | Out-Null
+          $env:UPDATE_TEST_ROOT = $root
+          node -e "(async()=>{const fs=require('fs'),path=require('path'),crypto=require('crypto');const r=await fetch('https://github.com/kevinq888/qiuqiumusic/releases/download/v1.1.0/1.1.0-windows-x64.zip');if(!r.ok)throw Error('Download failed '+r.status);const b=Buffer.from(await r.arrayBuffer());if(crypto.createHash('sha256').update(b).digest('hex')!=='4f1ce955077e0ecb05796c661aed27a4af1ddcb218577fee25d57e9ec7514cff')throw Error('Fixture checksum mismatch');fs.writeFileSync(path.join(process.env.UPDATE_TEST_ROOT,'old.zip'),b);})().catch(e=>{console.error(e);process.exit(1)});"
+          Expand-Archive -LiteralPath (Join-Path $root 'old.zip') -DestinationPath (Join-Path $root 'old-installer')
+          $old = Get-ChildItem -LiteralPath (Join-Path $root 'old-installer') -Filter '*.exe' | Select-Object -First 1
+          $app = Join-Path $root 'old-app'
+          $p = Start-Process -FilePath $old.FullName -ArgumentList @('/S', ('/D=' + $app)) -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw ('Old installer failed ' + $p.ExitCode) }
+          $version = node -p "require('./desktop/package.json').version"
+          $package = Join-Path $root ($version + '-windows-x64.zip')
+          Compress-Archive -LiteralPath (Join-Path $PWD ('desktop/dist/' + $version + '/秋秋音乐-' + $version + '-windows-x64.exe')) -DestinationPath $package
+          node desktop/scripts/test-update-installed.cjs $app $package $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

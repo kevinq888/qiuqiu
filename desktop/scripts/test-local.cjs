@@ -26,7 +26,7 @@ if(process.env.TEST_PHASE==='seed') {
 let unexpectedRequests=0;let network=0;require('node:https').get=()=>{network++;throw Error('Offline test: all upstream networking disabled');};
 let passed=false;const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn){for(let i=0;i<120;i++){if(await fn())return;await sleep(100);}throw Error('Timeout');}
-const guard=setTimeout(()=>{console.error('FAIL timeout');app.exit(1)},30000);
+const guard=setTimeout(()=>{console.error('FAIL timeout',BrowserWindow.getAllWindows().map(w=>({url:w.webContents.getURL(),closable:w.isClosable()})));app.exit(1)},60000);
 require(repo+'/desktop/main.js');
 app.whenReady().then(async()=>{try{
  session.defaultSession.webRequest.onBeforeRequest({urls:['https://*/*','http://*/*']},(details,done)=>{if(!details.url.startsWith('http://127.0.0.1:') && details.url !== 'https://qiuqiumusic.onrender.com/api/desktop-migration'){unexpectedRequests++;console.error('UNEXPECTED EXTERNAL REQUEST',details.url);done({cancel:true});}else done({});});

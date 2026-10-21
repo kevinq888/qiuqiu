@@ -1,6 +1,6 @@
 {
   "name": "qiuqiumusic-desktop",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "秋秋音乐本地桌面播放器",
   "main": "main.js",
@@ -10,7 +10,8 @@
     "build:mac": "node scripts/build-desktop.cjs mac",
     "build:win": "node scripts/build-desktop.cjs win",
     "build:all": "node scripts/build-desktop.cjs all",
-    "test:local": "node scripts/test-local.cjs"
+    "test:local": "node scripts/test-local.cjs",
+    "test:update": "node --test scripts/update.test.cjs"
   },
   "devDependencies": {
     "electron": "^37.2.6",
@@ -26,7 +27,8 @@
       "*.css",
       "icon.png",
       "app-icon.png",
-      "tray-icon.png"
+      "tray-icon.png",
+      "update/**/*"
     ],
     "icon": "app-icon.png",
     "mac": {
