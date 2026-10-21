@@ -11,13 +11,13 @@
 - 播放清单打开时，点击面板与开关以外的任意位置自动收回。
 - 桌面客户端内嵌站点同步 v1.2.2 全部清单与缓存改进。
 
-安装包位于 `desktop/dist/1.2.3/`，目录仅包含以下三个文件。ZIP 下载后先解压。
+安装包位于 `desktop/dist/1.2.3/`，下载即为对应系统的安装包，双击直接安装。
 
-| 系统 | 下载 | ZIP 内的安装包 |
-| --- | --- | --- |
-| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/1.2.3-macos-arm64.zip) | 秋秋音乐-1.2.3-macos-arm64.dmg |
-| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/1.2.3-macos-x64.zip) | 秋秋音乐-1.2.3-macos-x64.dmg |
-| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/1.2.3-windows-x64.zip) | 秋秋音乐-1.2.3-windows-x64.exe |
+| 系统 | 下载 |
+| --- | --- |
+| macOS（Apple 芯片） | [秋秋音乐-1.2.3-macos-arm64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.2.3-macos-arm64.dmg) |
+| macOS（Intel） | [秋秋音乐-1.2.3-macos-x64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.2.3-macos-x64.dmg) |
+| Windows（64 位） | [秋秋音乐-1.2.3-windows-x64.exe](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.2.3-windows-x64.exe) |
 
 ### v1.2.2
 
