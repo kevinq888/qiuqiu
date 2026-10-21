@@ -42,9 +42,17 @@ jobs:
           Expand-Archive -LiteralPath (Join-Path $root 'old.zip') -DestinationPath (Join-Path $root 'old-installer')
           $old = Get-ChildItem -LiteralPath (Join-Path $root 'old-installer') -Filter '*.exe' | Select-Object -First 1
           $baseline = Join-Path $root 'baseline'
-          $p = Start-Process -FilePath $old.FullName -ArgumentList @('/S', ('/D=' + $baseline)) -PassThru -Wait
-          if ($p.ExitCode -ne 0) { throw ('Old installer failed ' + $p.ExitCode) }
-          if (-not (Test-Path -LiteralPath (Join-Path $baseline '秋秋音乐.exe'))) { throw 'Previous installer did not create expected application' }
+          # The previously published installer can crash before extraction on
+          # some hosted Windows images. Retry the fixture, never the update.
+          $installed = $false
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            $p = Start-Process -FilePath $old.FullName -ArgumentList @('/S', ('/D=' + $baseline)) -PassThru
+            if (-not $p.WaitForExit(90000)) { $p.Kill(); throw 'Baseline installer timed out' }
+            Write-Host ('Baseline attempt ' + $attempt + ' exit ' + $p.ExitCode)
+            if ($p.ExitCode -eq 0 -and (Test-Path -LiteralPath (Join-Path $baseline '秋秋音乐.exe'))) { $installed = $true; break }
+            Start-Sleep -Seconds 2
+          }
+          if (-not $installed) { throw 'Previous installer did not create expected application' }
           $app = Join-Path $root 'installed app'
           Move-Item -LiteralPath $baseline -Destination $app
           $version = node -p "require('./desktop/package.json').version"
