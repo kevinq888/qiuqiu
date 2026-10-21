@@ -4,7 +4,7 @@ const path = require('node:path');
 const https = require('node:https');
 const { seed, addSongs } = require('./store');
 
-const CACHE_DIR = path.join(__dirname, '..', 'data', 'cache');
+const CACHE_DIR = path.join(require('./runtime-paths').dataDir, 'cache');
 const TTL = 6 * 60 * 60 * 1000;
 const MAX_PAGES = 250;
 const pending = new Map();

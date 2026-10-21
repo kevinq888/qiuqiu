@@ -1,8 +1,73 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, screen, shell } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, screen, shell, protocol, net, dialog } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const SITE_URL = process.env.QIUQIU_URL || 'https://qiuqiumusic.onrender.com/';
+// Stable local origin keeps browser storage intact across launches and upgrades.
+const SITE_URL = 'qiuqiu://app/';
+protocol.registerSchemesAsPrivileged([{ scheme: 'qiuqiu', privileges: {
+  standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true,
+} }]);
+let localServer;
+
+async function startLocalApp() {
+  const crypto = require('node:crypto');
+  process.env.QIUQIU_DATA_DIR = path.join(app.getPath('userData'), 'data');
+  const backend = app.isPackaged ? path.join(process.resourcesPath, 'backend') : path.resolve(__dirname, '..');
+  const token = crypto.randomBytes(32).toString('hex');
+  localServer = await require(path.join(backend, 'server.js')).startServer({ port: 0, host: '127.0.0.1', token });
+  const base = `http://127.0.0.1:${localServer.address().port}`;
+  protocol.handle('qiuqiu', async request => {
+    const url = new URL(request.url);
+    if (url.hostname === 'app' && url.pathname === '/__storage-migration') return new Response('<!doctype html><title>秋秋音乐</title>', { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    if (url.hostname !== 'app') return new Response('Not Found', { status: 404 });
+    const headers = new Headers(request.headers);
+    headers.set('x-qiuqiu-token', token);
+    const options = { method: request.method, headers, redirect: 'manual', bypassCustomProtocolHandlers: true };
+    if (request.method !== 'GET' && request.method !== 'HEAD') options.body = await request.arrayBuffer();
+    return net.fetch(base + url.pathname + url.search, options);
+  });
+}
+
+// Read the previous desktop origin without contacting Render: HTTPS is temporarily
+// intercepted with an inert local document. Existing browser data is never deleted.
+async function migrateLegacyStorage() {
+  const { session } = require('electron');
+  const migration = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false } });
+  let intercepted = false;
+  try {
+    await migration.loadURL('qiuqiu://app/__storage-migration');
+    if (await migration.webContents.executeJavaScript("localStorage.getItem('qiuqiumusic.localMigration.v1') === 'done'")) return;
+    session.defaultSession.protocol.handle('https', request => {
+      const url = new URL(request.url);
+      return new Response(url.hostname === 'qiuqiumusic.onrender.com' && url.pathname === '/api/desktop-migration' ? '<!doctype html><title>秋秋音乐</title>' : 'Blocked', {
+        status: url.hostname === 'qiuqiumusic.onrender.com' && url.pathname === '/api/desktop-migration' ? 200 : 403,
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+      });
+    });
+    intercepted = true;
+    await migration.loadURL('https://qiuqiumusic.onrender.com/api/desktop-migration');
+    const saved = await migration.webContents.executeJavaScript("Object.fromEntries(Object.keys(localStorage).filter(key => key.startsWith('qiuqiumusic.')).map(key => [key, localStorage.getItem(key)]))");
+    await migration.loadURL('qiuqiu://app/__storage-migration');
+    await migration.webContents.executeJavaScript(`(() => {
+      const saved = ${JSON.stringify(saved)};
+      for (const [key, value] of Object.entries(saved)) if (localStorage.getItem(key) === null) localStorage.setItem(key, value);
+      localStorage.setItem('qiuqiumusic.localMigration.v1', 'done');
+    })()`);
+    session.defaultSession.flushStorageData();
+  } catch (error) {
+    console.error('Playback storage migration will retry next launch:', error.message);
+  } finally {
+    if (intercepted) session.defaultSession.protocol.unhandle('https');
+    migration.destroy();
+  }
+}
+
+function isLocalURL(url) {
+  try { const parsed = new URL(url); return parsed.protocol === 'qiuqiu:' && parsed.hostname === 'app'; } catch { return false; }
+}
+function openExternal(url) {
+  if (/^https?:/.test(url)) shell.openExternal(url);
+}
 const ICON_PATH = path.join(__dirname, 'tray-icon.png');
 const APP_ICON_PATH = path.join(__dirname, 'app-icon.png');
 const BOUNDS_PATH = path.join(app.getPath('userData'), 'floating-window.json');
@@ -142,8 +207,7 @@ function createFloatingWindow() {
   floatingIgnoresMouse = true;
   floatingWindow.setIgnoreMouseEvents(true, { forward: true });
   floatingWindow.loadFile(path.join(__dirname, 'floating.html'));
-  // Show the ball immediately so the app is visibly alive while the site loads
-  // (Render free tier cold start can take 20s+). sendPlaybackState keeps it in
+  // Show the ball while the local main window initializes. sendPlaybackState keeps it in
   // sync afterwards and hides it once the main window is up with a player panel.
   floatingWindow.once('ready-to-show', () => floatingWindow.showInactive());
   floatingWindow.on('move', () => {
@@ -192,7 +256,9 @@ function createMainWindow() {
       sandbox: true,
     },
   });
-  mainWindow.loadURL(SITE_URL);
+  migrateLegacyStorage().then(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.loadURL(SITE_URL);
+  });
   // Fallback: never leave the user staring at a blank screen. If the site is
   // slow or ready-to-show is delayed, reveal the main window after 20s.
   const showFallback = setTimeout(() => {
@@ -203,7 +269,7 @@ function createMainWindow() {
   // The desktop app supplies its own always-on-top vinyl widget. Hide only
   // the website's in-page floating toggle so users never see two record icons.
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.webContents.insertCSS('.vinyl-toggle { display: none !important; }').catch(() => {});
+    mainWindow.webContents.insertCSS('.vinyl-toggle, #install-app { display: none !important; }').catch(() => {});
   });
   mainWindow.once('ready-to-show', () => {
     clearTimeout(showFallback);
@@ -229,13 +295,13 @@ function createMainWindow() {
     if (!quitting) setFloatingVisible(true);
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (new URL(url).origin !== new URL(SITE_URL).origin) shell.openExternal(url);
+    if (!isLocalURL(url)) openExternal(url);
     return { action: 'deny' };
   });
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (new URL(url).origin !== new URL(SITE_URL).origin) {
+    if (!isLocalURL(url)) {
       event.preventDefault();
-      shell.openExternal(url);
+      openExternal(url);
     }
   });
 }
@@ -269,7 +335,8 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', showMain);
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
+    await startLocalApp();
     if (process.platform === 'darwin') app.dock.setIcon(APP_ICON_PATH);
     ipcMain.on('floating:open', showMain);
     ipcMain.on('floating:quit', quitApp);
@@ -289,7 +356,15 @@ if (!app.requestSingleInstanceLock()) {
     if (process.platform === 'darwin') app.dock.show();
     pollTimer = setInterval(sendPlaybackState, 800);
     app.on('activate', showMain);
+  }).catch(error => {
+    dialog.showErrorBox('秋秋音乐启动失败', `本地播放器无法启动：${error.message}`);
+    quitApp();
   });
 }
 
-app.on('before-quit', () => { quitting = true; });
+app.on('before-quit', () => {
+  quitting = true;
+  if (pollTimer) clearInterval(pollTimer);
+  localServer?.close();
+  localServer?.closeAllConnections();
+});

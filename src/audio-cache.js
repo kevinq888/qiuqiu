@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const CACHE_DIR = path.join(__dirname, '..', 'data', 'cache', 'audio');
+const CACHE_DIR = path.join(require('./runtime-paths').dataDir, 'cache', 'audio');
 const MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;   // 缓存有效期：60 天
 const MAX_BYTES = 512 * 1024 * 1024;           // 磁盘软上限 512MB
 const PART_MAX_AGE_MS = 60 * 60 * 1000;        // 下载中断残留 .part 文件 1 小时后清理

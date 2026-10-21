@@ -148,7 +148,7 @@
     closeInstallDialog();
   });
   window.matchMedia('(display-mode: standalone)').addEventListener?.('change', updateInstallButton);
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (location.protocol !== 'qiuqiu:' && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
   function readSaved(restorePlayback = false) {
     let data = {};
@@ -490,7 +490,7 @@
   function internalLink(link) {
     if (!link || !link.href || link.hasAttribute('download') || link.target === '_blank') return false;
     const url = new URL(link.href, location.href);
-    return url.origin === location.origin && /^https?:$/.test(url.protocol) && !url.pathname.startsWith('/media/') && !url.pathname.startsWith('/projects/');
+    return url.origin === location.origin && /^(https?|qiuqiu):$/.test(url.protocol) && !url.pathname.startsWith('/media/') && !url.pathname.startsWith('/projects/');
   }
   function updateNavScrollHint() {
     const nav = document.querySelector('.main-nav');

@@ -56,12 +56,18 @@ function serveStatic(req, res, urlPath) {
       send(res, 404, '<h3>404，您请求的文件不存在!</h3>', 'text/html; charset=utf-8');
       return;
     }
+    if (server.desktopToken && path.extname(filePath) === '.css') {
+      data = data.toString('utf8').replace(/@import\s+url\(['"]https:\/\/fonts\.googleapis\.com[^;]+;/g, '');
+    }
     send(res, 200, data, MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream');
   });
   return true;
 }
 
 const server = http.createServer((req, res) => {
+  if (server.desktopToken && req.headers['x-qiuqiu-token'] !== server.desktopToken) {
+    return send(res, 403, 'Forbidden', 'text/plain; charset=utf-8');
+  }
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const p = u.pathname;
 
@@ -180,6 +186,8 @@ const server = http.createServer((req, res) => {
   }
 
   if (p === '/' || p === '/index.html') {
+    // Desktop starts immediately from the bundled catalogue, even offline.
+    if (server.desktopToken) return send(res, 200, views.homePage());
     // 首页区块接入实时数据（6 小时缓存），失败回退本地种子
     Promise.all([
       sourcePage(1).catch(() => null),
@@ -347,6 +355,19 @@ function serveAudio(req, res, title) {
   });
 }
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`秋秋音乐已启动: http://localhost:${PORT}`);
-});
+function startServer({ port = PORT, host = '0.0.0.0', token } = {}) {
+  server.desktopToken = token;
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, host, () => {
+      server.removeListener('error', reject);
+      resolve(server);
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer().then(() => console.log(`秋秋音乐已启动: http://localhost:${PORT}`))
+    .catch(error => { console.error(error); process.exitCode = 1; });
+}
+module.exports = { startServer };

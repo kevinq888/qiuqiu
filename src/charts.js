@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { ranking, sourcePage, MAX_PAGES } = require('./rankings');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = require('./runtime-paths').dataDir;
 const STATS_FILE = path.join(DATA_DIR, 'play-stats.json');
 const SNAPSHOT_FILE = path.join(DATA_DIR, 'chart-snapshots.json');
 const KEEP_DAYS = 60;          // 播放计数保留 60 天，与音频缓存策略一致
