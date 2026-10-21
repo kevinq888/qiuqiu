@@ -1,6 +1,7 @@
 param([string]$ConfigPath)
 $ErrorActionPreference = 'Stop'
 $c = Get-Content -LiteralPath $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
+function Log($message) { ((Get-Date).ToString('o') + ' ' + $message) | Out-File -LiteralPath $c.log -Append -Encoding UTF8 }
 function Save-Result($value) {
   $json = $value | ConvertTo-Json -Compress
   [IO.File]::WriteAllText($c.result, $json, (New-Object Text.UTF8Encoding($false)))
@@ -8,23 +9,31 @@ function Save-Result($value) {
 [IO.File]::WriteAllText((Join-Path (Split-Path $c.result) 'helper-ready'), 'ready')
 $backupComplete = $false
 try {
+  Log 'Waiting for old player to exit'
   $old = Get-Process -Id $c.pid -ErrorAction SilentlyContinue
   if ($old) { $old.WaitForExit(120000) | Out-Null }
   if (Get-Process -Id $c.pid -ErrorAction SilentlyContinue) { throw 'Player did not exit' }
   # Keep the current application intact until a complete backup exists.
+  Log 'Creating backup'
   Copy-Item -LiteralPath $c.target -Destination $c.backup -Recurse
   $backupComplete = $true
-  $install = Start-Process -FilePath $c.installer -ArgumentList @('/S', '--updated', ('/D=' + $c.target)) -PassThru -Wait
+  Log 'Starting silent installer'
+  $install = Start-Process -FilePath $c.installer -ArgumentList @('/S', '--updated', ('/D=' + $c.target)) -PassThru
+  if (-not $install.WaitForExit(180000)) { throw 'Installer timed out' }
+  $install.Refresh()
+  Log ('Installer exit: ' + $install.ExitCode)
   if ($install.ExitCode -ne 0) { throw ('Installer failed: ' + $install.ExitCode) }
+  Log 'Starting updated player'
   $new = Start-Process -FilePath $c.exe -ArgumentList @('--updated', ('"--user-data-dir=' + $c.userData + '"')) -PassThru
   for ($i = 0; $i -lt 90; $i++) {
     if (Test-Path -LiteralPath $c.healthy) {
       Remove-Item -LiteralPath $c.backup -Recurse -Force -ErrorAction SilentlyContinue
       Get-ChildItem -LiteralPath (Split-Path $c.result) -File | Where-Object { $_.Extension -in @('.zip', '.exe') } | Remove-Item -Force -ErrorAction SilentlyContinue
+      Log 'Update confirmed healthy'
       Save-Result $c.success
       exit 0
     }
-    if ($new.HasExited) { break }
+    if ($new.HasExited -and $new.ExitCode -ne 0) { break }
     Start-Sleep -Seconds 1
     $new.Refresh()
   }

@@ -36,7 +36,8 @@ async function stopTestApp() {
     }
   } else {
     const quote = value => "'" + value.replace(/'/g, "''") + "'";
-    await run('powershell.exe', ['-NoProfile', '-Command', `Get-Process | Where-Object {$_.Path -eq ${quote(exe)}} | Stop-Process -Force`]);
+    const actual = await fs.realpath(exe).catch(() => exe);
+    await run('powershell.exe', ['-NoProfile', '-Command', `Get-Process | Where-Object {$_.Path -eq ${quote(actual)}} | Stop-Process -Force`], { timeout: 15000 });
   }
 }
 (async () => {
@@ -132,6 +133,7 @@ async function stopTestApp() {
     }} catch {}
     socket?.close();
     await stopTestApp().catch(() => {});
+    if (child && child.exitCode === null) child.kill();
     process.exitCode = 1;
   }
 })();

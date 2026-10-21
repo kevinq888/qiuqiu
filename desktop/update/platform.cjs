@@ -78,7 +78,6 @@ async function launch(input) {
   const healthy = path.join(workspace, 'healthy');
   const result = path.join(workspace, 'result.json');
   const journal = { version: candidate.version, workspace, target, healthy, result, startedAt: Date.now() };
-  await fs.writeFile(path.join(runtime.userData, 'updates', 'pending.json'), JSON.stringify(journal), { mode: 0o600 });
   const success = { status: 'success', version: candidate.version };
   const failure = { status: 'error', version: candidate.version, error: '自动更新未完成，请重试；也可从官方发布页重新安装。' };
   let command, args;
@@ -97,7 +96,7 @@ async function launch(input) {
     args = ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(code, 'utf16le').toString('base64')];
   }
   const log = await fs.open(path.join(workspace, 'helper.log'), 'a', 0o600);
-  let child;
+  let child, handedOff = false;
   try {
     await new Promise((resolve, reject) => {
       child = spawn(command, args, { detached: true, stdio: ['ignore', log.fd, log.fd], windowsHide: true });
@@ -106,7 +105,11 @@ async function launch(input) {
     });
     const ready = path.join(workspace, 'helper-ready');
     for (let i = 0; i < 200; i++) {
-      if (await fs.stat(ready).then(() => true, () => false)) return;
+      if (await fs.stat(ready).then(() => true, () => false)) {
+        await fs.writeFile(path.join(runtime.userData, 'updates', 'pending.json'), JSON.stringify(journal), { mode: 0o600 });
+        handedOff = true;
+        return;
+      }
       if (child.exitCode !== null) break;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
@@ -114,7 +117,10 @@ async function launch(input) {
     const detail = await fs.readFile(path.join(workspace, 'helper.log'), 'utf8').catch(() => '');
     console.error('Update helper did not initialize:', detail);
     throw Error('更新辅助程序无法启动，播放器保持运行，请重试');
-  } finally { await log.close(); }
+  } finally {
+    if (!handedOff) child?.kill();
+    await log.close();
+  }
 }
 async function pendingResult(runtime) {
   const root = path.join(runtime.userData, 'updates');
