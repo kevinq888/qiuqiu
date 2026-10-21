@@ -1,28 +1,28 @@
 {
-  "tag_name": "v1.2.2",
+  "tag_name": "v1.2.3",
   "draft": false,
   "prerelease": false,
   "assets": [
     {
-      "name": "1.2.2-macos-arm64.zip",
+      "name": "1.2.3-macos-arm64.zip",
       "state": "uploaded",
-      "size": 108080657,
-      "digest": "sha256:b50c995613602d2af6139c12d90811e2154e88c00b94e2d0e7337a36f5ea216c",
-      "browser_download_url": "https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.2/1.2.2-macos-arm64.zip"
+      "size": 108086667,
+      "digest": "sha256:6ce484e932487fdc575027a3ecefeef8f65b06bcfa6df48fdbb940b1c3ae7d79",
+      "browser_download_url": "https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/1.2.3-macos-arm64.zip"
     },
     {
-      "name": "1.2.2-macos-x64.zip",
+      "name": "1.2.3-macos-x64.zip",
       "state": "uploaded",
-      "size": 112863259,
-      "digest": "sha256:9ae4482d7e0ac11b633eea008b2eb769dd0697e7e43e91a89c73533db33efc76",
-      "browser_download_url": "https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.2/1.2.2-macos-x64.zip"
+      "size": 112856531,
+      "digest": "sha256:2a31a6ee366d4d66b910947bc39fc7c0a832d722925bad1149403cd9545cd7d2",
+      "browser_download_url": "https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/1.2.3-macos-x64.zip"
     },
     {
-      "name": "1.2.2-windows-x64.zip",
+      "name": "1.2.3-windows-x64.zip",
       "state": "uploaded",
-      "size": 100591020,
-      "digest": "sha256:3e18b6101854212408984ca458028a521169521c352c75893ffb5aa49f4b96b5",
-      "browser_download_url": "https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.2/1.2.2-windows-x64.zip"
+      "size": 100591250,
+      "digest": "sha256:e11c446f72c647b72f0997bbca1d02e07a1170b4be4a3e64060ecdbaad14dfda",
+      "browser_download_url": "https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/1.2.3-windows-x64.zip"
     }
   ]
 }
