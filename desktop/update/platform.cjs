@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const { execFile, spawn } = require('node:child_process');
 const { promisify } = require('node:util');
 const run = promisify(execFile);
+const { inspectInstallerZip } = require('./zip.cjs');
 const APP_ID = 'com.qiuqiumusic.desktop';
 function appBundle(exe) { return path.resolve(path.dirname(exe), '../..'); }
 function psLiteral(value) { return "'" + value.replace(/'/g, "''") + "'"; }
@@ -14,9 +15,8 @@ async function extractInstaller({ candidate, archive, workspace, runtime }) {
   const ext = runtime.platform === 'darwin' ? 'dmg' : 'exe';
   const filename = `秋秋音乐-${candidate.version}-${candidate.target}.${ext}`;
   const installer = path.join(workspace, filename);
+  await inspectInstallerZip(archive, filename);
   if (runtime.platform === 'darwin') {
-    const { stdout } = await run('/usr/bin/unzip', ['-Z1', archive], { timeout: 30000 });
-    if (stdout.trim() !== filename) throw Error('安装包内容异常，更新已停止');
     await run('/usr/bin/ditto', ['-x', '-k', archive, workspace], { timeout: 120000 });
   } else {
     // Inspect before extracting; only the exact expected installer may be written.

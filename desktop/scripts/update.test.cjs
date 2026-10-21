@@ -74,3 +74,21 @@ test('offline check stays quiet; corrupt download never prepares or quits and ca
     good = true; await manager.install(); assert.ok(quit);
   } finally { await fs.rm(userData, { recursive: true, force: true }); }
 });
+test('ZIP inspection reads Chinese UTF-8 names and rejects traversal or conflicting local names', async () => {
+  const { inspectInstallerZip } = require('../update/zip.cjs');
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'qiuqiu-zip-validation-'));
+  function zip(name, localName = name, count = 1) {
+    const centralName = Buffer.from(name), localBytes = Buffer.from(localName);
+    const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50); local.writeUInt16LE(0x800, 6); local.writeUInt32LE(1, 18); local.writeUInt32LE(1, 22); local.writeUInt16LE(localBytes.length, 26);
+    const directory = Buffer.alloc(46); directory.writeUInt32LE(0x02014b50); directory.writeUInt16LE(0x800, 8); directory.writeUInt32LE(1, 20); directory.writeUInt32LE(1, 24); directory.writeUInt16LE(centralName.length, 28);
+    const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50); end.writeUInt16LE(count, 8); end.writeUInt16LE(count, 10); end.writeUInt32LE(directory.length + centralName.length, 12); end.writeUInt32LE(local.length + localBytes.length + 1, 16);
+    return Buffer.concat([local, localBytes, Buffer.from('x'), directory, centralName, end]);
+  }
+  try {
+    const expected = '秋秋音乐-1.2.0-macos-x64.dmg', file = path.join(root, 'fixture.zip');
+    await fs.writeFile(file, zip(expected)); await inspectInstallerZip(file, expected);
+    for (const data of [zip('../' + expected), zip(expected, '../' + expected), zip(expected, expected, 2), Buffer.from('not a zip')]) {
+      await fs.writeFile(file, data); await assert.rejects(inspectInstallerZip(file, expected), /内容异常/);
+    }
+  } finally { await fs.rm(root, { recursive: true, force: true }); }
+});

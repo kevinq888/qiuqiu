@@ -58,7 +58,7 @@ function createUpdater({ getMainWindow, quit }) {
     try {
       const resume = JSON.parse(await fs.readFile(resumeFile, 'utf8'));
       await fs.rm(resumeFile, { force: true });
-      if (resume.version === runtime.version && resume.playing && Date.now() - resume.savedAt < 10 * 60 * 1000) {
+      if ((resume.version === runtime.version || process.argv.includes('--update-rollback')) && resume.playing && Date.now() - resume.savedAt < 10 * 60 * 1000) {
         await getMainWindow()?.webContents.executeJavaScript(`document.querySelector('#player-play-pause')?.click()`, true);
       }
     } catch {}

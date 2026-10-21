@@ -9,7 +9,8 @@ const run = promisify(execFile);
 const crypto = require('node:crypto');
 const [application, archive, version = '1.2.0'] = process.argv.slice(2);
 const temporary = path.resolve(os.tmpdir());
-if (!application || !archive || !path.resolve(application).startsWith(temporary + path.sep)) throw Error('Use a disposable application copy under the system temp directory');
+const allowedTempRoots = [temporary, ...(process.platform === 'darwin' ? ['/private/tmp', '/tmp'] : [])];
+if (!application || !archive || !allowedTempRoots.some(root => { const normalized = value => process.platform === 'win32' ? path.resolve(value).toLowerCase() : path.resolve(value); return normalized(application).startsWith(normalized(root) + path.sep); })) throw Error('Use a disposable application copy under the system temp directory');
 const exe = process.platform === 'darwin' ? path.join(application, 'Contents', 'MacOS', '秋秋音乐') : path.join(application, '秋秋音乐.exe');
 const profile = awaitProfile();
 function awaitProfile() { return fs.mkdtemp(path.join(temporary, 'qiuqiu-update-profile-')); }
@@ -58,7 +59,7 @@ async function stopTestApp() {
     });
     await sleep(1500);
     await evaluate(`globalThis.e = process.getBuiltinModule('module').createRequire(process.execPath)('electron');true`);
-    assert.equal(path.resolve(await evaluate(`e.app.getPath('userData')`)),path.resolve(userData),'The installer test must never use a real user profile');
+    assert.equal(await fs.realpath(await evaluate(`e.app.getPath('userData')`)),await fs.realpath(userData),'The installer test must never use a real user profile');
     let mainId;
     for (let i = 0; i < 120; i++) {
       mainId = await evaluate(`e.BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()==='qiuqiu://app/')?.id`);
@@ -97,8 +98,16 @@ async function stopTestApp() {
     for (let i = 0; i < 360; i++) {
       try {
         journal = JSON.parse(await fs.readFile(path.join(userData, 'updates', 'pending.json'), 'utf8'));
+        // A debugger connection can delay Electron's final process exit.
+        if (socket.readyState === WebSocket.OPEN) socket.close();
         result = JSON.parse(await fs.readFile(journal.result, 'utf8')); break;
-      } catch { await sleep(1000); }
+      } catch {
+        if (!journal && socket.readyState === WebSocket.OPEN) {
+          const state = await evaluate('testUpdater.manager.snapshot()').catch(() => null);
+          if (state?.status === 'error') throw Error(state.error);
+        }
+        await sleep(1000);
+      }
     }
     assert.ok(result, 'Installer helper must finish and report health or rollback');
     assert.equal(result.status, rollback ? 'error' : 'success');

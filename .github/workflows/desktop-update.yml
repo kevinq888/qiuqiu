@@ -4,6 +4,9 @@ on:
     branches: [main, 'codex/**']
     paths: ['desktop/**', 'public/js/desktop-update.js', '.github/workflows/desktop-update.yml']
   workflow_dispatch:
+concurrency:
+  group: desktop-update-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -30,7 +33,8 @@ jobs:
           npm run build:win
       - name: Install previous public version into disposable directory
         run: |
-          $root = Join-Path ([IO.Path]::GetTempPath()) ('qiuqiu-installer-ci-' + [guid]::NewGuid())
+          $temp = node -p "require('os').tmpdir()"
+          $root = Join-Path $temp ('qiuqiu-installer-ci-' + [guid]::NewGuid())
           New-Item -ItemType Directory -Path $root | Out-Null
           $env:UPDATE_TEST_ROOT = $root
           node -e "(async()=>{const fs=require('fs'),path=require('path'),crypto=require('crypto');const r=await fetch('https://github.com/kevinq888/qiuqiumusic/releases/download/v1.1.0/1.1.0-windows-x64.zip');if(!r.ok)throw Error('Download failed '+r.status);const b=Buffer.from(await r.arrayBuffer());if(crypto.createHash('sha256').update(b).digest('hex')!=='4f1ce955077e0ecb05796c661aed27a4af1ddcb218577fee25d57e9ec7514cff')throw Error('Fixture checksum mismatch');fs.writeFileSync(path.join(process.env.UPDATE_TEST_ROOT,'old.zip'),b);})().catch(e=>{console.error(e);process.exit(1)});"

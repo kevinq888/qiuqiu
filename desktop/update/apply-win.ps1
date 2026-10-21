@@ -18,9 +18,9 @@ try {
   $new = Start-Process -FilePath $c.exe -ArgumentList @('--updated', ('"--user-data-dir=' + $c.userData + '"')) -PassThru
   for ($i = 0; $i -lt 90; $i++) {
     if (Test-Path -LiteralPath $c.healthy) {
+      Remove-Item -LiteralPath $c.backup -Recurse -Force -ErrorAction SilentlyContinue
+      Get-ChildItem -LiteralPath (Split-Path $c.result) -File | Where-Object { $_.Extension -in @('.zip', '.exe') } | Remove-Item -Force -ErrorAction SilentlyContinue
       Save-Result $c.success
-      Remove-Item -LiteralPath $c.backup -Recurse -Force
-      Get-ChildItem -LiteralPath (Split-Path $c.result) -File | Where-Object { $_.Extension -in @('.zip', '.exe') } | Remove-Item -Force
       exit 0
     }
     if ($new.HasExited) { break }

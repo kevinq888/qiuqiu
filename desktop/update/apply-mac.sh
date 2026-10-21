@@ -26,9 +26,9 @@ new_pid=$!
 i=0
 while [ "$i" -lt 60 ]; do
   if [ -f "$healthy" ]; then
-    write_result "$success_json"
     rm -rf "$backup"
     rm -f "${result%/*}/"*.zip "${result%/*}/"*.dmg
+    write_result "$success_json"
     exit 0
   fi
   kill -0 "$new_pid" 2>/dev/null || break
