@@ -791,16 +791,24 @@
     updateTimeline();
   });
   document.getElementById('player-favorite').addEventListener('click', () => { if (current) toggleFavorite(current); });
-  queueButton.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    queuePanel.hidden = !queuePanel.hidden;
-    queueButton.setAttribute('aria-expanded', String(!queuePanel.hidden));
-    if (!queuePanel.hidden) {
+  function setQueueOpen(open) {
+    queuePanel.hidden = !open;
+    queueButton.setAttribute('aria-expanded', String(open));
+    if (open) {
       renderCollections();
       focusQueueCurrent(syncQueueHighlight());
       refreshCacheStatus();
     }
+  }
+  queueButton.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    setQueueOpen(queuePanel.hidden);
+  });
+  // 点击面板与开关以外的任意位置自动收回清单
+  document.addEventListener('pointerdown', event => {
+    if (queuePanel.hidden || queuePanel.contains(event.target) || queueButton.contains(event.target)) return;
+    setQueueOpen(false);
   });
   document.getElementById('queue-close').addEventListener('click', event => {
     event.preventDefault();
