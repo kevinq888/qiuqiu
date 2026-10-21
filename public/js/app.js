@@ -139,14 +139,14 @@
   }
   function startInstall() {
     if (installedApp()) return;
-    const button = document.getElementById('install-app');
-    const span = button?.querySelector('span');
-    copySiteLink().then(copied => {
-      if (!copied) { showInstallInstructions(); return; }
-      if (!span) return;
-      span.textContent = '链接已复制';
-      setTimeout(() => { if (span.textContent === '链接已复制') span.textContent = '保存链接'; }, 1800);
-    });
+    if (!installPrompt) { showInstallInstructions(); return; }
+    const prompt = installPrompt;
+    installPrompt = null;
+    // 系统安装确认必须直接由这次点击触发，无法由网页静默安装。
+    prompt.prompt();
+    prompt.userChoice.then(({ outcome }) => {
+      if (outcome === 'accepted') updateInstallButton();
+    }).catch(showInstallInstructions);
   }
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();

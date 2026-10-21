@@ -374,8 +374,9 @@ body{min-height:100dvh;display:flex;flex-direction:column}
 
 /* 安装入口与主题切换并排放在站点顶栏。 */
 .header-actions{display:flex;align-items:center;gap:8px;flex:none}
-.install-button{height:39px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 13px;border:1px solid color-mix(in srgb,var(--forest) 22%,var(--line));border-radius:999px;background:var(--forest);color:#fff;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 5px 15px color-mix(in srgb,var(--forest) 17%,transparent);transition:transform .2s,box-shadow .2s}
-.install-button:hover{transform:translateY(-2px);box-shadow:0 8px 20px color-mix(in srgb,var(--forest) 25%,transparent)}
+/* “保存链接”按钮与“下载桌面版”保持同一风格：浅色底 + 主题色文字图标 */
+.install-button{height:39px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 13px;border:1px solid var(--line);border-radius:999px;background:var(--subtle);color:var(--forest);font-size:12px;font-weight:800;white-space:nowrap;transition:background .2s}
+.install-button:hover{background:var(--mint)}
 .install-button .icon{width:16px;height:16px}
 .install-button[hidden],.install-dialog[hidden]{display:none}
 .install-dialog{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:18px}
