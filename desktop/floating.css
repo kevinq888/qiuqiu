@@ -1,6 +1,9 @@
 * { box-sizing: border-box; }
 html, body { width: 360px; height: 180px; margin: 0; overflow: hidden; background: transparent !important; }
 body { user-select: none; -webkit-app-region: no-drag; }
+button { appearance: none; -webkit-appearance: none; -webkit-tap-highlight-color: transparent; }
+.record:focus, .record:active { outline: none; background: transparent; box-shadow: none; }
+.record-art, .progress-ring { outline: none; background: transparent; }
 .widget { position: relative; width: 360px; height: 180px; background: transparent; --coral: #f58a70; }
 .progress-ring { position: absolute; top: 0; left: 134px; width: 92px; height: 92px; pointer-events: none; transform: rotate(-90deg); }
 .progress-ring circle { fill: none; stroke-width: 4.5; }
@@ -18,7 +21,7 @@ body { user-select: none; -webkit-app-region: no-drag; }
 .track.is-marquee { text-align: left; }
 .is-hovered .track.is-marquee .track-text { animation: marquee var(--marquee-duration, 8s) linear .8s infinite; }
 .quick-controls { display: flex; width: max-content; align-items: center; justify-content: center; gap: 16px; margin: 5px auto 0; }
-.quick-control { display: grid; place-items: center; width: 32px; height: 30px; border: 1px solid rgba(255,255,255,.85); border-radius: 10px; color: #123e34; background: rgba(241,255,247,.82); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); cursor: pointer; }
+.quick-control { display: grid; place-items: center; width: 32px; height: 30px; border: 1px solid rgba(255,255,255,.85); border-radius: 10px; color: #123e34; background: rgba(241,255,247,.92); cursor: pointer; }
 .quick-control:hover { background: #f1fff7; }
 .quick-control:disabled { opacity: .4; cursor: default; }
 .quick-control svg { width: 18px; height: 18px; fill: currentColor; }

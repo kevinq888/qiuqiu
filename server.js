@@ -9,6 +9,7 @@ const { ranking, sourcePage, MAX_PAGES } = require('./src/rankings');
 const { search } = require('./src/search');
 const audioCache = require('./src/audio-cache');
 const charts = require('./src/charts');
+const { latestRelease } = require('./src/desktop-release');
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -63,6 +64,18 @@ function serveStatic(req, res, urlPath) {
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const p = u.pathname;
+
+  if (p === '/api/desktop-release' || p.startsWith('/download/desktop/')) {
+    latestRelease().then(release => {
+      res.setHeader('Cache-Control', 'no-store');
+      if (p === '/api/desktop-release') return send(res, 200, JSON.stringify(release), 'application/json; charset=utf-8');
+      const target = p.slice('/download/desktop/'.length);
+      if (!Object.hasOwn(release.downloads, target)) return send(res, 404, 'Installer not available', 'text/plain; charset=utf-8');
+      res.writeHead(302, { Location: release.downloads[target] });
+      res.end();
+    }).catch(() => send(res, 503, 'Download temporarily unavailable', 'text/plain; charset=utf-8'));
+    return;
+  }
 
   if (p === '/healthz') {
     send(res, 200, 'ok', 'text/plain; charset=utf-8');

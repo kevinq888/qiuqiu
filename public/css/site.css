@@ -590,3 +590,22 @@ body{background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--mint) 4
 .artist-card,.keyword-grid a,.collection-card,.chart-card{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 @media(hover:hover) and (pointer:fine){.artist-card:hover,.keyword-grid a:hover,.collection-card:hover,.chart-card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--forest) 30%,var(--line));box-shadow:0 18px 44px color-mix(in srgb,var(--forest) 12%,transparent)}}
 @media(prefers-reduced-motion:reduce){.artist-card,.keyword-grid a,.collection-card,.chart-card{transition:none}}
+
+/* Native desktop downloads stay separate from browser/PWA installation. */
+.desktop-download-wrap{position:relative;flex:none}
+.desktop-download-button{height:39px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 13px;border:1px solid var(--line);border-radius:999px;background:var(--subtle);color:var(--forest);font-size:12px;font-weight:800;white-space:nowrap}
+.desktop-download-button:hover{background:var(--mint)}
+.desktop-download-button .icon{width:16px;height:16px}
+.desktop-download-button[hidden],.desktop-download-choices[hidden]{display:none}
+.desktop-download-choices{position:absolute;right:0;top:calc(100% + 10px);width:254px;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--white);box-shadow:0 14px 40px rgba(9,33,34,.2);z-index:10;color:var(--ink)}
+.desktop-download-choices strong{display:block;font-size:13px;margin-bottom:10px}
+.desktop-download-choices a{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:var(--subtle);font-size:13px;font-weight:700;margin-top:6px}
+.desktop-download-choices a:hover{background:var(--mint);color:var(--forest)}
+.desktop-download-choices small,.desktop-download-choices p{font-size:11px;color:var(--muted);font-weight:400}
+.desktop-download-choices p{margin:12px 0 0;line-height:1.6}
+@media(max-width:1100px){.desktop-download-button{width:39px;padding:0}.desktop-download-button .download-label{display:none}}
+@media(max-width:680px){.desktop-download-button{height:35px;width:35px}}
+@media(max-width:680px){
+  .header-actions:has(.desktop-download-button:not([hidden])) .install-button{display:none}
+  .desktop-download-choices{position:fixed;right:16px;top:64px;width:min(280px,calc(100vw - 32px))}
+}

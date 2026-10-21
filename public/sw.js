@@ -1,10 +1,11 @@
 // 秋秋音乐 Service Worker：静态资源缓存优先，页面网络优先；音频 Cache API 缓存（60 天过期），
 // 第二次播放直接读本地缓存，不再发起网络请求。
-const CACHE = 'qiuqiumusic.v9';
+const CACHE = 'qiuqiumusic.v10';
 const ASSETS = [
   '/',
-  '/projects/source_code/css/site.css?v=20261016-26',
-  '/projects/source_code/js/app.js?v=20261016-26',
+  '/projects/source_code/css/site.css?v=20261021-desktop-download',
+  '/projects/source_code/js/app.js?v=20261021-desktop-download',
+  '/projects/source_code/js/desktop-download.js?v=20261021-desktop-download',
   '/projects/source_code/picture/logo.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -36,7 +37,7 @@ self.addEventListener('fetch', event => {
     return;
   }
   // 其余实时内容不走缓存：搜索、榜单、详情揭示接口
-  if (url.pathname.startsWith('/api/') ||
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/download/desktop/') ||
       url.pathname.startsWith('/ranking/') || url.pathname.startsWith('/search.php')) return;
   // 静态资源：缓存优先
   if (url.pathname.startsWith('/projects/') || url.pathname.startsWith('/icons/') ||

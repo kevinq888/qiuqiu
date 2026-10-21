@@ -117,6 +117,8 @@ function createFloatingWindow() {
     transparent: true,
     resizable: false,
     movable: true,
+    // Keep transparent popup controls from activating the native window.
+    focusable: false,
     skipTaskbar: true,
     minimizable: false,
     maximizable: false,

@@ -475,6 +475,7 @@
       updateThemeControls();
       updateNavScrollHint();
       updateInstallButton();
+      window.qiuqiuDownloads?.refresh();
       renderCollections();
     } catch {
       if (id === navigationId) {
@@ -499,6 +500,7 @@
   }
 
   document.addEventListener('click', event => {
+    if (event.target.closest('[data-desktop-package]')) return;
     if (event.target.closest('#install-app')) { startInstall(); return; }
     if (event.target.closest('#install-copy-link')) { copyInstallLink(); return; }
     if (event.target.closest('[data-install-close]')) { closeInstallDialog(); return; }
