@@ -12,9 +12,9 @@
 
 | 系统 | 下载 | ZIP 内的安装包 |
 | --- | --- | --- |
-| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.7/1.0.7-macos-arm64.zip) | 秋秋音乐-1.0.7-macos-arm64.dmg |
-| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.7/1.0.7-macos-x64.zip) | 秋秋音乐-1.0.7-macos-x64.dmg |
-| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.7/1.0.7-windows-x64.zip) | 秋秋音乐-1.0.7-windows-x64.exe |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.7/1.0.7-macos-arm64.zip) | 秋秋音乐-1.0.7-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.7/1.0.7-macos-x64.zip) | 秋秋音乐-1.0.7-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.7/1.0.7-windows-x64.zip) | 秋秋音乐-1.0.7-windows-x64.exe |
 
 程序坞图标按 QQ、微信的图形占比调整，启动时刷新当前图标；菜单栏改为带音符的单色图标。悬停面板去掉整块底色，标题宽度随内容变化，文字描边和独立按钮底保证清晰可见。
 
@@ -26,17 +26,17 @@
 
 | 系统 | 下载 | ZIP 内的安装包 |
 | --- | --- | --- |
-| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.6/1.0.6-macos-arm64.zip) | 秋秋音乐-1.0.6-macos-arm64.dmg |
-| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.6/1.0.6-macos-x64.zip) | 秋秋音乐-1.0.6-macos-x64.dmg |
-| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.6/1.0.6-windows-x64.zip) | 秋秋音乐-1.0.6-windows-x64.exe |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.6/1.0.6-macos-arm64.zip) | 秋秋音乐-1.0.6-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.6/1.0.6-macos-x64.zip) | 秋秋音乐-1.0.6-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.6/1.0.6-windows-x64.zip) | 秋秋音乐-1.0.6-windows-x64.exe |
 
 ### v1.0.5
 
 | 系统 | 安装包 | 架构 |
 | --- | --- | --- |
-| macOS（Apple 芯片） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.5/qiuqiumusic-1.0.5-macos-arm64.dmg) | arm64 |
-| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.5/qiuqiumusic-1.0.5-macos-x64.dmg) | x64 |
-| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.5/qiuqiumusic-1.0.5-windows-x64.exe) | x64 |
+| macOS（Apple 芯片） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.5/qiuqiumusic-1.0.5-macos-arm64.dmg) | arm64 |
+| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.5/qiuqiumusic-1.0.5-macos-x64.dmg) | x64 |
+| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.5/qiuqiumusic-1.0.5-windows-x64.exe) | x64 |
 
 菜单栏使用独立的小尺寸单色图标，程序坞使用正常大小的圆角图标。悬浮播放器支持悬停快捷切歌和播放/暂停，进度环采用珊瑚色；固定窗口尺寸减少悬停闪烁。
 
@@ -44,9 +44,9 @@
 
 | 系统 | 安装包 | 架构 |
 | --- | --- | --- |
-| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.4/qiuqiumusic-1.0.4-macos-arm64.dmg) | arm64 |
-| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.4/qiuqiumusic-1.0.4-macos-x64.dmg) | x64 |
-| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.4/qiuqiumusic-1.0.4-windows-x64.exe) | x64 |
+| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.4/qiuqiumusic-1.0.4-macos-arm64.dmg) | arm64 |
+| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.4/qiuqiumusic-1.0.4-macos-x64.dmg) | x64 |
+| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.4/qiuqiumusic-1.0.4-windows-x64.exe) | x64 |
 
 本版本进一步缩小系统 Dock/任务栏图标；悬浮播放器的歌曲名改为半透明青绿色磨砂底，长标题会自动滚动显示。
 
@@ -54,19 +54,19 @@
 
 | 系统 | 安装包 | 架构 |
 | --- | --- | --- |
-| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.3/qiuqiumusic-1.0.3-macos-arm64.dmg) | arm64 |
-| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.3/qiuqiumusic-1.0.3-macos-x64.dmg) | x64 |
-| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.3/qiuqiumusic-1.0.3-windows-x64.exe) | x64 |
+| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.3/qiuqiumusic-1.0.3-macos-arm64.dmg) | arm64 |
+| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.3/qiuqiumusic-1.0.3-macos-x64.dmg) | x64 |
+| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.3/qiuqiumusic-1.0.3-windows-x64.exe) | x64 |
 
 ### v1.0.2
 
 | 系统 | 安装包 | 架构 |
 | --- | --- | --- |
-| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-arm64.dmg) | arm64 |
-| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-x64.dmg) | x64 |
-| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiu/releases/download/v1.0.2/qiuqiumusic-1.0.2-windows-x64.exe) | x64 |
+| macOS（Apple 芯片，M1/M2/M3/M4） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-arm64.dmg) | arm64 |
+| macOS（Intel） | [下载 DMG](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.2/qiuqiumusic-1.0.2-macos-x64.dmg) | x64 |
+| Windows（64 位） | [下载安装程序](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.0.2/qiuqiumusic-1.0.2-windows-x64.exe) | x64 |
 
-全部版本的更新记录和安装包见 [GitHub Releases](https://github.com/kevinq888/qiuqiu/releases)。macOS 安装包尚未进行 Developer ID 签名和公证；首次打开时若系统拦截，请在“系统设置 → 隐私与安全性”中允许打开。
+全部版本的更新记录和安装包见 [GitHub Releases](https://github.com/kevinq888/qiuqiumusic/releases)。macOS 安装包尚未进行 Developer ID 签名和公证；首次打开时若系统拦截，请在“系统设置 → 隐私与安全性”中允许打开。
 
 ## 本地运行
 
@@ -93,7 +93,7 @@ npm start
 - 监听端口：平台提供的 `PORT` 环境变量，默认 3000
 - Docker：仓库根目录的 `Dockerfile`
 
-仓库根目录的 `render.yaml` 配置了 Render Web Service，可通过 Render Blueprint 连接 GitHub 仓库。线上服务从 GitHub `kevinq888/qiuqiu` 的 `main` 分支部署；向仓库推送后，按 Render 服务的自动部署设置发布。Codeup 副本的提交不会更新 Render 服务。
+仓库根目录的 `render.yaml` 配置了 Render Web Service，可通过 Render Blueprint 连接 GitHub 仓库。线上服务从 GitHub `kevinq888/qiuqiumusic` 的 `main` 分支部署；向仓库推送后，按 Render 服务的自动部署设置发布。Codeup 副本的提交不会更新 Render 服务。
 
 免费实例闲置后可能休眠，首次访问需等待服务启动；实例重启或重新部署后，临时文件缓存可能需要重新抓取。若需跨重启保留缓存，可使用带持久化磁盘的服务计划。
 
@@ -101,4 +101,4 @@ npm start
 
 ## 仓库
 
-GitHub：[kevinq888/qiuqiu](https://github.com/kevinq888/qiuqiu) · Codeup：[kevinq/qiuqiu](https://codeup.aliyun.com/6305f229e8ec152a05d73b41/kevinq/qiuqiu)。
+GitHub：[kevinq888/qiuqiumusic](https://github.com/kevinq888/qiuqiumusic) · Codeup：[kevinq/qiuqiumusic](https://codeup.aliyun.com/6305f229e8ec152a05d73b41/kevinq/qiuqiumusic)。
