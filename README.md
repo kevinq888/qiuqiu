@@ -6,7 +6,19 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.2.3（当前版本）
+### v1.2.4（当前版本）
+
+- “保存链接”恢复为安装到主屏幕/程序坞的系统安装引导（功能与更名前一致），文案保留“保存链接”。
+- 按钮图标由下载箭头改为保存（软盘）图标，样式与“下载桌面版”一致：浅色底 + 主题色文字。
+- 下载即安装包（DMG / EXE），不再需要解压 ZIP。
+
+| 系统 | 下载 |
+| --- | --- |
+| macOS（Apple 芯片） | [秋秋音乐-1.2.4-macos-arm64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.4/qiuqiumusic-1.2.4-macos-arm64.dmg) |
+| macOS（Intel） | [秋秋音乐-1.2.4-macos-x64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.4/qiuqiumusic-1.2.4-macos-x64.dmg) |
+| Windows（64 位） | [秋秋音乐-1.2.4-windows-x64.exe](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.4/qiuqiumusic-1.2.4-windows-x64.exe) |
+
+### v1.2.3
 
 - 播放清单打开时，点击面板与开关以外的任意位置自动收回。
 - 桌面客户端内嵌站点同步 v1.2.2 全部清单与缓存改进。

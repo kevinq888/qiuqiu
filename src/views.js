@@ -1,7 +1,7 @@
 const { seed, getSong, proxyMediaUrl } = require('./store');
 
 const SITE = '秋秋音乐';
-const ASSET_VERSION = '20261021-queue-dismiss';
+const ASSET_VERSION = '20261021-install-restore';
 function esc(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -22,6 +22,7 @@ function icon(name) {
     heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     download: '<path d="M12 3v12m-4-4 4 4 4-4M5 17v3h14v-3"/>',
+    save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
     sequence: '<path d="M4 6h16M4 12h16M4 18h10"/>',
     repeat: '<path d="m17 2 3 3-3 3M20 5H7a4 4 0 0 0-4 4v2m4 11-3-3 3-3m-3 3h13a4 4 0 0 0 4-4v-2"/>',
   };
@@ -35,7 +36,7 @@ function pageHead(title, description = '听见喜欢的声音。秋秋音乐，�
 }
 function nav(active = '') {
   const links = [['/', '发现'], ['/charts', '排行榜'], ['/navigation/1/', '最近更新'], ['/navigation/2/', '歌单'], ['/hotsgr.html', '歌手'], ['/keyword.html', '热搜'], ['/my-music', '我的音乐']];
-  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><button id="nav-scroll-next" class="nav-scroll-next" type="button" aria-label="向右查看更多导航">${icon('arrow')}</button><div class="header-actions"><div class="desktop-download-wrap" hidden><a id="desktop-download" aria-label="下载桌面版" class="desktop-download-button" href="https://github.com/kevinq888/qiuqiumusic/releases/latest" data-desktop-package hidden aria-controls="desktop-download-choices" aria-expanded="false">${icon('download')}<span class="download-label">下载桌面版</span></a><div id="desktop-download-choices" class="desktop-download-choices" hidden><strong>选择你的 Mac 芯片</strong><a href="/download/desktop/macos-arm64" data-desktop-package>Apple 芯片 <small>M1 / M2 / M3 / M4 / M5</small></a><a href="/download/desktop/macos-x64" data-desktop-package>Intel 芯片 <small>Intel Mac</small></a><p>ZIP 下载后请先解压，再打开安装包。</p></div></div><button class="install-button" id="install-app" type="button" aria-label="保存秋秋音乐链接">${icon('download')}<span>保存链接</span></button><div class="theme-picker"><button class="theme-trigger" id="theme-mobile-trigger" type="button" aria-label="切换皮肤" aria-haspopup="dialog" aria-expanded="false"><span class="theme-trigger-mark" aria-hidden="true">◐</span><span id="theme-mobile-label">薄荷绿</span></button></div></div></div></header>`;
+  return `<header class="site-header"><div class="shell nav-shell"><a class="brand" href="/" aria-label="秋秋音乐首页"><img src="/projects/source_code/picture/logo.svg" alt="" width="44" height="44"><span><strong>秋秋音乐</strong><small>qiuqiumusic</small></span></a><nav class="main-nav" aria-label="主导航">${links.map(([url, text]) => `<a href="${url}" class="${active === url ? 'active' : ''}">${text}</a>`).join('')}</nav><button id="nav-scroll-next" class="nav-scroll-next" type="button" aria-label="向右查看更多导航">${icon('arrow')}</button><div class="header-actions"><div class="desktop-download-wrap" hidden><a id="desktop-download" aria-label="下载桌面版" class="desktop-download-button" href="https://github.com/kevinq888/qiuqiumusic/releases/latest" data-desktop-package hidden aria-controls="desktop-download-choices" aria-expanded="false">${icon('download')}<span class="download-label">下载桌面版</span></a><div id="desktop-download-choices" class="desktop-download-choices" hidden><strong>选择你的 Mac 芯片</strong><a href="/download/desktop/macos-arm64" data-desktop-package>Apple 芯片 <small>M1 / M2 / M3 / M4 / M5</small></a><a href="/download/desktop/macos-x64" data-desktop-package>Intel 芯片 <small>Intel Mac</small></a><p>下载后双击打开安装包，按提示完成安装。</p></div></div><button class="install-button" id="install-app" type="button" aria-label="保存秋秋音乐链接">${icon('save')}<span>保存链接</span></button><div class="theme-picker"><button class="theme-trigger" id="theme-mobile-trigger" type="button" aria-label="切换皮肤" aria-haspopup="dialog" aria-expanded="false"><span class="theme-trigger-mark" aria-hidden="true">◐</span><span id="theme-mobile-label">薄荷绿</span></button></div></div></div></header>`;
 }
 function searchForm(q = '') {
   return `<form class="search-form" action="/search.php" method="get" role="search"><label class="sr-only" for="song-search">搜索歌曲或歌手</label>${icon('search')}<input id="song-search" name="q" type="search" value="${esc(q)}" placeholder="搜索歌曲、歌手，开启好心情" required><button type="submit">搜索音乐 ${icon('arrow')}</button></form>`;
