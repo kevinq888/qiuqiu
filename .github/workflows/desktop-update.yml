@@ -35,7 +35,7 @@ jobs:
       - name: Install previous public version into disposable directory
         run: |
           $temp = node -p "require('os').tmpdir()"
-          $root = Join-Path $temp ('qiuqiu-installer-ci-' + [guid]::NewGuid())
+          $root = Join-Path $temp ('qiuqiu installer ci-' + [guid]::NewGuid())
           New-Item -ItemType Directory -Path $root | Out-Null
           $env:UPDATE_TEST_ROOT = $root
           node -e "(async()=>{const fs=require('fs'),path=require('path'),crypto=require('crypto');const r=await fetch('https://github.com/kevinq888/qiuqiumusic/releases/download/v1.1.0/1.1.0-windows-x64.zip');if(!r.ok)throw Error('Download failed '+r.status);const b=Buffer.from(await r.arrayBuffer());if(crypto.createHash('sha256').update(b).digest('hex')!=='4f1ce955077e0ecb05796c661aed27a4af1ddcb218577fee25d57e9ec7514cff')throw Error('Fixture checksum mismatch');fs.writeFileSync(path.join(process.env.UPDATE_TEST_ROOT,'old.zip'),b);})().catch(e=>{console.error(e);process.exit(1)});"
@@ -49,3 +49,9 @@ jobs:
           Compress-Archive -LiteralPath (Join-Path $PWD ('desktop/dist/' + $version + '/秋秋音乐-' + $version + '-windows-x64.exe')) -DestinationPath $package
           node desktop/scripts/test-update-installed.cjs $app $package $version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Keep the exact Windows installer that passed the upgrade test
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: desktop/dist/**/*.exe
+          retention-days: 3

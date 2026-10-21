@@ -20,7 +20,7 @@ function launchPlayer(flag) {
 async function installer() {
   await new Promise((resolve, reject) => {
     const child = spawn(config.installer, ['/S', '--updated', `/D=${config.target}`], {
-      windowsHide: true, windowsVerbatimArguments: true, stdio: 'ignore',
+      windowsHide: true, stdio: 'ignore',
       env: Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toUpperCase() !== 'ELECTRON_RUN_AS_NODE')),
     });
     const timeout = setTimeout(() => { child.kill(); reject(Error('Installer timed out')); }, 180000);
