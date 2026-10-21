@@ -630,6 +630,16 @@ body{background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--mint) 4
 .cache-meter[data-cache-state="downloading"] i{width:100%;background:linear-gradient(90deg,transparent,var(--orange),transparent);background-size:45% 100%;background-repeat:no-repeat;animation:cache-sweep 1.05s linear infinite}
 .queue-items .personal-song .personal-main .cache-meter{width:100%;flex:none}
 .queue-panel .queue-items{flex:1;min-height:0}
+/* 清单面板比其他卡片更实，避免底下列表透出来显花 */
+.queue-panel{background:linear-gradient(145deg,color-mix(in srgb,var(--white) 97%,transparent),color-mix(in srgb,var(--white) 93%,transparent))}
+[data-theme="dark"] .queue-panel{background:linear-gradient(145deg,rgba(28,48,41,.97),rgba(18,34,29,.94))}
+/* 清单滚动条：细圆角低调常驻，替换原生滚动条的闪现 */
+.queue-items{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--forest) 45%,transparent) transparent}
+.queue-items::-webkit-scrollbar{width:6px}
+.queue-items::-webkit-scrollbar-track{background:transparent}
+.queue-items::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--forest) 38%,transparent);border-radius:999px}
+[data-theme="dark"] .queue-items{scrollbar-color:rgba(148,193,171,.35) transparent}
+[data-theme="dark"] .queue-items::-webkit-scrollbar-thumb{background:rgba(148,193,171,.32)}
 @keyframes cache-sweep{from{background-position:-45% 0}to{background-position:145% 0}}
 .queue-cache-summary{margin-left:6px;font-size:10px;font-weight:700;letter-spacing:.02em;color:var(--forest)}
 [data-theme="dark"] .queue-cache-summary{color:var(--mint)}
