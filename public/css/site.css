@@ -614,3 +614,25 @@ body{background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--mint) 4
 .desktop-update-button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-height:40px;padding:0 16px;border:1px solid rgba(245,138,112,.55);border-radius:999px;background:rgba(245,138,112,.13);color:var(--ink);font:inherit;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
 .desktop-update-button[hidden]{display:none}.desktop-update-button:not(:disabled):hover{background:rgba(245,138,112,.24)}.desktop-update-button:focus-visible{outline:2px solid #f58a70;outline-offset:3px}.desktop-update-button:disabled{cursor:progress;opacity:.85}.desktop-update-button[data-status=error]{border-color:#f58a70}
 @media(max-width:1100px){.desktop-update-button{padding:0 10px;font-size:12px;min-height:36px}}
+
+/* 播放清单：当前曲目高亮、缓存进度条、可扩展的清单计数徽标。配色统一走皮肤变量。 */
+.personal-song .personal-main{display:flex;flex-direction:column;flex:1;min-width:0}
+.personal-main button{width:100%;flex:none}
+.personal-song.is-current{background:color-mix(in srgb,var(--mint) 80%,transparent);border-radius:10px;box-shadow:inset 3px 0 0 var(--forest);padding-left:9px}
+.personal-song.is-current .personal-index,
+.personal-song.is-current .personal-main button{color:var(--forest);font-weight:800}
+[data-theme="dark"] .personal-song.is-current{background:color-mix(in srgb,var(--forest) 40%,transparent);box-shadow:inset 3px 0 0 var(--mint)}
+[data-theme="dark"] .personal-song.is-current .personal-index,
+[data-theme="dark"] .personal-song.is-current .personal-main button{color:#e6f4ee}
+.cache-meter{display:block;height:3px;margin:0 0 7px;max-width:100%;border-radius:999px;overflow:hidden;background:color-mix(in srgb,var(--line) 85%,transparent);color:inherit;font-size:0}
+.cache-meter i{display:block;height:100%;width:0;border-radius:inherit;background:var(--forest);transition:width .35s var(--ease)}
+.cache-meter[data-cache-state="cached"] i{width:100%;background:linear-gradient(90deg,var(--forest),color-mix(in srgb,var(--forest) 55%,var(--mint)))}
+.cache-meter[data-cache-state="downloading"] i{width:100%;background:linear-gradient(90deg,transparent,var(--orange),transparent);background-size:45% 100%;background-repeat:no-repeat;animation:cache-sweep 1.05s linear infinite}
+.queue-items .personal-song .personal-main .cache-meter{width:100%;flex:none}
+.queue-panel .queue-items{flex:1;min-height:0}
+@keyframes cache-sweep{from{background-position:-45% 0}to{background-position:145% 0}}
+.queue-cache-summary{margin-left:6px;font-size:10px;font-weight:700;letter-spacing:.02em;color:var(--forest)}
+[data-theme="dark"] .queue-cache-summary{color:var(--mint)}
+.queue-note{flex:none;margin:12px 0 0;padding-top:10px;border-top:1px dashed var(--line);font-size:11px;line-height:1.6;color:var(--muted)}
+#player-queue{white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){.cache-meter[data-cache-state="downloading"] i{animation:none;background:var(--orange)}}

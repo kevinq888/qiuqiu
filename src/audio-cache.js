@@ -1,10 +1,10 @@
-// 音频磁盘缓存：命中直接回源磁盘文件，60 天未被命中自动清理，容量超限时按最旧淘汰。
+// 音频磁盘缓存：命中直接回源磁盘文件，一周未被命中自动清理，容量超限时按最旧淘汰。
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
 const CACHE_DIR = path.join(require('./runtime-paths').dataDir, 'cache', 'audio');
-const MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;   // 缓存有效期：60 天
+const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;    // 缓存有效期：1 周（未命中即清理）
 const MAX_BYTES = 512 * 1024 * 1024;           // 磁盘软上限 512MB
 const PART_MAX_AGE_MS = 60 * 60 * 1000;        // 下载中断残留 .part 文件 1 小时后清理
 
@@ -31,6 +31,15 @@ function statFile(title) {
       fs.utimesSync(filePath, now, now);
       return stat;
     }
+  } catch {}
+  return null;
+}
+
+// 只读命中检查：供清单缓存进度查询使用，不刷新 mtime，避免查看状态延长缓存寿命。
+function lookup(title) {
+  try {
+    const stat = fs.statSync(filePathFor(title));
+    if (stat.size > 0 && Date.now() - stat.mtimeMs <= MAX_AGE_MS) return stat;
   } catch {}
   return null;
 }
@@ -72,4 +81,4 @@ function cleanup() {
   });
 }
 
-module.exports = { CACHE_DIR, MAX_AGE_MS, fileNameFor, filePathFor, ensureDir, statFile, cleanup };
+module.exports = { CACHE_DIR, MAX_AGE_MS, fileNameFor, filePathFor, ensureDir, statFile, lookup, cleanup };

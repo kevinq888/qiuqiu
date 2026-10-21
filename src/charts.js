@@ -6,7 +6,7 @@ const { ranking, sourcePage, MAX_PAGES } = require('./rankings');
 const DATA_DIR = require('./runtime-paths').dataDir;
 const STATS_FILE = path.join(DATA_DIR, 'play-stats.json');
 const SNAPSHOT_FILE = path.join(DATA_DIR, 'chart-snapshots.json');
-const KEEP_DAYS = 60;          // 播放计数保留 60 天，与音频缓存策略一致
+const KEEP_DAYS = 60;          // 播放计数保留 60 天，用于日榜走势对比
 const LOCAL_WINDOW_DAYS = 7;   // 本站点播榜统计最近 7 天
 const TREND_DEPTH = 40;        // 走势对比只跟踪各榜前 40 名
 

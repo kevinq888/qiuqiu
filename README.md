@@ -6,7 +6,23 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.2.1（当前版本）
+### v1.2.2（当前版本）
+
+- 加入播放清单后自动从第一首开始播放，并在后台按顺序逐首缓存，切歌更快。
+- 播放清单新增缓存进度条，颜色跟随当前皮肤；已缓存、缓存中、待缓存一眼可分。
+- 清单按钮显示"当前曲目/总数"（如 3/20），点开后自动定位并高亮当前曲目。
+- 音频缓存有效期调整为 1 周，一周未被播放的曲目自动清理，相关文案同步更新。
+- 网页顶栏的"安装"入口更名为"保存链接"，点击即可复制站点链接；桌面客户端内隐藏该入口。
+
+安装包位于 `desktop/dist/1.2.2/`，目录仅包含以下三个文件。ZIP 下载后先解压。
+
+| 系统 | 下载 | ZIP 内的安装包 |
+| --- | --- | --- |
+| macOS（Apple 芯片） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.2/1.2.2-macos-arm64.zip) | 秋秋音乐-1.2.2-macos-arm64.dmg |
+| macOS（Intel） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.2/1.2.2-macos-x64.zip) | 秋秋音乐-1.2.2-macos-x64.dmg |
+| Windows（64 位） | [下载 ZIP](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.2/1.2.2-windows-x64.zip) | 秋秋音乐-1.2.2-windows-x64.exe |
+
+### v1.2.1
 
 - GitHub 匿名 API 限流时，使用官方仓库发布清单检查更新，无需用户登录 GitHub。
 - 修复音源响应断线可能导致桌面进程退出的问题；播放失败会保留明确提示，点击播放可重新加载音源并重试。

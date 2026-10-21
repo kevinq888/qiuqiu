@@ -1,18 +1,18 @@
-// 秋秋音乐 Service Worker：静态资源缓存优先，页面网络优先；音频 Cache API 缓存（60 天过期），
+// 秋秋音乐 Service Worker：静态资源缓存优先，页面网络优先；音频 Cache API 缓存（一周过期），
 // 第二次播放直接读本地缓存，不再发起网络请求。
-const CACHE = 'qiuqiumusic.v11';
+const CACHE = 'qiuqiumusic.v12';
 const ASSETS = [
   '/',
-  '/projects/source_code/css/site.css?v=20261021-desktop-update',
-  '/projects/source_code/js/app.js?v=20261021-desktop-update',
-  '/projects/source_code/js/desktop-download.js?v=20261021-desktop-update',
-  '/projects/source_code/js/desktop-update.js?v=20261021-desktop-update',
+  '/projects/source_code/css/site.css?v=20261021-playlist-cache',
+  '/projects/source_code/js/app.js?v=20261021-playlist-cache',
+  '/projects/source_code/js/desktop-download.js?v=20261021-playlist-cache',
+  '/projects/source_code/js/desktop-update.js?v=20261021-playlist-cache',
   '/projects/source_code/picture/logo.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/manifest.webmanifest',
 ];
-const AUDIO_TTL_MS = 60 * 24 * 60 * 60 * 1000; // 音频缓存有效期：60 天
+const AUDIO_TTL_MS = 7 * 24 * 60 * 60 * 1000;  // 音频缓存有效期：1 周
 const AUDIO_MAX_ENTRIES = 300;                 // 音频缓存条目上限，超出按最旧淘汰
 
 self.addEventListener('install', event => {
@@ -32,7 +32,7 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
-  // 音频：缓存优先，60 天内第二次播放零网络
+  // 音频：缓存优先，一周内第二次播放零网络
   if (url.pathname.startsWith('/media/') && url.pathname.endsWith('.m4a')) {
     event.respondWith(handleAudio(request));
     return;
@@ -62,7 +62,7 @@ async function handleAudio(request) {
   if (hit) {
     const cachedAt = Number(hit.headers.get('x-cached-at') || 0);
     if (Date.now() - cachedAt < AUDIO_TTL_MS) return serveAudioBody(request, hit);
-    await cache.delete(request.url); // 60 天过期，重新走网络
+    await cache.delete(request.url); // 一周未命中即清理，重新走网络
   }
   let fresh;
   try {

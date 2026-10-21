@@ -66,6 +66,19 @@ function serveStatic(req, res, urlPath) {
   return true;
 }
 
+// 读取小型 JSON 请求体；超限或解析失败走 onError
+function readJsonBody(req, limit, onBody, onError) {
+  let body = '';
+  req.on('data', chunk => {
+    body += chunk;
+    if (body.length > limit) req.destroy();
+  });
+  req.on('end', () => {
+    try { onBody(JSON.parse(body || '{}')); } catch { onError(); }
+  });
+  req.on('error', () => {});
+}
+
 const server = http.createServer((req, res) => {
   if (server.desktopToken && req.headers['x-qiuqiu-token'] !== server.desktopToken) {
     return send(res, 403, 'Forbidden', 'text/plain; charset=utf-8');
@@ -93,7 +106,7 @@ const server = http.createServer((req, res) => {
   // 静态资源
   if (serveStatic(req, res, p)) return;
 
-  // 音频：优先读本地磁盘缓存（60 天未命中自动清理），未命中由服务器带 Referer 拉取上游全量落盘，
+  // 音频：优先读本地磁盘缓存（一周未命中自动清理），未命中由服务器带 Referer 拉取上游全量落盘，
   // 之后第二次播放直接从磁盘读取，不再访问外网；Range 拖动进度由本地文件切片实现。
   if (p.startsWith('/media/') && p.endsWith('.m4a')) {
     const title = decodeURIComponent(p.slice('/media/'.length, -'.m4a'.length));
@@ -110,6 +123,37 @@ const server = http.createServer((req, res) => {
       try { const d = JSON.parse(body || '{}'); ok = charts.recordPlay(d.id, d.title); } catch {}
       send(res, ok ? 200 : 400, JSON.stringify({ ok }), 'application/json; charset=utf-8');
     });
+    return;
+  }
+
+  // 播放清单缓存状态：只读查询，不刷新缓存命中时间
+  if (p === '/api/cache/status' && req.method === 'POST') {
+    readJsonBody(req, 64 * 1024, body => {
+      const titles = Array.isArray(body.titles) ? body.titles.slice(0, 1000) : [];
+      const cached = [];
+      const downloading = [];
+      for (const title of titles) {
+        if (typeof title !== 'string' || !title) continue;
+        if (audioCache.lookup(title)) cached.push(title);
+        else if (inflightAudio.has(title)) downloading.push(title);
+      }
+      send(res, 200, JSON.stringify({ cached, downloading }), 'application/json; charset=utf-8');
+    }, () => send(res, 400, JSON.stringify({ ok: false }), 'application/json; charset=utf-8'));
+    return;
+  }
+
+  // 清单预缓存：下载完成才响应，前端据此逐首显示缓存进度
+  if (p === '/api/cache/prefetch' && req.method === 'POST') {
+    readJsonBody(req, 8 * 1024, body => {
+      const title = typeof body.title === 'string' ? body.title : '';
+      if (!title) {
+        send(res, 400, JSON.stringify({ ok: false }), 'application/json; charset=utf-8');
+        return;
+      }
+      prefetchTitle(title)
+        .then(cached => send(res, 200, JSON.stringify({ ok: true, cached }), 'application/json; charset=utf-8'))
+        .catch(() => send(res, 502, JSON.stringify({ ok: false, cached: false }), 'application/json; charset=utf-8'));
+    }, () => send(res, 400, JSON.stringify({ ok: false }), 'application/json; charset=utf-8'));
     return;
   }
 
@@ -348,6 +392,17 @@ function fetchAudioToDisk(title) {
   });
 }
 
+// 单首预缓存：命中直接返回；并发请求复用同一下载
+function prefetchTitle(title) {
+  if (audioCache.lookup(title)) return Promise.resolve(true);
+  let pending = inflightAudio.get(title);
+  if (!pending) {
+    pending = fetchAudioToDisk(title).finally(() => inflightAudio.delete(title));
+    inflightAudio.set(title, pending);
+  }
+  return pending;
+}
+
 function serveAudio(req, res, title) {
   audioCache.ensureDir();
   const cachedStat = audioCache.statFile(title);
@@ -355,12 +410,7 @@ function serveAudio(req, res, title) {
     serveAudioFromDisk(req, res, audioCache.filePathFor(title), cachedStat);
     return;
   }
-  let pending = inflightAudio.get(title);
-  if (!pending) {
-    pending = fetchAudioToDisk(title).finally(() => inflightAudio.delete(title));
-    inflightAudio.set(title, pending);
-  }
-  pending.then(ok => {
+  prefetchTitle(title).then(ok => {
     const stat = ok ? audioCache.statFile(title) : null;
     if (stat) serveAudioFromDisk(req, res, audioCache.filePathFor(title), stat);
     else send(res, 404, 'Not Found', 'text/plain; charset=utf-8'); // 上游没有这首，与原站行为一致

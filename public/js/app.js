@@ -46,6 +46,12 @@
   let loadingStartedAt = 0;
   let playMode = (() => { try { const value = localStorage.getItem(PLAY_MODE_KEY); return PLAY_MODES.includes(value) ? value : 'sequence'; } catch { return 'sequence'; } })();
   let themeReturnFocus = null;
+  let cacheCached = new Set();
+  let cacheDownloading = new Set();
+  let cacheFailed = new Set();
+  let cachePrefetchId = 0;
+  let cacheLoopRunning = false;
+  let cacheStatusTimer;
 
   function showLoading(label) {
     loading.querySelector('.route-loading-text').textContent = label;
@@ -76,9 +82,10 @@
   function updateInstallButton() {
     const button = document.getElementById('install-app');
     if (!button) return;
-    button.hidden = installedApp();
-    const env = installEnvironment();
-    button.querySelector('span').textContent = env.inApp ? '浏览器安装' : env.ios ? '添加到桌面' : '安装';
+    // 桌面客户端（Electron）内不提供"保存链接"，网页里也统一叫"保存链接"
+    const desktop = /Electron\//.test(navigator.userAgent);
+    button.hidden = installedApp() || desktop;
+    button.querySelector('span').textContent = '保存链接';
   }
   function closeInstallDialog() {
     installDialog.hidden = true;
@@ -104,40 +111,42 @@
       instructions = '在浏览器地址栏右侧或菜单中选择“安装秋秋音乐”。如果暂时没有安装选项，请稍后刷新再试。';
     }
     installReturnFocus = document.activeElement;
-    document.getElementById('install-title').textContent = env.inApp ? '用浏览器安装秋秋音乐' : '把音乐装进设备';
+    document.getElementById('install-title').textContent = '保存秋秋音乐链接';
     document.getElementById('install-instructions').textContent = instructions;
     const copy = document.getElementById('install-copy-link');
-    copy.hidden = !env.inApp;
+    copy.hidden = false;
     copy.textContent = '复制网站链接';
     installDialog.hidden = false;
-    (env.inApp ? copy : installDialog.querySelector('.install-close')).focus();
+    copy.focus();
+  }
+  // 复制站点首页链接（"保存链接"入口用）
+  async function copySiteLink() {
+    const url = new URL('/', location.href).href;
+    try { await navigator.clipboard.writeText(url); return true; } catch {}
+    const field = document.createElement('textarea');
+    field.value = url;
+    field.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.append(field);
+    field.select();
+    let copied = false;
+    try { copied = document.execCommand('copy'); } catch {}
+    field.remove();
+    if (!copied) window.prompt('请复制链接，在手机浏览器中打开：', url);
+    return copied;
   }
   async function copyInstallLink() {
-    const url = new URL('/', location.href).href;
-    let copied = false;
-    try { await navigator.clipboard.writeText(url); copied = true; } catch {}
-    if (!copied) {
-      const field = document.createElement('textarea');
-      field.value = url;
-      field.style.cssText = 'position:fixed;left:-9999px;top:0';
-      document.body.append(field);
-      field.select();
-      try { copied = document.execCommand('copy'); } catch {}
-      field.remove();
-    }
-    if (copied) document.getElementById('install-copy-link').textContent = '链接已复制';
-    else window.prompt('请复制链接，在手机浏览器中打开：', url);
+    if (await copySiteLink()) document.getElementById('install-copy-link').textContent = '链接已复制';
   }
   function startInstall() {
     if (installedApp()) return;
-    if (!installPrompt) { showInstallInstructions(); return; }
-    const prompt = installPrompt;
-    installPrompt = null;
-    // 系统安装确认必须直接由这次点击触发，无法由网页静默安装。
-    prompt.prompt();
-    prompt.userChoice.then(({ outcome }) => {
-      if (outcome === 'accepted') updateInstallButton();
-    }).catch(showInstallInstructions);
+    const button = document.getElementById('install-app');
+    const span = button?.querySelector('span');
+    copySiteLink().then(copied => {
+      if (!copied) { showInstallInstructions(); return; }
+      if (!span) return;
+      span.textContent = '链接已复制';
+      setTimeout(() => { if (span.textContent === '链接已复制') span.textContent = '保存链接'; }, 1800);
+    });
   }
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
@@ -266,6 +275,8 @@
     if (!validSong(song) || contains(queue, song)) return;
     queue.push(song);
     save();
+    autoStartQueue();
+    scheduleCacheStatusRefresh();
   }
   function addPageToQueue(button) {
     const rows = button.closest('.panel')?.querySelectorAll('.song-row [data-add-id]') || [];
@@ -276,8 +287,97 @@
       queue.push(song);
       added++;
     }
-    if (added) save();
+    if (added) {
+      save();
+      autoStartQueue();
+      scheduleCacheStatusRefresh();
+    }
     setBulkButton(button, added ? `已加入 ${added} 首` : '本页已加入', true);
+  }
+  // 清单为空闲状态时，加入即从第一首开始播放
+  function autoStartQueue() {
+    if (!current && queue.length) playSong(queue[0]);
+  }
+  function queueTitles() {
+    return [...new Set(queue.map(song => song.title).filter(Boolean))];
+  }
+  function cacheStateFor(title) {
+    if (cacheCached.has(title)) return 'cached';
+    if (cacheDownloading.has(title)) return 'downloading';
+    return 'pending';
+  }
+  function updateCacheMeters() {
+    for (const node of document.querySelectorAll('[data-cache-title]')) {
+      const state = cacheStateFor(node.dataset.cacheTitle);
+      if (node.dataset.cacheState !== state) node.dataset.cacheState = state;
+      const label = state === 'cached' ? '已缓存' : state === 'downloading' ? '缓存中' : '待缓存';
+      if (node.getAttribute('aria-label') !== label) node.setAttribute('aria-label', label);
+    }
+    const summary = document.getElementById('queue-cache-summary');
+    if (summary) {
+      const cached = queue.filter(song => cacheCached.has(song.title)).length;
+      summary.textContent = `已缓存 ${cached}/${queue.length}`;
+      summary.hidden = queue.length === 0;
+    }
+  }
+  function scheduleCacheStatusRefresh() {
+    clearTimeout(cacheStatusTimer);
+    cacheStatusTimer = setTimeout(refreshCacheStatus, 150);
+  }
+  async function refreshCacheStatus() {
+    const titles = queueTitles();
+    if (!titles.length) {
+      cacheCached = new Set();
+      cacheDownloading = new Set();
+      updateCacheMeters();
+      return;
+    }
+    try {
+      const res = await fetch('/api/cache/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titles }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      cacheCached = new Set(Array.isArray(data.cached) ? data.cached : []);
+      cacheDownloading = new Set(Array.isArray(data.downloading) ? data.downloading : []);
+    } catch {}
+    updateCacheMeters();
+    startPrefetchLoop();
+  }
+  // 逐首预缓存：一次只下载一首，下载完成再处理下一首
+  async function startPrefetchLoop() {
+    if (cacheLoopRunning || !queue.length) return;
+    cacheLoopRunning = true;
+    const runId = ++cachePrefetchId;
+    try {
+      for (const song of queue) {
+        if (runId !== cachePrefetchId) return;
+        const title = song.title;
+        if (!title || cacheCached.has(title) || cacheFailed.has(title)) continue;
+        cacheDownloading.add(title);
+        updateCacheMeters();
+        try {
+          const res = await fetch('/api/cache/prefetch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title }),
+          });
+          const data = await res.json().catch(() => ({}));
+          cacheDownloading.delete(title);
+          if (res.ok && data.cached) cacheCached.add(title);
+          else cacheFailed.add(title);
+        } catch {
+          cacheDownloading.delete(title);
+          cacheFailed.add(title);
+        }
+        if (runId !== cachePrefetchId) return;
+        updateCacheMeters();
+      }
+    } finally {
+      if (runId === cachePrefetchId) cacheLoopRunning = false;
+    }
   }
   function toggleFavorite(song) {
     if (!validSong(song)) return;
@@ -311,6 +411,26 @@
     remoteBar.style.setProperty('--played', `${duration ? Math.min(100, currentTime / duration * 100) : 0}%`);
   }
   function announce() { if (owner === tabId && current) message('state', { current, playing: isPlaying, ...playbackPosition() }); }
+  // 清单里高亮当前曲目（颜色跟随皮肤变量，见 site.css）
+  function syncQueueHighlight() {
+    const items = document.getElementById('queue-items');
+    if (!items) return null;
+    let active = null;
+    for (const row of items.querySelectorAll('.personal-song')) {
+      const on = !!current && row.dataset.songId === current.id;
+      row.classList.toggle('is-current', on);
+      if (on) { row.setAttribute('aria-current', 'true'); active = row; }
+      else row.removeAttribute('aria-current');
+    }
+    return active;
+  }
+  // 打开清单时把当前曲目滚动到可视区域中间
+  function focusQueueCurrent(active) {
+    const items = document.getElementById('queue-items');
+    if (!active || !items || queuePanel.hidden) return;
+    const top = active.offsetTop - items.clientHeight / 2 + active.offsetHeight / 2;
+    items.scrollTop = Math.max(0, top);
+  }
   function updatePlayer() {
     host.hidden = false;
     host.classList.toggle('has-track', !!current);
@@ -319,7 +439,13 @@
     }
     // 计数徽标无条件刷新；清单有歌时播放键保持可用，解决"清单有歌却显示 0 首且无法播放"
     document.getElementById('player-play-pause').disabled = !current && !queue.length;
-    document.getElementById('queue-count').textContent = String(queue.length);
+    const index = current ? queue.findIndex(song => song.id === current.id) + 1 : 0;
+    document.getElementById('queue-count').textContent = queue.length ? `${index}/${queue.length}` : '0';
+    queueButton.setAttribute('aria-label', queue.length
+      ? `播放清单，当前第 ${index || 1} 首，共 ${queue.length} 首`
+      : '播放清单，暂无曲目');
+    syncQueueHighlight();
+    updateCacheMeters();
     if (!current) { stateNode.textContent = queue.length ? '按播放键开始' : '待命中'; return; }
     if (!minimizedByUser && !host.classList.contains('is-expanded')) expand();
     titleNode.textContent = current.title;
@@ -465,7 +591,13 @@
   }
   function listMarkup(items, kind) {
     if (!items.length) return `<p class="empty-personal">${kind === 'favorites' ? '还没有收藏歌曲，点击歌曲旁的爱心开始收藏。' : '播放清单还是空的，点击歌曲旁的加号添加。'}</p>`;
-    return items.map((song, index) => `<div class="personal-song"><span>${String(index + 1).padStart(2, '0')}</span><button type="button" data-play-id="${escapeHtml(song.id)}" data-play-title="${escapeHtml(song.title)}">${escapeHtml(song.title)}</button><button type="button" data-${kind === 'favorites' ? 'favorite' : 'remove'}-id="${escapeHtml(song.id)}" data-song-title="${escapeHtml(song.title)}" aria-label="${kind === 'favorites' ? '取消收藏' : '从播放清单移除'} ${escapeHtml(song.title)}">×</button></div>`).join('');
+    return items.map((song, index) => {
+      const isCurrent = kind === 'queue' && !!current && current.id === song.id;
+      const meter = kind === 'queue'
+        ? `<span class="cache-meter" data-cache-title="${escapeHtml(song.title)}" data-cache-state="${cacheStateFor(song.title)}" role="img" aria-label="${cacheStateFor(song.title) === 'cached' ? '已缓存' : cacheStateFor(song.title) === 'downloading' ? '缓存中' : '待缓存'}"><i></i></span>`
+        : '';
+      return `<div class="personal-song${isCurrent ? ' is-current' : ''}" data-song-id="${escapeHtml(song.id)}"${isCurrent ? ' aria-current="true"' : ''}><span class="personal-index">${String(index + 1).padStart(2, '0')}</span><div class="personal-main"><button type="button" data-play-id="${escapeHtml(song.id)}" data-play-title="${escapeHtml(song.title)}">${escapeHtml(song.title)}</button>${meter}</div><button type="button" data-${kind === 'favorites' ? 'favorite' : 'remove'}-id="${escapeHtml(song.id)}" data-song-title="${escapeHtml(song.title)}" aria-label="${kind === 'favorites' ? '取消收藏' : '从播放清单移除'} ${escapeHtml(song.title)}">×</button></div>`;
+    }).join('');
   }
   function renderCollections() {
     document.querySelectorAll('[data-favorite-id]').forEach(button => {
@@ -484,6 +616,7 @@
       setBulkButton(button, allAdded ? '本页已加入' : '一键加入歌单', allAdded);
     });
     updatePlayer();
+    updateCacheMeters();
   }
   async function navigate(url, { replace = false, pop = false } = {}) {
     const target = new URL(url, location.href);
@@ -663,7 +796,11 @@
     event.stopPropagation();
     queuePanel.hidden = !queuePanel.hidden;
     queueButton.setAttribute('aria-expanded', String(!queuePanel.hidden));
-    if (!queuePanel.hidden) renderCollections();
+    if (!queuePanel.hidden) {
+      renderCollections();
+      focusQueueCurrent(syncQueueHighlight());
+      refreshCacheStatus();
+    }
   });
   document.getElementById('queue-close').addEventListener('click', event => {
     event.preventDefault();
@@ -671,7 +808,11 @@
     queuePanel.hidden = true;
     queueButton.setAttribute('aria-expanded', 'false');
   });
-  audio.addEventListener('playing', () => { playbackError = ''; setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放'; updatePlayer(); announce(); });
+  audio.addEventListener('playing', () => {
+    playbackError = ''; setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放';
+    if (current?.title) { cacheCached.add(current.title); cacheFailed.delete(current.title); }
+    updatePlayer(); announce();
+  });
   audio.addEventListener('canplay', () => setBuffering(false));
   audio.addEventListener('pause', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; persistPlayback(); updatePlayer(); announce(); } });
   audio.addEventListener('waiting', () => { if (owner === tabId) { setBuffering(true); stateNode.textContent = '缓冲中…'; } });
@@ -728,5 +869,7 @@
   updateInstallButton();
   updateNavScrollHint();
   message('hello');
+  // 已保存的清单在后台逐首补缓存
+  if (queue.length) scheduleCacheStatusRefresh();
   document.documentElement.dataset.playerReady = 'true';
 })();
