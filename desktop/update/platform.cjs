@@ -68,7 +68,10 @@ async function prepareWindows(input) {
   const installer = await extractInstaller(input);
   const target = path.dirname(input.runtime.exePath);
   if (path.relative(target, input.workspace).split(path.sep)[0] !== '..') throw Error('更新缓存不能位于安装目录内');
-  return { installer, target, backup: path.join(input.workspace, 'previous-app'), exe: input.runtime.exePath, cleanup: async () => {} };
+  if (target === path.parse(target).root) throw Error('安装目录无效，请重新安装后更新');
+  const backup = path.join(input.workspace, 'previous-app');
+  await fs.cp(target, backup, { recursive: true, force: false, errorOnExist: true });
+  return { installer, target, backup, exe: input.runtime.exePath, helperExe: path.join(backup, path.basename(input.runtime.exePath)), cleanup: async () => {} };
 }
 async function prepare(input) {
   return input.runtime.platform === 'darwin' ? prepareMac(input) : prepareWindows(input);
@@ -87,25 +90,25 @@ async function launch(input) {
     command = '/bin/sh';
     args = [helper, target, input.stage, backup, String(process.pid), result, healthy, input.binary, JSON.stringify(success), JSON.stringify(failure), runtime.userData];
   } else {
-    const helper = path.join(workspace, 'apply.ps1');
+    const helper = path.join(workspace, 'apply.cjs');
     const config = path.join(workspace, 'apply.json');
-    await fs.copyFile(path.join(__dirname, 'apply-win.ps1'), helper);
+    await fs.copyFile(path.join(__dirname, 'apply-win.cjs'), helper);
     await fs.writeFile(config, JSON.stringify({ ...input, cleanup: undefined, runtime: undefined, candidate: undefined, pid: process.pid, userData: runtime.userData, healthy, result, success, failure, log: path.join(workspace, 'install.log') }), { mode: 0o600 });
-    command = 'powershell.exe';
-    const code = `& ([scriptblock]::Create([IO.File]::ReadAllText(${psLiteral(helper)}))) -ConfigPath ${psLiteral(config)}`;
-    args = ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(code, 'utf16le').toString('base64')];
+    command = input.helperExe;
+    args = [helper, config];
   }
   const log = await fs.open(path.join(workspace, 'helper.log'), 'a', 0o600);
   let child, handedOff = false;
   try {
     await new Promise((resolve, reject) => {
-      child = spawn(command, args, { detached: true, stdio: ['ignore', log.fd, log.fd], windowsHide: true });
+      child = spawn(command, args, { detached: true, stdio: ['ignore', log.fd, log.fd], windowsHide: true, env: runtime.platform === 'win32' ? { ...process.env, ELECTRON_RUN_AS_NODE: '1' } : process.env });
       child.once('error', reject);
       child.once('spawn', () => { child.unref(); resolve(); });
     });
     const ready = path.join(workspace, 'helper-ready');
     for (let i = 0; i < 200; i++) {
       if (await fs.stat(ready).then(() => true, () => false)) {
+        journal.helperPid = child.pid;
         await fs.writeFile(path.join(runtime.userData, 'updates', 'pending.json'), JSON.stringify(journal), { mode: 0o600 });
         handedOff = true;
         return;
@@ -136,4 +139,16 @@ async function confirmHealthy(runtime) {
   const target = runtime.platform === 'darwin' ? appBundle(runtime.exePath) : path.dirname(runtime.exePath);
   if (pending?.version === runtime.version && pending.target === target) await fs.writeFile(pending.healthy, 'ready', { mode: 0o600 });
 }
-module.exports = { prepare, launch, pendingResult, confirmHealthy, appBundle };
+async function cleanupCompleted(runtime) {
+  const pending = await pendingResult(runtime);
+  if (!pending || pending.version !== runtime.version) return;
+  try {
+    const result = JSON.parse(await fs.readFile(pending.result, 'utf8'));
+    if (result.status !== 'success') return;
+    try { process.kill(pending.helperPid, 0); return; } catch {}
+    await fs.rm(pending.workspace, { recursive: true, force: true });
+    await fs.rm(path.join(runtime.userData, 'updates', 'pending.json'), { force: true });
+  } catch {}
+}
+
+module.exports = { prepare, launch, pendingResult, confirmHealthy, cleanupCompleted, appBundle };

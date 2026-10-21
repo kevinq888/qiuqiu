@@ -48,7 +48,7 @@ function createUpdater({ getMainWindow, quit }) {
     const main = getMainWindow();
     if (main && !main.isDestroyed()) main.webContents.send('desktop:update-state', state);
   });
-  let firstCheck, interval;
+  let firstCheck, interval, cleanup;
   async function loaded() {
     const main = getMainWindow();
     if (!main || main.isDestroyed()) return;
@@ -69,13 +69,16 @@ function createUpdater({ getMainWindow, quit }) {
         if (result.status === 'error') manager.setState({ status: 'error', version: pending.version, error: result.error });
       } catch {}
     }
+    if (!cleanup && runtime.packaged) {
+      cleanup = setTimeout(() => platform.cleanupCompleted(runtime), 30000); cleanup.unref();
+    }
     if (!firstCheck && runtime.packaged) {
       firstCheck = setTimeout(() => manager.check(), 5000); firstCheck.unref();
       interval = setInterval(() => manager.check(), 6 * 60 * 60 * 1000); interval.unref();
     }
   }
   function dispose() {
-    clearTimeout(firstCheck); clearInterval(interval);
+    clearTimeout(firstCheck); clearInterval(interval); clearTimeout(cleanup);
   }
   return { manager, loaded, dispose };
 }
