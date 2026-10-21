@@ -16,6 +16,7 @@ const profile = awaitProfile();
 function awaitProfile() { return fs.mkdtemp(path.join(temporary, 'qiuqiu-update-profile-')); }
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const rollback = process.env.QIUQIU_TEST_ROLLBACK === '1';
+const inspectPort = Number(process.env.QIUQIU_TEST_INSPECT_PORT || 9349);
 let socket, nextId = 0, child;
 const requests = new Map();
 function call(method, params = {}) {
@@ -35,9 +36,12 @@ async function stopTestApp() {
       if (match && match[2].startsWith(exe + ' ')) { try { process.kill(Number(match[1]), 'SIGTERM'); } catch {} }
     }
   } else {
-    const quote = value => "'" + value.replace(/'/g, "''") + "'";
-    const actual = await fs.realpath(exe).catch(() => exe);
-    await run('powershell.exe', ['-NoProfile', '-Command', `Get-Process | Where-Object {$_.Path -eq ${quote(actual)}} | Stop-Process -Force`], { timeout: 15000 });
+    // Match the disposable profile token, then terminate its process tree.
+    // Windows may report an expanded long executable path although the fixture
+    // was launched from an 8.3 temp path, so path string equality is unreliable.
+    const token = path.basename(await profile);
+    assert.ok(/^qiuqiu-update-profile-[a-zA-Z0-9]+$/.test(token));
+    await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `Get-CimInstance Win32_Process | Where-Object {$_.Name -eq '秋秋音乐.exe' -and $_.CommandLine -like '*${token}*'} | ForEach-Object {taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null}`], { timeout: 15000 });
   }
 }
 (async () => {
@@ -45,12 +49,12 @@ async function stopTestApp() {
   console.log('Disposable profile:', userData);
   try {
     await fs.access(exe);
-    child = spawn(exe, ['--inspect=127.0.0.1:9349', `--user-data-dir=${userData}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    child = spawn(exe, [`--inspect=127.0.0.1:${inspectPort}`, `--user-data-dir=${userData}`], { stdio: ['ignore', 'pipe', 'pipe'] });
     child.on('error',error=>console.error('Disposable application launch failed:',error));
     child.stderr.on('data', bytes => process.stderr.write(bytes));
     let endpoints;
     for (let i = 0; i < 100; i++) {
-      try { endpoints = await fetch('http://127.0.0.1:9349/json/list').then(r => r.json()); break; } catch { await sleep(100); }
+      try { endpoints = await fetch(`http://127.0.0.1:${inspectPort}/json/list`).then(r => r.json()); break; } catch { await sleep(100); }
     }
     assert.ok(endpoints?.[0]);
     socket = new WebSocket(endpoints[0].webSocketDebuggerUrl);
@@ -130,7 +134,7 @@ async function stopTestApp() {
     await stopTestApp();
     if (process.platform === 'darwin') await run('/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister',['-u',application]).catch(()=>{});
     await sleep(1000);
-    await fs.rm(userData, { recursive: true, force: true });
+    await fs.rm(userData, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
   } catch (error) {
     console.error(error);
     console.error('Diagnostics retained:', userData);
@@ -141,5 +145,8 @@ async function stopTestApp() {
     await stopTestApp().catch(() => {});
     if (child && child.exitCode === null) child.kill();
     process.exitCode = 1;
+  } finally {
+    // Detached Electron descendants must not hold the runner's pipe handles.
+    child?.stdout?.destroy(); child?.stderr?.destroy(); child?.unref();
   }
 })();
