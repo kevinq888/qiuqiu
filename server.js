@@ -1,5 +1,6 @@
 // 秋秋音乐：零依赖 Node 后端
 const http = require('node:http');
+const { pipeline } = require('node:stream');
 const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -25,6 +26,7 @@ const MIME = {
 };
 
 function send(res, status, body, type = 'text/html; charset=utf-8') {
+  if (status >= 400) res.setHeader('Cache-Control', 'no-store');
   res.writeHead(status, { 'Content-Type': type });
   res.end(body);
 }
@@ -287,49 +289,62 @@ function serveAudioFromDisk(req, res, filePath, stat) {
       'Content-Range': `bytes ${parsed.start}-${parsed.end}/${size}`,
       'Content-Length': parsed.end - parsed.start + 1,
     });
-    fs.createReadStream(filePath, { start: parsed.start, end: parsed.end }).pipe(res);
+    pipeAudioFile(filePath, res, { start: parsed.start, end: parsed.end });
   } else {
     res.writeHead(200, { ...base, 'Content-Length': size });
-    fs.createReadStream(filePath).pipe(res);
+    pipeAudioFile(filePath, res);
   }
 }
 
-// 拉取上游全量音频落盘；成功 true（resolve），上游不存在 false，网络错误 reject
+function pipeAudioFile(filePath, res, options) {
+  const input = fs.createReadStream(filePath, options);
+  input.on('error', () => res.destroy());
+  res.once('close', () => input.destroy());
+  input.pipe(res);
+}
+
+// A failed/aborted upstream response must never become an unhandled stream
+// error in Electron's main process, or leave a pending download forever.
 function fetchAudioToDisk(title) {
   return new Promise((resolve, reject) => {
     const finalPath = audioCache.filePathFor(title);
     const tmpPath = `${finalPath}.part`;
+    let settled = false, responseStream, deadline;
+    const finish = (error, ok = false) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      if (error) reject(error); else resolve(ok);
+    };
     const upstream = https.get(mediaUrl(title), {
-      headers: {
-        Referer: 'https://myfreemp3ku.com/',
-        'User-Agent': 'Mozilla/5.0',
-      },
-      timeout: 60000,
-    }, (up) => {
+      headers: { Referer: 'https://myfreemp3ku.com/', 'User-Agent': 'Mozilla/5.0' },
+      timeout: 30000,
+    }, up => {
       const isFull = up.statusCode === 200
         || (up.statusCode === 206 && /^bytes 0-/.test(up.headers['content-range'] || ''));
-      if (!isFull) {
-        up.resume();
-        resolve(false);
-        return;
-      }
-      const file = fs.createWriteStream(tmpPath);
-      up.pipe(file);
-      file.on('finish', () => {
-        file.close(() => {
-          fs.rename(tmpPath, finalPath, () => {
-            audioCache.cleanup();
-            resolve(true);
-          });
+      // Even error responses can emit a stream error after resume().
+      up.on('error', error => { if (!isFull) finish(error); });
+      if (!isFull) { up.resume(); finish(null, false); return; }
+      responseStream = up;
+      pipeline(up, fs.createWriteStream(tmpPath), error => {
+        if (error) {
+          fs.rm(tmpPath, { force: true }, () => finish(error));
+          return;
+        }
+        fs.rename(tmpPath, finalPath, renameError => {
+          if (renameError) fs.rm(tmpPath, { force: true }, () => finish(renameError));
+          else { audioCache.cleanup(); finish(null, true); }
         });
       });
-      file.on('error', () => {
-        up.destroy();
-        fs.unlink(tmpPath, () => resolve(false));
-      });
     });
+    const abort = error => {
+      if (responseStream) responseStream.destroy(error);
+      else finish(error);
+    };
     upstream.on('timeout', () => upstream.destroy(new Error('upstream timeout')));
-    upstream.on('error', reject);
+    upstream.on('error', abort);
+    deadline = setTimeout(() => upstream.destroy(new Error('upstream deadline exceeded')), 60000);
+    deadline.unref();
   });
 }
 

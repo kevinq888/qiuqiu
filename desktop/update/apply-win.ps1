@@ -5,6 +5,7 @@ function Save-Result($value) {
   $json = $value | ConvertTo-Json -Compress
   [IO.File]::WriteAllText($c.result, $json, (New-Object Text.UTF8Encoding($false)))
 }
+[IO.File]::WriteAllText((Join-Path (Split-Path $c.result) 'helper-ready'), 'ready')
 $backupComplete = $false
 try {
   $old = Get-Process -Id $c.pid -ErrorAction SilentlyContinue

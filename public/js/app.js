@@ -34,6 +34,8 @@
   let current = null;
   let owner = null;
   let isPlaying = false;
+  let playbackError = '';
+  let playRequestId = 0;
   let minimizedByUser = false;
   let remotePosition = { currentTime: 0, duration: 0 };
   let lastProgressSent = 0;
@@ -328,6 +330,8 @@
     if (owner !== tabId) renderRemoteProgress();
     updateTimeline();
     if (owner !== tabId) stateNode.textContent = isPlaying ? '正在另一标签页播放' : '另一标签页已暂停';
+    else if (playbackError) stateNode.textContent = playbackError;
+    else if (host.classList.contains('is-buffering')) stateNode.textContent = '正在加载…';
     else if (!isPlaying && audio.paused) stateNode.textContent = '已暂停';
   }
   function syncPlayerSpace() {
@@ -372,17 +376,47 @@
       body: JSON.stringify({ id: String(current.id), title: current.title }),
     }).catch(() => {});
   });
+  function pausePlayback() {
+    playRequestId++;
+    audio.pause();
+    setBuffering(false);
+  }
+  function requestPlayback() {
+    if (!current) return;
+    const requestId = ++playRequestId;
+    if (audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || !audio.getAttribute('src')) {
+      pendingRestorePosition = savedPosition();
+      trackLoadPending = true;
+      // A rejected play() keeps the old MediaError until load() is called.
+      // A retry query also prevents reusing a cached failed HTTP response.
+      audio.src = `/media/${encodeURIComponent(current.title)}.m4a?retry=${Date.now()}`;
+      audio.load();
+    }
+    playbackError = '';
+    setBuffering(true);
+    stateNode.textContent = '正在加载…';
+    audio.play().catch(error => {
+      if (requestId !== playRequestId) return;
+      setBuffering(false);
+      isPlaying = false;
+      if (error.name !== 'AbortError') playbackError = '音源暂时不可用，点击播放重试或切换下一首';
+      updatePlayer();
+      announce();
+    });
+    updatePlayer();
+  }
   function playSong(song, expandPanel = true) {
     if (!validSong(song)) return;
     if (owner === tabId && current?.id === song.id) {
-      if (audio.paused) audio.play().catch(() => { stateNode.textContent = '点击播放按钮重试'; });
-      else audio.pause();
+      if (audio.paused) requestPlayback();
+      else pausePlayback();
       if (expandPanel) expand();
       return;
     }
     message('takeover');
     owner = tabId;
     current = song;
+    playbackError = '';
     if (expandPanel) minimizedByUser = false;
     pendingRestorePosition = 0;
     trackLoadPending = true;
@@ -394,14 +428,14 @@
     isPlaying = true;
     updatePlayer();
     if (expandPanel) expand();
-    audio.play().catch(() => { setBuffering(false); isPlaying = false; stateNode.textContent = '点击播放按钮重试'; updatePlayer(); announce(); });
+    requestPlayback();
     announce();
   }
   function shiftSong(step, automatic = false) {
     if (owner !== tabId || !queue.length) return false;
     if (automatic && playMode === 'repeat-one') {
       audio.currentTime = 0;
-      audio.play().catch(() => { stateNode.textContent = '点击播放按钮重试'; });
+      requestPlayback();
       return true;
     }
     const index = queue.findIndex(song => song.id === current?.id);
@@ -411,7 +445,7 @@
     const next = queue[(target + queue.length) % queue.length];
     if (next.id === current?.id) {
       audio.currentTime = 0;
-      audio.play().catch(() => { stateNode.textContent = '点击播放按钮重试'; });
+      requestPlayback();
     } else playSong(next, false);
     return true;
   }
@@ -426,7 +460,7 @@
     if (action === 'toggle') {
       // 清单有歌但尚未加载曲目时，播放键直接开播第一首
       if (!current && queue.length) { playSong(queue[0]); return; }
-      audio.paused ? audio.play().catch(() => {}) : audio.pause();
+      audio.paused ? requestPlayback() : pausePlayback();
     }
   }
   function listMarkup(items, kind) {
@@ -637,11 +671,11 @@
     queuePanel.hidden = true;
     queueButton.setAttribute('aria-expanded', 'false');
   });
-  audio.addEventListener('playing', () => { setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放'; updatePlayer(); announce(); });
+  audio.addEventListener('playing', () => { playbackError = ''; setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放'; updatePlayer(); announce(); });
   audio.addEventListener('canplay', () => setBuffering(false));
   audio.addEventListener('pause', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; persistPlayback(); updatePlayer(); announce(); } });
   audio.addEventListener('waiting', () => { if (owner === tabId) { setBuffering(true); stateNode.textContent = '缓冲中…'; } });
-  audio.addEventListener('error', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = '音频暂时不可用'; updatePlayer(); announce(); } });
+  audio.addEventListener('error', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; playbackError = '音源暂时不可用，点击播放重试或切换下一首'; updatePlayer(); announce(); } });
   audio.addEventListener('ended', () => {
     if (owner !== tabId) return;
     if (!shiftSong(1, true)) { isPlaying = false; stateNode.textContent = '播放完毕'; updatePlayer(); announce(); }

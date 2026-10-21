@@ -30,6 +30,7 @@ jobs:
         working-directory: desktop
         run: |
           npm run test:update
+          npm run test:audio
           npm run build:win
       - name: Install previous public version into disposable directory
         run: |

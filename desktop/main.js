@@ -10,6 +10,18 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'qiuqiu', privileges: {
 let localServer;
 let updater;
 
+function recordDiagnostic(event, detail) {
+  try {
+    const directory = app.getPath('userData');
+    fs.mkdirSync(directory, { recursive: true });
+    const file = path.join(directory, 'desktop.log');
+    if (fs.existsSync(file) && fs.statSync(file).size > 512 * 1024) fs.renameSync(file, file + '.previous');
+    fs.appendFileSync(file, `${new Date().toISOString()} ${event} ${detail || ''}\n`);
+  } catch {}
+}
+process.on('uncaughtExceptionMonitor', error => recordDiagnostic('uncaught-exception', error.stack));
+app.on('child-process-gone', (_event, details) => recordDiagnostic('child-process-gone', `${details.type} ${details.reason}`));
+
 async function startLocalApp() {
   const crypto = require('node:crypto');
   process.env.QIUQIU_DATA_DIR = path.join(app.getPath('userData'), 'data');
@@ -270,6 +282,10 @@ function createMainWindow() {
   }, 20000);
   // The desktop app supplies its own always-on-top vinyl widget. Hide only
   // the website's in-page floating toggle so users never see two record icons.
+  mainWindow.webContents.on('did-fail-load', (_event, code, description, _url, isMainFrame) => {
+    if (isMainFrame && code !== -3) recordDiagnostic('main-load-failed', `${code} ${description}`);
+  });
+  mainWindow.webContents.on('render-process-gone', (_event, details) => recordDiagnostic('renderer-gone', details.reason));
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.insertCSS('.vinyl-toggle, #install-app { display: none !important; }').catch(() => {});
     updater?.loaded().catch(console.error);

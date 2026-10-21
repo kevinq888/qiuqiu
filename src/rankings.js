@@ -44,6 +44,7 @@ function download(page) {
   const url = `https://myfreemp3ku.com/navigation/1/${page}/`;
   return new Promise((resolve, reject) => {
     const req = https.get(url, { headers: { 'User-Agent': 'qiuqiumusic/1.0' } }, res => {
+      res.on('error', reject);
       if (res.statusCode !== 200) {
         res.resume();
         reject(new Error(`source HTTP ${res.statusCode}`));

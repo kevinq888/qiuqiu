@@ -144,8 +144,8 @@ function applyMask(pixels, mode, customRadius, inset = 0) {
 
 const original = decodePng(source);
 const base = original.pixels.subarray(3, 4).length ? original.pixels.subarray(0, 3) : [241, 248, 245];
-// Match the visible footprint of the installed QQ / WeChat Dock tiles (~81%).
-const appArtworkScale = 0.84;
+// Preserve the rounded tile footprint; fill it with the reference-sized record.
+const appArtworkScale = 1.0;
 const smallerAppArt = placeScaled(original.pixels, original.width, original.height, appArtworkScale, base);
 applyMask(smallerAppArt, 'rounded', 88, 48);
 encodePng(size, size, smallerAppArt, appIconPath);

@@ -12,6 +12,7 @@ failure_json=$9
 user_data=${10}
 log="${result%/*}/install.log"
 exec >>"$log" 2>&1
+printf ready > "${result%/*}/helper-ready"
 write_result() { printf '%s' "$1" > "$result.tmp" && mv "$result.tmp" "$result"; }
 i=0
 while kill -0 "$old_pid" 2>/dev/null; do

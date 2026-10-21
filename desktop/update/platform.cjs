@@ -96,11 +96,25 @@ async function launch(input) {
     const code = `& ([scriptblock]::Create([IO.File]::ReadAllText(${psLiteral(helper)}))) -ConfigPath ${psLiteral(config)}`;
     args = ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(code, 'utf16le').toString('base64')];
   }
-  await new Promise((resolve, reject) => {
-    const child = spawn(command, args, { detached: true, stdio: 'ignore', windowsHide: true });
-    child.once('error', reject);
-    child.once('spawn', () => { child.unref(); resolve(); });
-  });
+  const log = await fs.open(path.join(workspace, 'helper.log'), 'a', 0o600);
+  let child;
+  try {
+    await new Promise((resolve, reject) => {
+      child = spawn(command, args, { detached: true, stdio: ['ignore', log.fd, log.fd], windowsHide: true });
+      child.once('error', reject);
+      child.once('spawn', () => { child.unref(); resolve(); });
+    });
+    const ready = path.join(workspace, 'helper-ready');
+    for (let i = 0; i < 200; i++) {
+      if (await fs.stat(ready).then(() => true, () => false)) return;
+      if (child.exitCode !== null) break;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    child.kill();
+    const detail = await fs.readFile(path.join(workspace, 'helper.log'), 'utf8').catch(() => '');
+    console.error('Update helper did not initialize:', detail);
+    throw Error('更新辅助程序无法启动，播放器保持运行，请重试');
+  } finally { await log.close(); }
 }
 async function pendingResult(runtime) {
   const root = path.join(runtime.userData, 'updates');

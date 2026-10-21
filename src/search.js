@@ -66,6 +66,7 @@ function fetchHtml(query, page) {
   const url = `https://myfreemp3ku.com/search.php?q=${encodeURIComponent(query)}${page > 1 ? `&page=${page}` : ''}`;
   return new Promise((resolve, reject) => {
     const request = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 qiuqiumusic' } }, response => {
+      response.on('error', reject);
       if (response.statusCode !== 200) {
         response.resume();
         reject(new Error(`source HTTP ${response.statusCode}`));

@@ -41,7 +41,16 @@ function build() {
     }
     complete = true;
   } finally {
-    if (complete) fs.rmSync(scratch, { recursive: true, force: true });
+    if (complete) {
+      if (process.platform === 'darwin') {
+        const register = '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister';
+        for (const folder of ['mac', 'mac-arm64']) {
+          const application = path.join(scratch, folder, `${pkg.build.productName}.app`);
+          if (fs.existsSync(application)) spawnSync(register, ['-u', application], { stdio: 'ignore' });
+        }
+      }
+      fs.rmSync(scratch, { recursive: true, force: true });
+    }
     else console.error(`Build diagnostics retained at: ${scratch}`);
   }
 }

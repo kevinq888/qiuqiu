@@ -121,13 +121,14 @@ async function stopTestApp() {
     console.log('PASS real installer update', { from: saved.version, to: version, target, mode: rollback ? 'startup failure rollback' : 'successful replacement, health and playback resume' });
     socket.close();
     await stopTestApp();
+    if (process.platform === 'darwin') await run('/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister',['-u',application]).catch(()=>{});
     await sleep(1000);
     await fs.rm(userData, { recursive: true, force: true });
   } catch (error) {
     console.error(error);
     console.error('Diagnostics retained:', userData);
     try { for (const name of await fs.readdir(path.join(userData,'updates'))) {
-      try { console.error(await fs.readFile(path.join(userData,'updates',name,'install.log'),'utf8')); } catch {}
+      for (const log of ['install.log','helper.log']) { try { console.error(await fs.readFile(path.join(userData,'updates',name,log),'utf8')); } catch {} }
     }} catch {}
     socket?.close();
     await stopTestApp().catch(() => {});

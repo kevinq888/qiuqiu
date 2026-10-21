@@ -11,7 +11,8 @@
     "build:win": "node scripts/build-desktop.cjs win",
     "build:all": "node scripts/build-desktop.cjs all",
     "test:local": "node scripts/test-local.cjs",
-    "test:update": "node --test scripts/update.test.cjs"
+    "test:update": "node --test scripts/update.test.cjs",
+    "test:audio": "node --test scripts/audio-recovery.test.cjs"
   },
   "devDependencies": {
     "electron": "^37.2.6",
