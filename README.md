@@ -15,9 +15,9 @@
 
 | 系统 | 下载 |
 | --- | --- |
-| macOS（Apple 芯片） | [秋秋音乐-1.2.3-macos-arm64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.2.3-macos-arm64.dmg) |
-| macOS（Intel） | [秋秋音乐-1.2.3-macos-x64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.2.3-macos-x64.dmg) |
-| Windows（64 位） | [秋秋音乐-1.2.3-windows-x64.exe](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/%E7%A7%8B%E7%A7%8B%E9%9F%B3%E4%B9%90-1.2.3-windows-x64.exe) |
+| macOS（Apple 芯片） | [秋秋音乐-1.2.3-macos-arm64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/qiuqiumusic-1.2.3-macos-arm64.dmg) |
+| macOS（Intel） | [秋秋音乐-1.2.3-macos-x64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/qiuqiumusic-1.2.3-macos-x64.dmg) |
+| Windows（64 位） | [秋秋音乐-1.2.3-windows-x64.exe](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.3/qiuqiumusic-1.2.3-windows-x64.exe) |
 
 ### v1.2.2
 
