@@ -6,7 +6,19 @@
 
 桌面版提供 Windows 和 macOS 安装包。下载后按系统提示完成安装；桌面版支持系统托盘和黑胶悬浮球。手机和平板请直接访问[在线版](https://qiuqiumusic.onrender.com/)，或按下方说明添加到主屏幕。
 
-### v1.2.5（当前版本）
+### v1.2.6（当前版本）
+
+- 新增播放快捷键：先按 Q，再在 2 秒内按空格（播放/暂停）、P（播放）、S（暂停）、←（上一首）、→（下一首）。
+- 仅秋秋音乐窗口内生效，不注册全局热键；输入文字、输入法组字和弹窗期间不触发。
+- 播放条新增键盘说明按钮；按 Esc、点击其他位置或切换窗口可取消待输入的快捷键。
+
+| 系统 | 下载 |
+| --- | --- |
+| macOS（Apple 芯片） | [秋秋音乐-1.2.6-macos-arm64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.6/qiuqiumusic-1.2.6-macos-arm64.dmg) |
+| macOS（Intel） | [秋秋音乐-1.2.6-macos-x64.dmg](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.6/qiuqiumusic-1.2.6-macos-x64.dmg) |
+| Windows（64 位） | [秋秋音乐-1.2.6-windows-x64.exe](https://github.com/kevinq888/qiuqiumusic/releases/download/v1.2.6/qiuqiumusic-1.2.6-windows-x64.exe) |
+
+### v1.2.5
 
 - 修复已缓存歌曲卡在“正在加载”、必须退出重启才能继续播放的问题。
 - 加载或缓冲超时自动重载一次并保留进度；持续失败时提示手动重试，暂停与切歌会取消恢复任务。

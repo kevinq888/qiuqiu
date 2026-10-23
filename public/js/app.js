@@ -27,6 +27,10 @@
   const loading = document.getElementById('route-loading');
   const installDialog = document.getElementById('install-dialog');
   const themeSheet = document.getElementById('theme-sheet');
+  const shortcutsDialog = document.getElementById('playback-shortcuts');
+  const shortcutStatus = document.getElementById('shortcut-status');
+  let shortcutTimer;
+  let shortcutDeadline = 0;
   let installPrompt = null;
   let installPromptConsumed = false;
   let installPromptWaiters = [];
@@ -638,10 +642,15 @@
     }
     if (action === 'next') shiftSong(1);
     if (action === 'prev') shiftSong(-1);
-    if (action === 'toggle') {
+    if (action === 'pause') {
+      if (current) { pausePlayback(); isPlaying = false; updatePlayer(); announce(); }
+      return;
+    }
+    if (action === 'play' && current && !audio.paused && !playbackError && !host.classList.contains('is-buffering')) return;
+    if (action === 'toggle' || action === 'play') {
       // 清单有歌但尚未加载曲目时，播放键直接开播第一首
       if (!current && queue.length) { playSong(queue[0]); return; }
-      audio.paused ? requestPlayback() : pausePlayback();
+      action === 'play' || audio.paused ? requestPlayback() : pausePlayback();
     }
   }
   function listMarkup(items, kind) {
@@ -723,6 +732,7 @@
   }
 
   document.addEventListener('click', event => {
+    if (event.target.closest('#player-shortcuts')) { resetShortcut(); shortcutsDialog.showModal(); return; }
     if (event.target.closest('[data-desktop-package]')) return;
     if (event.target.closest('#install-app')) { startInstall(); return; }
     if (event.target.closest('#install-copy-link')) { copyInstallLink(); return; }
@@ -751,6 +761,38 @@
     if (event.key === 'Escape' && !installDialog.hidden) closeInstallDialog();
     if (event.key === 'Escape' && !themeSheet.hidden) closeThemeSheet();
   });
+  function resetShortcut() {
+    clearTimeout(shortcutTimer);
+    shortcutDeadline = 0;
+    shortcutStatus.hidden = true;
+  }
+  document.addEventListener('keydown', event => {
+    // Never register global shortcuts or consume OS/browser modifier chords.
+    // Use key rather than code so an active non-Latin layout is left alone.
+    if (event.defaultPrevented || event.repeat || event.isComposing || event.keyCode === 229 ||
+        event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
+        !document.hasFocus() || document.hidden || !installDialog.hidden || !themeSheet.hidden ||
+        document.querySelector('dialog[open]') ||
+        event.target.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="slider"]')) {
+      resetShortcut(); return;
+    }
+    const armed = performance.now() < shortcutDeadline;
+    resetShortcut();
+    if (armed) {
+      const command = { ' ': 'toggle', p: 'play', s: 'pause', ArrowLeft: 'prev', ArrowRight: 'next' }[event.key];
+      if (command) { event.preventDefault(); playbackCommand(command); return; }
+    }
+    if (event.key !== 'q') return;
+    event.preventDefault();
+    shortcutDeadline = performance.now() + 2000;
+    shortcutStatus.hidden = false;
+    shortcutTimer = setTimeout(resetShortcut, 2000);
+  });
+  window.addEventListener('blur', resetShortcut);
+  document.addEventListener('focusin', resetShortcut);
+  document.addEventListener('pointerdown', resetShortcut);
+  document.addEventListener('compositionstart', resetShortcut);
+  document.addEventListener('visibilitychange', resetShortcut);
   document.addEventListener('submit', event => {
     const form = event.target.closest('form.search-form');
     if (!form) return;

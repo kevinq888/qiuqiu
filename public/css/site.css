@@ -647,3 +647,13 @@ body{background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--mint) 4
 .queue-note{flex:none;margin:12px 0 0;padding-top:10px;border-top:1px dashed var(--line);font-size:11px;line-height:1.6;color:var(--muted)}
 #player-queue{white-space:nowrap;font-variant-numeric:tabular-nums}
 @media(prefers-reduced-motion:reduce){.cache-meter[data-cache-state="downloading"] i{animation:none;background:var(--orange)}}
+
+/* Window-scoped playback shortcut help and sequence prompt. */
+.shortcuts-dialog{margin:auto;max-height:calc(100dvh - 36px);overflow:auto}
+.shortcuts-dialog::backdrop{background:rgba(11,33,30,.52);backdrop-filter:blur(5px)}
+.shortcut-list{margin:0 0 20px}
+.shortcut-list>div{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--line)}
+.shortcut-list dd{margin:0;color:var(--muted)}
+.shortcut-list kbd{display:inline-block;padding:2px 7px;border:1px solid var(--line);border-radius:6px;background:var(--subtle);color:var(--ink);font:inherit;min-width:28px;text-align:center}
+.shortcut-status{position:fixed;z-index:75;left:50%;bottom:150px;transform:translateX(-50%);max-width:calc(100vw - 32px);width:max-content;padding:12px 18px;border:1px solid var(--line);border-radius:12px;background:var(--white);color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.15);font-size:13px}
+.shortcut-status[hidden]{display:none}
