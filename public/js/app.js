@@ -38,6 +38,11 @@
   let isPlaying = false;
   let playbackError = '';
   let playRequestId = 0;
+  let playbackTimer;
+  let playbackWanted = false;
+  let reloadPlayback = false;
+  let recoveryAttempts = 0;
+  let lastPlaybackTime = 0;
   let minimizedByUser = false;
   let remotePosition = { currentTime: 0, duration: 0 };
   let lastProgressSent = 0;
@@ -521,13 +526,40 @@
   });
   function pausePlayback() {
     playRequestId++;
+    playbackWanted = false;
+    if (host.classList.contains('is-buffering')) reloadPlayback = true;
+    clearTimeout(playbackTimer);
+    playbackTimer = null;
     audio.pause();
     setBuffering(false);
   }
-  function requestPlayback() {
+  function watchPlayback() {
+    if (playbackTimer) return;
+    if (!playbackWanted || owner !== tabId) return;
+    const requestId = playRequestId;
+    // A pending play() need not reject or emit a MediaError. Bound both initial
+    // loading and later stalls; uncached tracks may need the server's 60s download.
+    playbackTimer = setTimeout(() => {
+      if (requestId !== playRequestId || !playbackWanted || owner !== tabId) return;
+      playbackTimer = null;
+      reloadPlayback = true;
+      if (recoveryAttempts++ < 1) { requestPlayback(true); return; }
+      pausePlayback();
+      isPlaying = false;
+      playbackError = '播放加载超时，点击播放重试或切换下一首';
+      updatePlayer();
+      announce();
+    }, cacheCached.has(current?.title) ? 15000 : 75000);
+  }
+  function requestPlayback(automaticRecovery = false) {
     if (!current) return;
     const requestId = ++playRequestId;
-    if (audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || !audio.getAttribute('src')) {
+    clearTimeout(playbackTimer);
+    playbackTimer = null;
+    if (!automaticRecovery) recoveryAttempts = 0;
+    playbackWanted = true;
+    lastPlaybackTime = audio.currentTime;
+    if (reloadPlayback || host.classList.contains('is-buffering') || audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || !audio.getAttribute('src')) {
       pendingRestorePosition = savedPosition();
       trackLoadPending = true;
       // A rejected play() keeps the old MediaError until load() is called.
@@ -535,11 +567,17 @@
       audio.src = `/media/${encodeURIComponent(current.title)}.m4a?retry=${Date.now()}`;
       audio.load();
     }
+    reloadPlayback = false;
     playbackError = '';
     setBuffering(true);
     stateNode.textContent = '正在加载…';
+    watchPlayback();
     audio.play().catch(error => {
       if (requestId !== playRequestId) return;
+      playbackWanted = false;
+      clearTimeout(playbackTimer);
+      playbackTimer = null;
+      reloadPlayback = true;
       setBuffering(false);
       isPlaying = false;
       if (error.name !== 'AbortError') playbackError = '音源暂时不可用，点击播放重试或切换下一首';
@@ -557,6 +595,7 @@
       return;
     }
     message('takeover');
+    pausePlayback();
     owner = tabId;
     current = song;
     playbackError = '';
@@ -567,7 +606,6 @@
     addToQueue(song);
     persistPlayback();
     stateNode.textContent = '正在加载…';
-    setBuffering(true);
     isPlaying = true;
     updatePlayer();
     if (expandPanel) expand();
@@ -834,19 +872,42 @@
     queueButton.setAttribute('aria-expanded', 'false');
   });
   audio.addEventListener('playing', () => {
+    clearTimeout(playbackTimer);
+    playbackTimer = null;
+    recoveryAttempts = 0;
     playbackError = ''; setBuffering(false); isPlaying = true; stateNode.textContent = '正在播放';
-    if (current?.title) { cacheCached.add(current.title); cacheFailed.delete(current.title); }
+    // Only the backend can confirm a complete disk cache entry.
+    scheduleCacheStatusRefresh();
     updatePlayer(); announce();
   });
   audio.addEventListener('canplay', () => setBuffering(false));
   audio.addEventListener('pause', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; stateNode.textContent = audio.ended ? '播放完毕' : '已暂停'; persistPlayback(); updatePlayer(); announce(); } });
-  audio.addEventListener('waiting', () => { if (owner === tabId) { setBuffering(true); stateNode.textContent = '缓冲中…'; } });
-  audio.addEventListener('error', () => { setBuffering(false); if (owner === tabId) { isPlaying = false; playbackError = '音源暂时不可用，点击播放重试或切换下一首'; updatePlayer(); announce(); } });
+  audio.addEventListener('waiting', () => { if (owner === tabId && playbackWanted) { setBuffering(true); stateNode.textContent = '缓冲中…'; watchPlayback(); } });
+  audio.addEventListener('stalled', () => { if (playbackWanted && !playbackTimer) watchPlayback(); });
+  audio.addEventListener('error', () => {
+    clearTimeout(playbackTimer);
+    playbackTimer = null;
+    playbackWanted = false;
+    reloadPlayback = true;
+    setBuffering(false);
+    if (owner === tabId) {
+      isPlaying = false;
+      playbackError = '音源暂时不可用，点击播放重试或切换下一首';
+      updatePlayer(); announce();
+    }
+  });
   audio.addEventListener('ended', () => {
     if (owner !== tabId) return;
-    if (!shiftSong(1, true)) { isPlaying = false; stateNode.textContent = '播放完毕'; updatePlayer(); announce(); }
+    if (!shiftSong(1, true)) { pausePlayback(); isPlaying = false; stateNode.textContent = '播放完毕'; updatePlayer(); announce(); }
   });
   audio.addEventListener('timeupdate', () => {
+    if (playbackWanted && !audio.paused && audio.readyState >= 3 && audio.currentTime > lastPlaybackTime) {
+      clearTimeout(playbackTimer);
+      playbackTimer = null;
+      recoveryAttempts = 0;
+      setBuffering(false);
+    }
+    lastPlaybackTime = audio.currentTime;
     updateTimeline();
     if (owner === tabId && current && performance.now() - lastPlaybackSave >= 4000) {
       lastPlaybackSave = performance.now();
@@ -870,7 +931,7 @@
   if (channel) channel.addEventListener('message', event => {
     const data = event.data;
     if (!data || data.tabId === tabId) return;
-    if (data.type === 'takeover' && owner === tabId) { audio.pause(); owner = data.tabId; }
+    if (data.type === 'takeover' && owner === tabId) { pausePlayback(); owner = data.tabId; }
     if (data.type === 'state') {
       if (owner === tabId && !audio.paused) return;
       owner = data.tabId; current = data.current; isPlaying = !!data.playing;

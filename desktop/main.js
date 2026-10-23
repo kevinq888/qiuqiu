@@ -36,6 +36,10 @@ async function startLocalApp() {
     const headers = new Headers(request.headers);
     headers.set('x-qiuqiu-token', token);
     const options = { method: request.method, headers, redirect: 'manual', bypassCustomProtocolHandlers: true };
+    // Media retries must reach the disk cache rather than a stale Chromium
+    // response. Cancel the loopback fetch when the player abandons its request.
+    options.signal = request.signal;
+    if (url.pathname.startsWith('/media/')) options.cache = 'no-store';
     if (request.method !== 'GET' && request.method !== 'HEAD') options.body = await request.arrayBuffer();
     return net.fetch(base + url.pathname + url.search, options);
   });

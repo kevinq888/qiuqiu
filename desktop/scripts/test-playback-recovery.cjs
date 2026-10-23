@@ -34,7 +34,46 @@ app.whenReady().then(async () => {
       await main.webContents.executeJavaScript(`document.querySelector('#player-play-pause').click()`, true);
       await until(() => main.webContents.executeJavaScript(`!document.querySelector('#player-audio').paused`));
     }
-    console.log('PASS 404 remains visible, same-song retry reloads recovered source, two pause/resume cycles');
+    // Reproduce a play() that never settles and never emits a MediaError, even
+    // though the entire track is on disk. Speed up only the recovery deadlines.
+    await main.webContents.executeJavaScript(`
+      document.querySelector('#player-play-pause').click();
+      window.realTimeout = window.setTimeout;
+      window.setTimeout = (fn, ms, ...args) => realTimeout(fn, ms === 15000 || ms === 75000 ? 300 : ms, ...args);
+      window.realPlay = HTMLMediaElement.prototype.play;
+      window.playCalls = 0;
+      HTMLMediaElement.prototype.play = function() {
+        if (++window.playCalls === 1) return new Promise(() => {});
+        return realPlay.call(this);
+      };
+      window.resumeAt = document.querySelector('#player-audio').currentTime;
+      document.querySelector('#player-play-pause').click();
+    `, true);
+    await until(() => main.webContents.executeJavaScript(`window.playCalls >= 2 && !document.querySelector('#player-audio').paused && document.querySelector('#player-audio').currentTime > window.resumeAt`));
+    assert.ok(await main.webContents.executeJavaScript(`document.querySelector('#player-audio').src.includes('retry=')`));
+    // A permanently stuck source must stop retrying and leave a working retry
+    // button. A manual pause must cancel its pending recovery.
+    await main.webContents.executeJavaScript(`
+      document.querySelector('#player-play-pause').click();
+      window.playCalls = 0;
+      HTMLMediaElement.prototype.play = function() { ++window.playCalls; return new Promise(() => {}); };
+      document.querySelector('#player-play-pause').click();
+    `, true);
+    await until(() => main.webContents.executeJavaScript(`document.querySelector('#player-state').textContent.includes('播放加载超时')`));
+    assert.equal(await main.webContents.executeJavaScript('window.playCalls'), 2);
+    // Restore real playback and simulate a decoder waiting without progress.
+    await main.webContents.executeJavaScript(`HTMLMediaElement.prototype.play = realPlay; document.querySelector('#player-play-pause').click()`, true);
+    await until(() => main.webContents.executeJavaScript(`!document.querySelector('#player-audio').paused && document.querySelector('#player-state').textContent === '正在播放'`));
+    await main.webContents.executeJavaScript(`
+      window.stalledSource = document.querySelector('#player-audio').src;
+      document.querySelector('#player-audio').pause();
+      document.querySelector('#player-audio').dispatchEvent(new Event('waiting'));
+    `, true);
+    await until(() => main.webContents.executeJavaScript(`document.querySelector('#player-audio').src !== window.stalledSource && !document.querySelector('#player-audio').paused && document.querySelector('#player-state').textContent === '正在播放'`));
+    await main.webContents.executeJavaScript(`document.querySelector('#player-audio').dispatchEvent(new Event('waiting')); document.querySelector('#player-play-pause').click()`, true);
+    await sleep(700);
+    assert.ok(await main.webContents.executeJavaScript(`document.querySelector('#player-audio').paused && !document.querySelector('#site-player').classList.contains('is-buffering')`));
+    console.log('PASS source-error retry, cached hanging play recovery with position, bounded retries, mid-track stall recovery, manual retry and pause cancellation');
     ipcMain.emit('floating:quit');
   } catch (error) { console.error(error); app.exit(1); }
 });
